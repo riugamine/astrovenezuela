@@ -1,0 +1,29 @@
+import type { ReactNode } from 'react';
+import AdminHeader from '@/components/layout/admin/AdminHeader';
+import AdminSidebar from '@/components/layout/admin/AdminSidebar';
+import { Toaster } from 'sonner';
+
+interface AdminLayoutProps {
+  children: ReactNode;
+}
+
+/**
+ * Layout principal para el panel administrativo
+ * @param {ReactNode} children - Contenido a renderizar dentro del layout
+ */
+const AdminLayout = ({ children }: AdminLayoutProps) => {
+  return (
+    <div className="min-h-screen flex">
+      <AdminSidebar />
+      <div className="flex-1 flex flex-col">
+        <AdminHeader />
+        <main className="flex-1 p-6 bg-gray-50">
+          {children}
+        </main>
+        <Toaster position="top-right" />
+      </div>
+    </div>
+  );
+};
+
+export default AdminLayout;
