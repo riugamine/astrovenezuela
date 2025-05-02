@@ -45,7 +45,7 @@ export function RegisterForm() {
         <Input
           {...register('name')}
           placeholder="Nombre completo"
-          className="w-full"
+          className="w-full text-[#001730]"
         />
         {errors.name && (
           <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
@@ -57,7 +57,7 @@ export function RegisterForm() {
           {...register('email')}
           type="email"
           placeholder="Correo electrónico"
-          className="w-full"
+          className="w-full text-[#001730]"
         />
         {errors.email && (
           <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
@@ -69,7 +69,7 @@ export function RegisterForm() {
           {...register('password')}
           type="password"
           placeholder="Contraseña"
-          className="w-full"
+          className="w-full text-[#001730]"
         />
         {errors.password && (
           <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
@@ -81,7 +81,7 @@ export function RegisterForm() {
           {...register('confirmPassword')}
           type="password"
           placeholder="Confirmar contraseña"
-          className="w-full"
+          className="w-full text-[#001730]"
         />
         {errors.confirmPassword && (
           <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>

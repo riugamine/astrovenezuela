@@ -44,7 +44,7 @@ export function LoginForm() {
             {...register('email')}
             type="email"
             placeholder="Correo electrónico"
-            className="w-full"
+            className="w-full text-[#001730]"
           />
           {errors.email && (
             <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
@@ -56,7 +56,7 @@ export function LoginForm() {
             {...register('password')}
             type="password"
             placeholder="Contraseña"
-            className="w-full"
+            className="w-full text-[#001730]"
           />
           {errors.password && (
             <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
