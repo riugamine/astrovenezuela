@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram } from '@fortawesome/free-brands-svg-icons';
+import Link from 'next/link';
 
 const Footer = () => {
   return (
@@ -8,15 +9,25 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo */}
           <div>
-            <img src="/logo.png" alt="Astro" className="h-12 mb-4" />
+            <Link href="/">
+              <img src="/logo.png" alt="Astro" className="h-12 mb-4" />
+            </Link>
           </div>
 
           {/* Enlaces */}
           <div>
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
-              <li><a href="/terminos" className="hover:underline">Términos y condiciones</a></li>
-              <li><a href="/privacidad" className="hover:underline">Política de privacidad</a></li>
+              <li>
+                <Link href="/terminos" className="hover:underline">
+                  Términos y condiciones
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacidad" className="hover:underline">
+                  Política de privacidad
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -24,8 +35,16 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Enlaces</h3>
             <ul className="space-y-2">
-              <li><a href="/productos" className="hover:underline">Productos</a></li>
-              <li><a href="/about" className="hover:underline">Acerca de</a></li>
+              <li>
+                <Link href="/productos" className="hover:underline">
+                  Productos
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:underline">
+                  Acerca de
+                </Link>
+              </li>
             </ul>
           </div>
 
