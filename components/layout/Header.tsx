@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { categories } from '@/lib/data/categories';
 import { useTheme } from 'next-themes';
+import { useCartStore } from '@/lib/store/useCartStore';
 
 // Interfaz para los elementos del menú de navegación
 interface NavigationItem {
@@ -46,6 +47,7 @@ const NavigationItemCard = ({ item }: { item: NavigationItem }) => (
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const totalItems = useCartStore((state) => state.totalItems);
 
   // Transformar las categorías en items de navegación
   const navigationItems: NavigationItem[] = categories.map(category => ({
@@ -71,7 +73,7 @@ const Header = () => {
           <NavigationMenu>
             <NavigationMenuList className="gap-2">
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="font-exo bg-transparent hover:bg-secondary/80">
+                <NavigationMenuTrigger className="font-exo text-white bg-transparent hover:bg-secondary/80">
                   Productos
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -97,7 +99,7 @@ const Header = () => {
                 <NavigationMenuLink asChild>
                   <Link 
                     href="/about" 
-                    className="font-exo px-4 py-2 hover:bg-secondary/80 rounded-md transition-colors"
+                    className="font-exo px-4 py-2 hover:bg-secondary/80 rounded-md transition-colors text-white"
                   >
                     Acerca de
                   </Link>
@@ -123,8 +125,13 @@ const Header = () => {
           </Button>
 
           <Link href="/cart">
-            <Button variant="ghost" size="icon" className="hover:bg-secondary/80">
+            <Button variant="ghost" size="icon" className="hover:bg-secondary/80 relative">
               <FontAwesomeIcon icon={faShoppingCart} className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
             </Button>
           </Link>
           <Link href="/auth">

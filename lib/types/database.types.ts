@@ -9,11 +9,13 @@ export interface Category {
 export interface Product {
   id: string;
   name: string;
-  slug: string;
-  description: string;
   price: number;
+  description: string;
+  image_url: string;
+  slug: string;
   category_id: string;
   created_at: string;
+  stock: number;
 }
 
 export interface ProductVariant {

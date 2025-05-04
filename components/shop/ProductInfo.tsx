@@ -5,10 +5,34 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
+import { useCartStore } from "@/lib/store/useCartStore";
+import { toast } from "sonner";
+import { Product } from "@/lib/types/database.types";
 
-export function ProductInfo() {
+
+
+export function ProductInfo({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const addItem = useCartStore((state) => state.addItem);
+
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      toast.error('Por favor selecciona una talla');
+      return;
+    }
+
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity,
+      size: selectedSize,
+      image_url: product.image_url
+    });
+
+    toast.success('Producto agregado al carrito');
+  };
 
   const sizes = ['S', 'M', 'L', 'XL'];
 
@@ -66,7 +90,7 @@ export function ProductInfo() {
       </div>
 
       {/* Botón de agregar al carrito */}
-      <Button className="w-full py-6 text-lg">
+      <Button className="w-full py-6 text-lg" onClick={handleAddToCart}>
         Añadir al carrito
       </Button>
 
