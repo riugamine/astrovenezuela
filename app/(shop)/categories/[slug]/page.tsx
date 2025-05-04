@@ -11,8 +11,9 @@ interface CategoryPageProps {
   };
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const category = categories.find(cat => cat.slug === params.slug);
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const resolvedParams = await Promise.resolve(params);
+  const category = categories.find(cat => cat.slug === resolvedParams.slug);
   
   if (!category) {
     notFound();
