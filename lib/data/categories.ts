@@ -42,23 +42,20 @@ export async function getSubcategoriesByCategory(categoryId: string): Promise<Su
 export const categories = [
   {
     id: '1',
-    name: 'Entrenamiento',
-    slug: 'entrenamiento',
+    name: 'Ropa Deportiva',
+    slug: 'ropa-deportiva',
+    description: 'Encuentra la mejor ropa deportiva para tu entrenamiento',
+    banner_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/categories/banners/ropa-deportiva-banner.jpg',
     parent_id: null,
     created_at: new Date().toISOString()
   },
   {
     id: '2',
-    name: 'CrossFit',
-    slug: 'crossfit',
-    parent_id: '1',
-    created_at: new Date().toISOString()
-  },
-  {
-    id: '3',
-    name: 'Gimnasio',
-    slug: 'gimnasio',
-    parent_id: '1',
+    name: 'Accesorios',
+    slug: 'accesorios',
+    description: 'Complementa tu outfit con nuestros accesorios deportivos',
+    banner_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/categories/banners/accesorios-banner.jpg',
+    parent_id: null,
     created_at: new Date().toISOString()
   }
 ];
