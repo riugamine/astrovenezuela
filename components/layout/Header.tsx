@@ -1,6 +1,6 @@
 'use client'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faUser, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faUser, faBars, faTimes, faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -20,6 +20,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { categories } from '@/lib/data/categories';
+import { useTheme } from 'next-themes';
 
 // Interfaz para los elementos del menú de navegación
 interface NavigationItem {
@@ -44,6 +45,7 @@ const NavigationItemCard = ({ item }: { item: NavigationItem }) => (
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   // Transformar las categorías en items de navegación
   const navigationItems: NavigationItem[] = categories.map(category => ({
@@ -107,6 +109,19 @@ const Header = () => {
 
         {/* Iconos y Menú Móvil */}
         <div className="flex items-center space-x-4">
+          {/* Theme Toggle Button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="hover:bg-secondary/80"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          >
+            <FontAwesomeIcon 
+              icon={theme === 'dark' ? faSun : faMoon} 
+              className="h-5 w-5 transition-transform hover:rotate-12"
+            />
+          </Button>
+
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="hover:bg-secondary/80">
               <FontAwesomeIcon icon={faShoppingCart} className="h-5 w-5" />
@@ -130,6 +145,21 @@ const Header = () => {
                 <SheetTitle className="font-exo text-left">Menú</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col space-y-4 mt-8">
+                {/* Theme Toggle en Menú Móvil */}
+                <button
+                  onClick={() => {
+                    setTheme(theme === 'dark' ? 'light' : 'dark');
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center font-gabarito text-lg py-2 hover:bg-slate-100 rounded-md px-4 transition-colors"
+                >
+                  <FontAwesomeIcon 
+                    icon={theme === 'dark' ? faSun : faMoon} 
+                    className="h-5 w-5 mr-3"
+                  />
+                  {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+                </button>
+                
                 {navigationItems.map((item, index) => (
                   <Link 
                     key={index}

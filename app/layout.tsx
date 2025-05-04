@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Exo, Gabarito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { Providers } from "./providers";
 
 // Configuración de la fuente Exo para títulos y texto destacado
 const exo = Exo({
@@ -47,11 +48,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${exo.variable} ${gabarito.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
         <Toaster position="top-right" />
       </body>
     </html>
