@@ -15,7 +15,7 @@ const Header = () => {
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center">
-          <img src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/sign/brand-assets/brand-logo/Logotipo_Blanco-03.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzA5NTExMDNjLTY3ZjgtNDYwNS1hZDc3LTE5YmEwYTM0NjdiMiJ9.eyJ1cmwiOiJicmFuZC1hc3NldHMvYnJhbmQtbG9nby9Mb2dvdGlwb19CbGFuY28tMDMucG5nIiwiaWF0IjoxNzQ2MjA2ODk4LCJleHAiOjIwNjE1NjY4OTh9.Zw5i81ImCL8wJZdFWwXY2u3OlrA2qNZcMzboE99UlrI" alt="Astro" className="h-8" />
+          <img src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/sign/brand-assets/brand-logo/Logotipo_Azul%20marino.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzA5NTExMDNjLTY3ZjgtNDYwNS1hZDc3LTE5YmEwYTM0NjdiMiJ9.eyJ1cmwiOiJicmFuZC1hc3NldHMvYnJhbmQtbG9nby9Mb2dvdGlwb19BenVsIG1hcmluby5wbmciLCJpYXQiOjE3NDYyMDcwNTQsImV4cCI6MjA2MTU2NzA1NH0.zF69fSmdSDjEhfy_0Whcs1fOMVbU2APgAV8khFzx7Pc" alt="Astro" className="h-8" />
         </Link>
 
         {/* Menú de navegación principal - Desktop */}
@@ -25,13 +25,13 @@ const Header = () => {
               <Button variant="ghost">Productos</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <Link href="/productos/ropa">
+              <Link href="/shop/categories/ropa">
                 <DropdownMenuItem>Ropa</DropdownMenuItem>
               </Link>
-              <Link href="/productos/calzado">
+              <Link href="/shop/categories/calzado">
                 <DropdownMenuItem>Calzado</DropdownMenuItem>
               </Link>
-              <Link href="/productos/accesorios">
+              <Link href="/shop/categories/accesorios">
                 <DropdownMenuItem>Accesorios</DropdownMenuItem>
               </Link>
             </DropdownMenuContent>
@@ -43,7 +43,7 @@ const Header = () => {
 
         {/* Iconos de usuario */}
         <div className="flex items-center space-x-4">
-          <Link href="/carrito">
+          <Link href="/shop/cart">
             <Button variant="ghost" size="icon">
               <FontAwesomeIcon icon={faShoppingCart} className="h-5 w-5" />
             </Button>
