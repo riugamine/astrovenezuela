@@ -15,7 +15,7 @@ const Header = () => {
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center">
-          <img src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/sign/brand-assets/brand-logo/Logotipo_Azul%20marino.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzA5NTExMDNjLTY3ZjgtNDYwNS1hZDc3LTE5YmEwYTM0NjdiMiJ9.eyJ1cmwiOiJicmFuZC1hc3NldHMvYnJhbmQtbG9nby9Mb2dvdGlwb19BenVsIG1hcmluby5wbmciLCJpYXQiOjE3NDYyMDcwNTQsImV4cCI6MjA2MTU2NzA1NH0.zF69fSmdSDjEhfy_0Whcs1fOMVbU2APgAV8khFzx7Pc" alt="Astro" className="h-8" />
+          <img src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/sign/brand-assets/brand-logo/Logotipo_Blanco-03.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzA5NTExMDNjLTY3ZjgtNDYwNS1hZDc3LTE5YmEwYTM0NjdiMiJ9.eyJ1cmwiOiJicmFuZC1hc3NldHMvYnJhbmQtbG9nby9Mb2dvdGlwb19CbGFuY28tMDMucG5nIiwiaWF0IjoxNzQ2MzY2ODg4LCJleHAiOjE5MDQwNDY4ODh9.O2fLQRNGCra3b5CpEgda_sV-FTWVlwVYmyksJiFDT6k" alt="Astro" className="h-8" />
         </Link>
 
         {/* Menú de navegación principal - Desktop */}
@@ -25,13 +25,10 @@ const Header = () => {
               <Button variant="ghost">Productos</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <Link href="/shop/categories/ropa">
-                <DropdownMenuItem>Ropa</DropdownMenuItem>
+              <Link href="/categories/ropa-deportiva">
+                <DropdownMenuItem>Ropa Deportiva</DropdownMenuItem>
               </Link>
-              <Link href="/shop/categories/calzado">
-                <DropdownMenuItem>Calzado</DropdownMenuItem>
-              </Link>
-              <Link href="/shop/categories/accesorios">
+              <Link href="/categories/accesorios">
                 <DropdownMenuItem>Accesorios</DropdownMenuItem>
               </Link>
             </DropdownMenuContent>

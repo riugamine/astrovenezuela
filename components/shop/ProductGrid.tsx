@@ -31,7 +31,7 @@ export function ProductGrid() {
             
             {/* Información del producto */}
             <div className="p-4">
-              <Link href={`/shop/products/${product.slug}`} className="block">
+              <Link href={`/products/${product.slug}`} className="block">
                 <h3 className="font-medium hover:text-primary transition-colors">
                   {product.name}
                 </h3>
