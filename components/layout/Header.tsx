@@ -3,11 +3,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShoppingCart, faUser, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu"
 import {
   Sheet,
   SheetContent,
@@ -22,46 +24,87 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="border-b bg-white/70 backdrop-blur-sm sticky top-0 z-50">
+    <header className="bg-secondary/80 backdrop-blur-sm sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <img 
-            src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/sign/brand-assets/brand-logo/Logotipo_Azul%20marino.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzA5NTExMDNjLTY3ZjgtNDYwNS1hZDc3LTE5YmEwYTM0NjdiMiJ9.eyJ1cmwiOiJicmFuZC1hc3NldHMvYnJhbmQtbG9nby9Mb2dvdGlwb19BenVsIG1hcmluby5wbmciLCJpYXQiOjE3NDYyMDcwNTQsImV4cCI6MjA2MTU2NzA1NH0.zF69fSmdSDjEhfy_0Whcs1fOMVbU2APgAV8khFzx7Pc" 
+            src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/sign/brand-assets/brand-logo/Logotipo_Blanco-03.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzA5NTExMDNjLTY3ZjgtNDYwNS1hZDc3LTE5YmEwYTM0NjdiMiJ9.eyJ1cmwiOiJicmFuZC1hc3NldHMvYnJhbmQtbG9nby9Mb2dvdGlwb19CbGFuY28tMDMucG5nIiwiaWF0IjoxNzQ2MzY5ODAzLCJleHAiOjE5MDQwNDk4MDN9.IuYZ0hot_g4vlIVOQASw_1O1PlZGT2I5HmI_QM4BNpE" 
             alt="Astro" 
             className="h-8" 
           />
         </Link>
 
-        {/* Menú Desktop */}
+        {/* Menú Desktop con NavigationMenu */}
         <div className="hidden md:flex items-center space-x-6">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="font-exo">Productos</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <Link href="/categories/ropa-deportiva">
-                <DropdownMenuItem className="font-gabarito">Ropa Deportiva</DropdownMenuItem>
-              </Link>
-              <Link href="/categories/accesorios">
-                <DropdownMenuItem className="font-gabarito">Accesorios</DropdownMenuItem>
-              </Link>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Link href="/about">
-            <Button variant="ghost" className="font-exo">Acerca de</Button>
-          </Link>
+          <NavigationMenu>
+            <NavigationMenuList className="gap-2">
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="font-exo bg-transparent hover:bg-secondary/80">
+                  Productos
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="grid gap-3 p-6 w-[400px] bg-white rounded-lg shadow-sm">
+                    <div className="grid grid-cols-2 gap-4">
+                      <NavigationMenuLink asChild>
+                        <Link href="/categories/ropa-deportiva" className="group">
+                          <div className="p-4 hover:bg-secondary/10 rounded-lg transition-colors">
+                            <h3 className="font-exo text-lg mb-1 text-primary font-bold">Ropa Deportiva</h3>
+                            <p className="font-gabarito text-sm text-muted-foreground">
+                              Descubre nuestra colección de ropa deportiva de alta calidad
+                            </p>
+                          </div>
+                        </Link>
+                      </NavigationMenuLink>
+                      <NavigationMenuLink asChild>
+                        <Link href="/categories/accesorios" className="group">
+                          <div className="p-4 hover:bg-secondary/10 rounded-lg transition-colors">
+                            <h3 className="font-exo text-lg mb-1 text-primary font-bold">Accesorios</h3>
+                            <p className="font-gabarito text-sm text-muted-foreground">
+                              Complementa tu outfit con nuestros accesorios deportivos
+                            </p>
+                          </div>
+                        </Link>
+                      </NavigationMenuLink>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-secondary/20">
+                      <NavigationMenuLink asChild>
+                        <Link href="/products" className="group">
+                          <div className="p-4 hover:bg-secondary/10 rounded-lg transition-colors">
+                            <h3 className="font-exo text-lg mb-1 text-primary font-bold">Ver todo</h3>
+                            <p className="font-gabarito text-sm text-muted-foreground">
+                              Explora toda nuestra colección de productos
+                            </p>
+                          </div>
+                        </Link>
+                      </NavigationMenuLink>
+                    </div>
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link 
+                    href="/about" 
+                    className="font-exo px-4 py-2 hover:bg-secondary/80 rounded-md transition-colors"
+                  >
+                    Acerca de
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
         </div>
 
         {/* Iconos y Menú Móvil */}
         <div className="flex items-center space-x-4">
           <Link href="/cart">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:bg-secondary/80">
               <FontAwesomeIcon icon={faShoppingCart} className="h-5 w-5" />
             </Button>
           </Link>
           <Link href="/auth">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:bg-secondary/80">
               <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
             </Button>
           </Link>
@@ -69,7 +112,7 @@ const Header = () => {
           {/* Menú Móvil */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="hover:bg-secondary/80">
                 <FontAwesomeIcon icon={isOpen ? faTimes : faBars} className="h-5 w-5" />
               </Button>
             </SheetTrigger>
