@@ -49,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${exo.variable} ${gabarito.variable} font-gabarito antialiased`}
+        className={`${exo.variable} ${gabarito.variable} antialiased`}
       >
         {children}
         <Toaster position="top-right" />
