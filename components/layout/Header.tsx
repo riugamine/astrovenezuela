@@ -19,9 +19,38 @@ import {
 } from "@/components/ui/sheet";
 import Link from 'next/link';
 import { useState } from 'react';
+import { categories } from '@/lib/data/categories';
+
+// Interfaz para los elementos del menú de navegación
+interface NavigationItem {
+  title: string;
+  href: string;
+  description: string;
+}
+
+// Componente para renderizar un item del menú de navegación
+const NavigationItemCard = ({ item }: { item: NavigationItem }) => (
+  <NavigationMenuLink asChild>
+    <Link href={item.href} className="group">
+      <div className="p-4 hover:bg-secondary/10 rounded-lg transition-colors">
+        <h3 className="font-exo text-lg mb-1 text-primary font-bold">{item.title}</h3>
+        <p className="font-gabarito text-sm text-muted-foreground">
+          {item.description}
+        </p>
+      </div>
+    </Link>
+  </NavigationMenuLink>
+);
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Transformar las categorías en items de navegación
+  const navigationItems: NavigationItem[] = categories.map(category => ({
+    title: category.name,
+    href: `/categories/${category.slug}`,
+    description: category.description || `Explora nuestra colección de ${category.name.toLowerCase()}`
+  }));
 
   return (
     <header className="bg-secondary/80 backdrop-blur-sm sticky top-0 z-50">
@@ -46,38 +75,18 @@ const Header = () => {
                 <NavigationMenuContent>
                   <div className="grid gap-3 p-6 w-[400px] bg-white rounded-lg shadow-sm">
                     <div className="grid grid-cols-2 gap-4">
-                      <NavigationMenuLink asChild>
-                        <Link href="/categories/ropa-deportiva" className="group">
-                          <div className="p-4 hover:bg-secondary/10 rounded-lg transition-colors">
-                            <h3 className="font-exo text-lg mb-1 text-primary font-bold">Ropa Deportiva</h3>
-                            <p className="font-gabarito text-sm text-muted-foreground">
-                              Descubre nuestra colección de ropa deportiva de alta calidad
-                            </p>
-                          </div>
-                        </Link>
-                      </NavigationMenuLink>
-                      <NavigationMenuLink asChild>
-                        <Link href="/categories/accesorios" className="group">
-                          <div className="p-4 hover:bg-secondary/10 rounded-lg transition-colors">
-                            <h3 className="font-exo text-lg mb-1 text-primary font-bold">Accesorios</h3>
-                            <p className="font-gabarito text-sm text-muted-foreground">
-                              Complementa tu outfit con nuestros accesorios deportivos
-                            </p>
-                          </div>
-                        </Link>
-                      </NavigationMenuLink>
+                      {navigationItems.map((item, index) => (
+                        <NavigationItemCard key={index} item={item} />
+                      ))}
                     </div>
                     <div className="mt-4 pt-4 border-t border-secondary/20">
-                      <NavigationMenuLink asChild>
-                        <Link href="/products" className="group">
-                          <div className="p-4 hover:bg-secondary/10 rounded-lg transition-colors">
-                            <h3 className="font-exo text-lg mb-1 text-primary font-bold">Ver todo</h3>
-                            <p className="font-gabarito text-sm text-muted-foreground">
-                              Explora toda nuestra colección de productos
-                            </p>
-                          </div>
-                        </Link>
-                      </NavigationMenuLink>
+                      <NavigationItemCard 
+                        item={{
+                          title: "Ver todo",
+                          href: "/products",
+                          description: "Explora toda nuestra colección de productos"
+                        }}
+                      />
                     </div>
                   </div>
                 </NavigationMenuContent>
@@ -121,20 +130,16 @@ const Header = () => {
                 <SheetTitle className="font-exo text-left">Menú</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col space-y-4 mt-8">
-                <Link 
-                  href="/categories/ropa-deportiva" 
-                  onClick={() => setIsOpen(false)}
-                  className="font-gabarito text-lg py-2 hover:bg-slate-100 rounded-md px-4 transition-colors"
-                >
-                  Ropa Deportiva
-                </Link>
-                <Link 
-                  href="/categories/accesorios"
-                  onClick={() => setIsOpen(false)}
-                  className="font-gabarito text-lg py-2 hover:bg-slate-100 rounded-md px-4 transition-colors"
-                >
-                  Accesorios
-                </Link>
+                {navigationItems.map((item, index) => (
+                  <Link 
+                    key={index}
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className="font-gabarito text-lg py-2 hover:bg-slate-100 rounded-md px-4 transition-colors"
+                  >
+                    {item.title}
+                  </Link>
+                ))}
                 <Link 
                   href="/about"
                   onClick={() => setIsOpen(false)}
