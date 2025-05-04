@@ -17,9 +17,11 @@ export default function Home() {
           <div className="text-white max-w-2xl">
             <h1 className="text-5xl font-bold mb-6">Astro Venezuela</h1>
             <p className="text-xl mb-8">Tu destino para la mejor ropa street en Venezuela</p>
-            <Button size="lg" variant="secondary">
-              Ver Productos
-            </Button>
+            <Link href="/products">
+              <Button size="lg" variant="secondary">
+                Ver Productos
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
