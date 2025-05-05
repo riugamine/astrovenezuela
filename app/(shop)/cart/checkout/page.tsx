@@ -122,41 +122,38 @@ export default function CheckoutPage() {
     const selectedShipping = shippingMethods.find(
       (m) => m.id === shippingMethod
     )?.name;
+    // Número de WhatsApp de la tienda
+    const phoneNumber = "584243091410";
+    // Formato más compacto del mensaje
+    const message = `PEDIDO\n${customerInfo.name} - ${customerInfo.phone}\n${
+      customerInfo.email
+    }\n${
+      customerInfo.agencyAddress ? `Agencia: ${customerInfo.agencyAddress}` : ""
+    }\n\nITEMS:\n${formattedItems}\n\nTotal: $${total.toLocaleString(
+      "es-VE"
+    )}\n${selectedShipping} - ${selectedPayment}`;
 
-    const message = `
-🛍️ *NUEVO PEDIDO*
-
-*Cliente:*
-Nombre: ${customerInfo.name}
-Teléfono: ${customerInfo.phone}
-Email: ${customerInfo.email}
-${customerInfo.address ? `Dirección: ${customerInfo.address}` : ""}
-
-*Pedido:*
-${formattedItems}
-
-*Resumen:*
-Subtotal: $${subtotal.toLocaleString("es-VE")}
-Envío: $${shipping.toLocaleString("es-VE")}
-Total: $${total.toLocaleString("es-VE")}
-
-Método de envío: ${selectedShipping}
-Método de pago: ${selectedPayment}
-`;
-
-    // Número de WhatsApp de la tienda (reemplazar con el número real)
-    const phoneNumber = "584144881964";
     const encodedMessage = encodeURIComponent(message);
-    window.open(
-      `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
-      "_blank"
-    );
-  };
-  const handleAgencySelect = (address: string) => {
-    setCustomerInfo((prev) => ({
-      ...prev,
-      agencyAddress: address,
-    }));
+
+    if (encodedMessage.length > 4000) {
+      // Mensaje demasiado largo, enviar resumen
+      const summaryMessage = `PEDIDO\n${
+        customerInfo.name
+      }\n${totalItems} productos\nTotal: $${total.toLocaleString(
+        "es-VE"
+      )}\n\nPor favor, contáctenos para ver los detalles completos.`;
+      window.open(
+        `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+          summaryMessage
+        )}`,
+        "_blank"
+      );
+    } else {
+      window.open(
+        `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
+        "_blank"
+      );
+    }
   };
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -227,7 +224,45 @@ Método de pago: ${selectedPayment}
               required
             />
             <Separator />
-
+            {/* Métodos de pago */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-medium">Método de pago</h2>
+              <div className="grid grid-cols-1 sm: grid-cols-2 gap-3">
+                {paymentMethods.map((method) => (
+                  <div
+                    key={method.id}
+                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                      paymentMethod === method.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setPaymentMethod(method.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            paymentMethod === method.id
+                              ? "border-primary"
+                              : "border-muted-foreground"
+                          }`}
+                        >
+                          {paymentMethod === method.id && (
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium">{method.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {method.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
             {/* Métodos de envío */}
             <div className="space-y-4">
               <h2 className="text-xl font-medium">Método de envío</h2>
@@ -307,7 +342,7 @@ Método de pago: ${selectedPayment}
         </div>
 
         {/* Resumen del pedido */}
-        <div className="bg-gray-50 p-6 rounded-lg space-y-6">
+        <div className="bg-gray-50 p-6 rounded-lg space-y-6 text-secondary">
           <div className="space-y-4">
             {items.map((item) => (
               <div key={item.id} className="flex gap-4">
@@ -356,7 +391,7 @@ Método de pago: ${selectedPayment}
           </div>
 
           <Button
-            className="w-full"
+            className="w-full dark:text-secondary"
             size="lg"
             onClick={handleSubmit}
             disabled={
@@ -366,7 +401,7 @@ Método de pago: ${selectedPayment}
               !customerInfo.phone
             }
           >
-            <FontAwesomeIcon icon={faWhatsapp} className="mr-2" />
+            <FontAwesomeIcon icon={faWhatsapp} className="mr-2 " />
             Hacer pedido por WhatsApp
           </Button>
         </div>
