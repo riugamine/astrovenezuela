@@ -57,5 +57,14 @@ export const categories = [
     banner_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/categories/banners/accesorios-banner.jpg',
     parent_id: null,
     created_at: new Date().toISOString()
+  },
+  {
+    id: '3',
+    name: 'Calzado',
+    slug: 'calzado',
+    description: 'El mejor calzado deportivo para tu rendimiento',
+    banner_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/categories/banners/calzado-banner.jpg',
+    parent_id: null,
+    created_at: new Date().toISOString()
   }
 ];
