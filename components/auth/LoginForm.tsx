@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/useAuthStore';
 
 const loginSchema = z.object({
   email: z.string().email('Correo electrónico inválido'),
@@ -19,6 +22,9 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
+  const { setUser, setSession } = useAuthStore();
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -27,12 +33,39 @@ export function LoginForm() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setLoading(true);
-      // Aquí iría la lógica de autenticación con Supabase
+      const { data: { user, session }, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) throw error;
+
+      setUser(user);
+      setSession(session);
       toast.success('Inicio de sesión exitoso');
+      router.push('/'); 
+      router.refresh();
     } catch (error) {
       toast.error('Error al iniciar sesión');
+      console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      toast.error('Error al iniciar sesión con Google');
+      console.error(error);
     }
   };
 
@@ -84,7 +117,8 @@ export function LoginForm() {
       <Button 
         variant="outline" 
         className="w-full"
-        onClick={() => {/* Implementar login con Google */}}
+        onClick={handleGoogleLogin}
+        disabled={loading}
       >
         <FontAwesomeIcon icon={faGoogle} className="mr-2 h-4 w-4" />
         Google
