@@ -9,13 +9,20 @@ export interface Category {
 export interface Product {
   id: string;
   name: string;
-  price: number;
-  description: string;
-  image_url: string;
   slug: string;
+  description: string;
+  price: number;
+  reference_number: string;
   category_id: string;
+  main_image_url: string;
+  detail_images: ProductDetailImage[];
   created_at: string;
-  stock: number;
+}
+
+export interface ProductDetailImage {
+  id: string;
+  image_url: string;
+  order_index: number;
 }
 
 export interface ProductVariant {

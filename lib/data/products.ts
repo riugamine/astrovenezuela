@@ -8,9 +8,21 @@ export const products = [
     slug: 'camiseta-sport-pro',
     description: 'Camiseta deportiva de alto rendimiento con tecnología de secado rápido',
     price: 29.99,
-    reference_number: 'SP-001', // Número de referencia opcional
+    reference_number: 'SP-001',
     category_id: '1',
-    image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/camiseta-sport-pro.jpg',
+    main_image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/camiseta-sport-pro.jpg',
+    detail_images: [
+      {
+        id: '1-1',
+        image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/camiseta-sport-pro-detail-1.jpg',
+        order_index: 1
+      },
+      {
+        id: '1-2',
+        image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/camiseta-sport-pro-detail-2.jpg',
+        order_index: 2
+      }
+    ],
     created_at: new Date().toISOString()
   },
   {

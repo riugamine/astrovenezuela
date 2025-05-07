@@ -3,30 +3,26 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { Product } from '@/lib/types/database.types';
 
-interface ProductImage {
-  url: string;
-  alt: string;
+interface ProductGalleryProps {
+  product: Product;
 }
 
-export function ProductGallery() {
-  // Datos de ejemplo - luego vendrán de la base de datos
-  const images: ProductImage[] = [
-    {
-      url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/product-1.jpg',
-      alt: 'Vista frontal'
-    },
-    {
-      url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/product-2.jpg',
-      alt: 'Vista trasera'
-    },
-    {
-      url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/product-3.jpg',
-      alt: 'Vista detalle'
-    }
-  ];
-
+export function ProductGallery({ product }: ProductGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(0);
+
+  // Crear array de imágenes combinando la imagen principal y las imágenes de detalle
+  const images = [
+    {
+      url: product.main_image_url,
+      alt: `${product.name} - Principal`
+    },
+    ...(product.detail_images?.map(img => ({
+      url: img.image_url,
+      alt: `${product.name} - Detalle ${img.order_index}`
+    })) || [])
+  ];
 
   return (
     <div className="flex gap-4">

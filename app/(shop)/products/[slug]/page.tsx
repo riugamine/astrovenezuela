@@ -16,7 +16,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Galería de imágenes */}
-        <ProductGallery />
+        <ProductGallery product={product} />
         
         {/* Información del producto */}
         <ProductInfo product={product} />

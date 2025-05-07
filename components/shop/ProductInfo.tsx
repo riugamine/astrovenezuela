@@ -28,7 +28,7 @@ export function ProductInfo({ product }: { product: Product }) {
       price: product.price,
       quantity,
       size: selectedSize,
-      image_url: product.image_url
+      image_url: product.main_image_url
     });
 
     toast.success('Producto agregado al carrito');
@@ -40,8 +40,10 @@ export function ProductInfo({ product }: { product: Product }) {
     <div className="space-y-6">
       {/* Título y precio */}
       <div>
-        <h1 className="text-3xl font-bold">Matchpoint Sweater</h1>
-        <p className="text-2xl font-semibold mt-2">$119.990,00</p>
+        <h1 className="text-3xl font-bold">{product.name}</h1>
+        <p className="text-2xl font-semibold mt-2">
+          ${product.price.toLocaleString('es-VE')}
+        </p>
       </div>
 
       {/* Selector de tallas */}
@@ -98,8 +100,7 @@ export function ProductInfo({ product }: { product: Product }) {
       <div className="space-y-4 pt-6 border-t">
         <h2 className="font-semibold text-lg">Descripción</h2>
         <p className="text-muted-foreground">
-          Camiseta diseño exclusivo y calidad premium. Confeccionado en tela suave y duradera, 
-          ideal para el uso intenso y versátil para cualquier ocasión.
+          {product.description}
         </p>
       </div>
     </div>
