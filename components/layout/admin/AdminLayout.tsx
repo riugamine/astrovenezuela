@@ -13,11 +13,11 @@ interface AdminLayoutProps {
  */
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gray-50">
       <AdminSidebar />
       <div className="flex-1 flex flex-col">
         <AdminHeader />
-        <main className="flex-1 p-6 bg-gray-50">
+        <main className="flex-1 p-6">
           {children}
         </main>
         <Toaster position="top-right" />

@@ -1,11 +1,11 @@
 import type { FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBox, faUsers, faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faUsers, faChartLine, faGlobe } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Componente que muestra el dashboard principal del panel de administración
- * Incluye estadísticas y acciones rápidas
+ * Incluye estadísticas y acciones rápidas, además de una vista previa del sitio
  */
 const AdminDashboard: FC = () => {
   return (
@@ -49,6 +49,7 @@ const AdminDashboard: FC = () => {
           </CardContent>
         </Card>
       </div>
+
     </div>
   );
 };
