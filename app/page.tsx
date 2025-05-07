@@ -148,7 +148,7 @@ export default function Home() {
                   <CardContent className="p-0">
                     <div className="relative aspect-square">
                       <Image
-                        src={product.image_url}
+                        src={product.main_image_url || 'https://placehold.co/600x400?text=Producto'}
                         alt={product.name}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-105"

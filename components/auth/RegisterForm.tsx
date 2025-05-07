@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/useAuthStore';
-
 const registerSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   email: z.string().email('Correo electrónico inválido'),
@@ -43,6 +42,7 @@ export function RegisterForm() {
         options: {
           data: {
             full_name: data.name,
+            role: 'costumer'
           },
         }
       });
@@ -51,6 +51,7 @@ export function RegisterForm() {
 
       setUser(user);
       setSession(session);
+      toast.success('Registro exitoso. Por favor, verifique su correo para activar su cuenta.');
       router.push('/auth/verify-email');
     } catch (error) {
       toast.error('Error al registrar usuario');

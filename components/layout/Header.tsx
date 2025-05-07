@@ -22,6 +22,16 @@ import { useState } from 'react';
 import { categories } from '@/lib/data/categories';
 import { useTheme } from 'next-themes';
 import { useCartStore } from '@/lib/store/useCartStore';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuthStore } from '@/lib/store/useAuthStore';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Interfaz para los elementos del menú de navegación
 interface NavigationItem {
@@ -48,6 +58,7 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const totalItems = useCartStore((state) => state.totalItems);
+  const { user, signOut } = useAuthStore();
 
   // Transformar las categorías en items de navegación
   const navigationItems: NavigationItem[] = categories.map(category => ({
@@ -55,6 +66,16 @@ const Header = () => {
     href: `/categories/${category.slug}`,
     description: category.description || `Explora nuestra colección de ${category.name.toLowerCase()}`
   }));
+
+  // Función para obtener las iniciales del nombre
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <header className="bg-secondary/80 backdrop-blur-sm sticky top-0 z-50">
@@ -134,11 +155,33 @@ const Header = () => {
               )}
             </Button>
           </Link>
-          <Link href="/auth">
-            <Button variant="ghost" size="icon" className="hover:bg-secondary/80">
-              <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
-            </Button>
-          </Link>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getInitials(user.user_metadata.full_name || 'Usuario')}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled>
+                  {user.email}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
+                  Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/auth">
+              <Button variant="ghost" size="icon" className="hover:bg-secondary/80">
+                <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
 
           {/* Menú Móvil */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
