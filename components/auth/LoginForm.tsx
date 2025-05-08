@@ -13,15 +13,36 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 
+// Mensajes de error personalizados en español
 const loginSchema = z.object({
-  email: z.string().email('Correo electrónico inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  email: z.string()
+    .min(1, 'El correo electrónico es requerido')
+    .email('El formato del correo electrónico no es válido'),
+  password: z.string()
+    .min(1, 'La contraseña es requerida')
+    .min(6, 'La contraseña debe tener al menos 6 caracteres'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
 
+// Función para manejar errores de autenticación
+const getAuthErrorMessage = (error: any): string => {
+  const errorMap: { [key: string]: string } = {
+    'Invalid login credentials': 'Credenciales inválidas. Por favor, verifica tu correo y contraseña.',
+    'Email not confirmed': 'Por favor, confirma tu correo electrónico antes de iniciar sesión.',
+    'Invalid email or password': 'Correo electrónico o contraseña incorrectos.',
+    'Too many requests': 'Demasiados intentos. Por favor, espera unos minutos antes de intentar nuevamente.',
+    'Email rate limit exceeded': 'Has excedido el límite de intentos. Intenta más tarde.',
+    'Network request failed': 'Error de conexión. Verifica tu conexión a internet.',
+  };
+
+  return errorMap[error.message] || 'Ha ocurrido un error. Por favor, intenta nuevamente.';
+};
+
 export function LoginForm() {
-  const [loading, setLoading] = useState(false);
+  // Separar los estados de carga para cada botón
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const { setUser, setSession } = useAuthStore();
@@ -32,29 +53,38 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      setLoading(true);
+      setIsLoginLoading(true);
       const { data: { user, session }, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        toast.error(getAuthErrorMessage(error));
+        return;
+      }
+
+      if (!user || !session) {
+        toast.error('No se pudo iniciar sesión. Por favor, intenta nuevamente.');
+        return;
+      }
 
       setUser(user);
       setSession(session);
-      toast.success('Inicio de sesión exitoso');
+      toast.success('¡Bienvenido de vuelta!');
       router.push('/'); 
       router.refresh();
-    } catch (error) {
-      toast.error('Error al iniciar sesión');
-      console.error(error);
+    } catch (error: any) {
+      toast.error(getAuthErrorMessage(error));
+      console.error('Error de inicio de sesión:', error);
     } finally {
-      setLoading(false);
+      setIsLoginLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
+      setIsGoogleLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -62,10 +92,15 @@ export function LoginForm() {
         }
       });
 
-      if (error) throw error;
-    } catch (error) {
-      toast.error('Error al iniciar sesión con Google');
-      console.error(error);
+      if (error) {
+        toast.error('Error al iniciar sesión con Google. Por favor, intenta nuevamente.');
+        console.error('Error de Google OAuth:', error);
+      }
+    } catch (error: any) {
+      toast.error('No se pudo conectar con Google. Por favor, intenta más tarde.');
+      console.error('Error de Google OAuth:', error);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -78,6 +113,7 @@ export function LoginForm() {
             type="email"
             placeholder="Correo electrónico"
             className="w-full text-[#001730]"
+            disabled={isLoginLoading}
           />
           {errors.email && (
             <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
@@ -90,6 +126,7 @@ export function LoginForm() {
             type="password"
             placeholder="Contraseña"
             className="w-full text-[#001730]"
+            disabled={isLoginLoading}
           />
           {errors.password && (
             <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
@@ -98,10 +135,19 @@ export function LoginForm() {
         
         <Button
           type="submit"
-          className="w-full bg-[#001730] hover:bg-[#32217A]"
-          disabled={loading}
+          className="w-full bg-[#001730] hover:bg-[#32217A] relative"
+          disabled={isLoginLoading}
         >
-          {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+          {isLoginLoading ? (
+            <>
+              <span className="opacity-0">Iniciar Sesión</span>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+              </div>
+            </>
+          ) : (
+            'Iniciar Sesión'
+          )}
         </Button>
       </form>
 
@@ -116,12 +162,23 @@ export function LoginForm() {
 
       <Button 
         variant="outline" 
-        className="w-full"
+        className="w-full relative"
         onClick={handleGoogleLogin}
-        disabled={loading}
+        disabled={isGoogleLoading}
       >
-        <FontAwesomeIcon icon={faGoogle} className="mr-2 h-4 w-4" />
-        Google
+        {isGoogleLoading ? (
+          <>
+            <span className="opacity-0">Google</span>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-[#001730]"></div>
+            </div>
+          </>
+        ) : (
+          <>
+            <FontAwesomeIcon icon={faGoogle} className="mr-2 h-4 w-4" />
+            Google
+          </>
+        )}
       </Button>
     </div>
   );
