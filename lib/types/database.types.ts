@@ -39,3 +39,37 @@ export interface Profile {
   role: 'admin' | 'customer';
   created_at: string;
 }
+
+
+// Definición del tipo Database que engloba todas las tablas
+export type Database = {
+  public: {
+    Tables: {
+      categories: {
+        Row: Category;
+        Insert: Omit<Category, 'created_at'>;
+        Update: Partial<Omit<Category, 'created_at'>>;
+      };
+      products: {
+        Row: Product;
+        Insert: Omit<Product, 'created_at'>;
+        Update: Partial<Omit<Product, 'created_at'>>;
+      };
+      product_detail_images: {
+        Row: ProductDetailImage;
+        Insert: ProductDetailImage;
+        Update: Partial<ProductDetailImage>;
+      };
+      product_variants: {
+        Row: ProductVariant;
+        Insert: Omit<ProductVariant, 'created_at'>;
+        Update: Partial<Omit<ProductVariant, 'created_at'>>;
+      };
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, 'created_at'>;
+        Update: Partial<Omit<Profile, 'created_at'>>;
+      };
+    };
+  };
+};

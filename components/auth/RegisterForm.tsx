@@ -7,14 +7,26 @@ import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/useAuthStore';
+import { registerUser } from '@/app/actions/auth';
+
+// Schema de validación mejorado
 const registerSchema = z.object({
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  email: z.string().email('Correo electrónico inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  name: z.string()
+    .min(1, 'El nombre es requerido')
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(50, 'El nombre no puede exceder 50 caracteres')
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre solo puede contener letras'),
+  email: z.string()
+    .min(1, 'El correo electrónico es requerido')
+    .email('El formato del correo electrónico no es válido')
+    .toLowerCase(),
+  password: z.string()
+    .min(1, 'La contraseña es requerida')
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'La contraseña debe contener al menos una letra mayúscula, una minúscula y un número'),
   confirmPassword: z.string()
+    .min(1, 'La confirmación de contraseña es requerida')
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -22,53 +34,60 @@ const registerSchema = z.object({
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
+// Función mejorada para manejar errores de autenticación
+const getAuthErrorMessage = (error: any): string => {
+  const errorMap: { [key: string]: string } = {
+    'User already registered': 'Este correo electrónico ya está registrado',
+    'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres',
+    'Email not confirmed': 'Por favor, confirma tu correo electrónico',
+    'Invalid email': 'El correo electrónico no es válido',
+    'Signup disabled': 'El registro está temporalmente deshabilitado',
+    'Network request failed': 'Error de conexión. Verifica tu conexión a internet',
+    'Rate limit exceeded': 'Has realizado demasiados intentos. Por favor, espera unos minutos',
+  };
+
+  return errorMap[error.message] || 'Ha ocurrido un error durante el registro. Por favor, intenta nuevamente.';
+};
+
 export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
-  const { setUser, setSession } = useAuthStore();
   
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    mode: 'onChange'
   });
 
   const onSubmit = async (data: RegisterForm) => {
     try {
       setLoading(true);
-      
-      // Usar signUp en lugar de auth.signUp
-      const { data: { user, session }, error: signUpError } = await supabase.auth.signUp({
+
+      const response = await registerUser({
         email: data.email,
         password: data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            full_name: data.name,
-            role: 'customer'
-          }
-        }
+        name: data.name
       });
 
-      if (signUpError) {
-        console.error('Error detallado:', signUpError);
-        throw signUpError;
-      }
-
-      if (!user || !session) {
-        toast.success('Registro exitoso. Por favor, verifique su correo para activar su cuenta.');
-        router.push('/auth/verify-email');
+      if (response.error) {
+        toast.error(response.error);
         return;
       }
 
-      setUser(user);
-      setSession(session);
-      toast.success('Registro exitoso');
-      router.push('/dashboard');
+      if (!response.success || !response.user) {
+        toast.error('No se pudo crear el usuario. Por favor, intenta nuevamente');
+        return;
+      }
+
+      // Limpiar el formulario después del éxito
+      reset();
+      
+      // Mostrar mensaje de éxito y redirigir
+      toast.success('Registro exitoso. Por favor, verifica tu correo para activar tu cuenta.');
+      router.push('/auth/verify-email');
       
     } catch (error: any) {
-      console.error('Error detallado:', error);
-      toast.error(error.message || 'Error al registrar usuario');
-      router.push('/auth/error');
+      console.error('Error inesperado:', error);
+      toast.error('Ha ocurrido un error inesperado. Por favor, intenta nuevamente');
     } finally {
       setLoading(false);
     }
@@ -81,6 +100,7 @@ export function RegisterForm() {
           {...register('name')}
           placeholder="Nombre completo"
           className="w-full text-[#001730]"
+          disabled={loading}
         />
         {errors.name && (
           <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
@@ -93,6 +113,7 @@ export function RegisterForm() {
           type="email"
           placeholder="Correo electrónico"
           className="w-full text-[#001730]"
+          disabled={loading}
         />
         {errors.email && (
           <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
@@ -105,6 +126,7 @@ export function RegisterForm() {
           type="password"
           placeholder="Contraseña"
           className="w-full text-[#001730]"
+          disabled={loading}
         />
         {errors.password && (
           <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
@@ -117,6 +139,7 @@ export function RegisterForm() {
           type="password"
           placeholder="Confirmar contraseña"
           className="w-full text-[#001730]"
+          disabled={loading}
         />
         {errors.confirmPassword && (
           <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>
@@ -125,10 +148,19 @@ export function RegisterForm() {
       
       <Button
         type="submit"
-        className="w-full bg-[#001730] hover:bg-[#32217A]"
+        className="w-full bg-[#001730] hover:bg-[#32217A] relative"
         disabled={loading}
       >
-        {loading ? 'Registrando...' : 'Registrarse'}
+        {loading ? (
+          <>
+            <span className="opacity-0">Registrarse</span>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+            </div>
+          </>
+        ) : (
+          'Registrarse'
+        )}
       </Button>
     </form>
   );
