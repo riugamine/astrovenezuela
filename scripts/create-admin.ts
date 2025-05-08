@@ -1,10 +1,32 @@
-import { createClient } from '@supabase/supabase-js';
-import { config } from 'dotenv';
-import { z } from 'zod';
-import readline from 'readline';
+const { createClient } = require('@supabase/supabase-js');
+const { config } = require('dotenv');
+const { z } = require('zod');
+const readline = require('readline');
+const path = require('path');
 
-// Cargar variables de entorno
-config();
+// Cargar variables de entorno desde la raíz del proyecto
+config({ path: path.resolve(__dirname, '../.env') });
+
+// Validar variables de entorno requeridas
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Error: Variables de entorno requeridas no encontradas');
+  console.log('Por favor, asegúrate de tener las siguientes variables en tu archivo .env:');
+  console.log('- NEXT_PUBLIC_SUPABASE_URL');
+  console.log('- SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+}
+
+// Crear cliente de Supabase con validación
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
 
 // Schema de validación para el administrador
 const adminSchema = z.object({
@@ -13,11 +35,6 @@ const adminSchema = z.object({
   fullName: z.string().min(3, 'El nombre debe tener al menos 3 caracteres')
 });
 
-// Crear cliente de Supabase
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // Interfaz para leer input del usuario
 const rl = readline.createInterface({
@@ -25,7 +42,7 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-const question = (query: string): Promise<string> => {
+const question = (query: string) => {
   return new Promise((resolve) => {
     rl.question(query, resolve);
   });
@@ -56,19 +73,46 @@ async function createAdmin() {
       }
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      console.error('Error detallado:', {
+        status: authError.status,
+        message: authError.message,
+        name: authError.name,
+        details: authError
+      });
+      throw authError;
+    }
+
+    if (!authData?.user) {
+      throw new Error('No se pudo crear el usuario - respuesta vacía');
+    }
+
+    console.log('Usuario creado:', {
+      id: authData.user.id,
+      email: authData.user.email,
+      role: authData.user.role
+    });
 
     // Actualizar rol en la tabla de perfiles
     const { error: profileError } = await supabase
       .from('profiles')
-      .update({ role: 'admin' })
-      .eq('id', authData.user.id);
+      .insert({
+        id: authData.user.id,
+        role: 'admin',
+      })
+      .single();
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('Error al crear perfil:', profileError);
+      throw profileError;
+    }
 
     console.log('✅ Administrador creado exitosamente');
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error creando administrador:', error);
+    if (error.message) {
+      console.error('Mensaje de error:', error.message);
+    }
   } finally {
     rl.close();
   }

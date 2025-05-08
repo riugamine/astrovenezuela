@@ -36,26 +36,38 @@ export function RegisterForm() {
     try {
       setLoading(true);
       
+      // Usar signUp en lugar de auth.signUp
       const { data: { user, session }, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             full_name: data.name,
-            role: 'costumer'
-          },
+            role: 'customer'
+          }
         }
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        console.error('Error detallado:', signUpError);
+        throw signUpError;
+      }
+
+      if (!user || !session) {
+        toast.success('Registro exitoso. Por favor, verifique su correo para activar su cuenta.');
+        router.push('/auth/verify-email');
+        return;
+      }
 
       setUser(user);
       setSession(session);
-      toast.success('Registro exitoso. Por favor, verifique su correo para activar su cuenta.');
-      router.push('/auth/verify-email');
-    } catch (error) {
-      toast.error('Error al registrar usuario');
-      console.error(error);
+      toast.success('Registro exitoso');
+      router.push('/dashboard');
+      
+    } catch (error: any) {
+      console.error('Error detallado:', error);
+      toast.error(error.message || 'Error al registrar usuario');
       router.push('/auth/error');
     } finally {
       setLoading(false);

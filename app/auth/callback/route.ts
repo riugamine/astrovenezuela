@@ -1,22 +1,24 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { NextResponse } from 'next/server';
 
 // Función para manejar la redirección después de la autenticación
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
+  const token = requestUrl.searchParams.get('token');
+  const type = requestUrl.searchParams.get('type');
 
-  if (code) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+  if (token && type === 'signup') {
+    const supabase = createClient();
     
     try {
-      const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
+      // Intercambiar el token por una sesión
+      const { data: { session }, error } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'signup'
+      });
       
       if (error) {
-        // Si hay un error, redirigimos a la página de error
+        console.error('Error en la verificación:', error);
         return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
       }
 
@@ -24,12 +26,15 @@ export async function GET(request: Request) {
         // Si la sesión se creó exitosamente, redirigimos al inicio
         return NextResponse.redirect(`${requestUrl.origin}/`);
       }
+
+      // Si no hay sesión pero tampoco hay error, redirigimos a auth
+      return NextResponse.redirect(`${requestUrl.origin}/auth`);
     } catch (error) {
       console.error('Error al procesar la autenticación:', error);
       return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
     }
   }
 
-  // Si no hay código o algo falló, redirigimos a la página de autenticación
+  // Si no hay token o tipo, redirigimos a la página de autenticación
   return NextResponse.redirect(`${requestUrl.origin}/auth`);
 }

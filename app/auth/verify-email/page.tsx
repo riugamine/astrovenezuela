@@ -7,19 +7,31 @@ import { Button } from "@/components/ui/button";
 export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#001730] via-[#32217A] to-[#7F98C9] p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <FontAwesomeIcon icon={faEnvelope} className="h-12 w-12 text-[#001730] mb-4" />
-          <CardTitle>Verifica tu correo electrónico</CardTitle>
+      <Card className="w-full max-w-sm bg-white/95 backdrop-blur-sm shadow-lg">
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center">
+            <div className="rounded-full bg-[#001730]/10 p-4">
+              <FontAwesomeIcon 
+                icon={faEnvelope} 
+                className="h-8 w-8 text-[#001730]" 
+              />
+            </div>
+          </div>
+          <CardTitle className="text-center text-xl font-medium">
+            Verifica tu correo
+          </CardTitle>
         </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-muted-foreground">
-            Hemos enviado un enlace de verificación a tu correo electrónico.
-            Por favor, revisa tu bandeja de entrada y sigue las instrucciones.
+        <CardContent className="space-y-6">
+          <p className="text-center text-sm text-muted-foreground">
+            Te hemos enviado un enlace de verificación.
+            Revisa tu bandeja de entrada.
           </p>
-          <Link href="/auth">
-            <Button variant="outline" className="w-full">
-              Volver al inicio de sesión
+          <Link href="/auth" className="block">
+            <Button 
+              variant="outline" 
+              className="w-full hover:bg-[#001730] hover:text-white transition-colors"
+            >
+              Volver
             </Button>
           </Link>
         </CardContent>
