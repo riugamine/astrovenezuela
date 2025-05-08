@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { faListUl } from '@fortawesome/free-solid-svg-icons';
 
 const AdminSidebar: FC = () => {
   const pathname = usePathname();
@@ -24,6 +25,7 @@ const AdminSidebar: FC = () => {
   const navigationItems = [
     { href: '/admin', icon: faHome, label: 'Dashboard' },
     { href: '/admin/products', icon: faBox, label: 'Productos' },
+    { href: '/admin/categories', icon: faListUl, label: 'Categorías' },
     { href: '/admin/orders', icon: faShoppingCart, label: 'Órdenes' },
     { href: '/admin/users', icon: faUsers, label: 'Usuarios' },
     { href: '/admin/analytics', icon: faChartLine, label: 'Análisis' },

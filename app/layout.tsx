@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Exo, Gabarito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { Providers } from "./providers";
-
+import { Providers } from "../providers/ThemeProvider";
+import { QueryProvider } from "@/providers/QueryProvider";
 // Configuración de la fuente Exo para títulos y texto destacado
 const exo = Exo({
   variable: "--font-exo",
@@ -21,8 +21,10 @@ const gabarito = Gabarito({
 // Metadata de la aplicación
 export const metadata: Metadata = {
   title: "Astro Venezuela | Tienda de Ropa Deportiva",
-  description: "Descubre la mejor selección de ropa deportiva en Venezuela. Especialistas en equipamiento para CrossFit, gimnasio y entrenamiento funcional.",
-  keywords: "ropa deportiva, crossfit, gimnasio, entrenamiento funcional, venezuela, ropa fitness, equipamiento deportivo",
+  description:
+    "Descubre la mejor selección de ropa deportiva en Venezuela. Especialistas en equipamiento para CrossFit, gimnasio y entrenamiento funcional.",
+  keywords:
+    "ropa deportiva, crossfit, gimnasio, entrenamiento funcional, venezuela, ropa fitness, equipamiento deportivo",
   authors: [{ name: "Jose Angel", url: "https://instagram.com/joseangelweb_" }],
   creator: "Jose Angel",
   metadataBase: new URL("https://astrovenezuela.com"),
@@ -49,10 +51,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body
-        className={`${exo.variable} ${gabarito.variable} antialiased`}
-      >
-        <Providers>{children}</Providers>
+      <body className={`${exo.variable} ${gabarito.variable} antialiased`}>
+        <QueryProvider>
+          <Providers>{children}</Providers>
+        </QueryProvider>
         <Toaster position="top-right" />
       </body>
     </html>

@@ -17,9 +17,6 @@ const AdminHeader: FC = () => {
           <Button variant="ghost" size="icon">
             <FontAwesomeIcon icon={faBell} className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
-            <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
-          </Button>
         </div>
       </div>
     </header>

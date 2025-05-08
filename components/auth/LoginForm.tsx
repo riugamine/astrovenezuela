@@ -45,7 +45,7 @@ export function LoginForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-  const { setUser, setSession } = useAuthStore();
+  const { setUser } = useAuthStore();
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -70,7 +70,6 @@ export function LoginForm() {
       }
 
       setUser(user);
-      setSession(session);
       toast.success('¡Bienvenido de vuelta!');
       router.push('/'); 
       router.refresh();
