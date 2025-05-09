@@ -40,15 +40,23 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { Category } from '@/lib/types/category';
 import CategoryActions from './CategoryActions';
 
 // Schema para validación de categorías
 const categorySchema = z.object({
-  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
-  description: z.string().optional(),
-  image_url: z.string().url("Debe ser una URL válida").optional(),
+  name: z.string()
+    .min(3, "El nombre debe tener al menos 3 caracteres")
+    .refine(value => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value), {
+      message: "El nombre solo puede contener letras y espacios"
+    }),
+  description: z.string()
+    .min(10, "La descripción debe tener al menos 10 caracteres")
+    .optional(),
+  image_url: z.string()
+    .url("Debe ser una URL válida")
+    .optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -96,10 +104,9 @@ const CategoriesManagement: FC = () => {
     }
   ];
 
-  const supabase = createClient();
   const queryClient = useQueryClient();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CategoryFormData>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema)
   });
 
@@ -107,7 +114,7 @@ const CategoriesManagement: FC = () => {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('categories')
         .select('*')
         .order('created_at', { ascending: false });
@@ -141,7 +148,7 @@ const CategoriesManagement: FC = () => {
   // Crear categoría
   const createMutation = useMutation({
     mutationFn: async (newCategory: CategoryFormData) => {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('categories')
         .insert([{ 
           ...newCategory,
@@ -168,7 +175,7 @@ const CategoriesManagement: FC = () => {
   // Actualizar categoría
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: CategoryFormData }) => {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('categories')
         .update({ 
           ...data,
@@ -194,7 +201,7 @@ const CategoriesManagement: FC = () => {
   // Eliminar categoría
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('categories')
         .delete()
         .eq('id', id);
@@ -232,6 +239,7 @@ const CategoriesManagement: FC = () => {
                 Añade una nueva categoría para los productos
               </DialogDescription>
             </DialogHeader>
+            // En el formulario de creación
             <form onSubmit={handleSubmit(data => createMutation.mutate(data))}>
               <div className="space-y-4">
                 <div>
@@ -241,9 +249,26 @@ const CategoriesManagement: FC = () => {
                     <p className="text-sm text-red-500">{errors.name.message}</p>
                   )}
                 </div>
+                
+                <div>
+                  <Label htmlFor="slug">Slug (URL)</Label>
+                  <Input 
+                    id="slug" 
+                    disabled 
+                    value={watch('name')?.toLowerCase().replace(/\s+/g, '-') || ''}
+                    className="bg-muted"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Este será el identificador único en la URL
+                  </p>
+                </div>
+            
                 <div>
                   <Label htmlFor="description">Descripción</Label>
                   <Textarea id="description" {...register('description')} />
+                  {errors.description && (
+                    <p className="text-sm text-red-500">{errors.description.message}</p>
+                  )}
                 </div>
               </div>
               <DialogFooter className="mt-6">
