@@ -45,7 +45,6 @@ export const categories = [
     name: 'Ropa Deportiva',
     slug: 'ropa-deportiva',
     description: 'Encuentra la mejor ropa deportiva para tu entrenamiento',
-    banner_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/categories/banners/ropa-deportiva-banner.jpg',
     parent_id: null,
     created_at: new Date().toISOString()
   },
@@ -54,7 +53,6 @@ export const categories = [
     name: 'Accesorios',
     slug: 'accesorios',
     description: 'Complementa tu outfit con nuestros accesorios deportivos',
-    banner_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/categories/banners/accesorios-banner.jpg',
     parent_id: null,
     created_at: new Date().toISOString()
   },
@@ -63,7 +61,6 @@ export const categories = [
     name: 'Calzado',
     slug: 'calzado',
     description: 'El mejor calzado deportivo para tu rendimiento',
-    banner_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/categories/banners/calzado-banner.jpg',
     parent_id: null,
     created_at: new Date().toISOString()
   }

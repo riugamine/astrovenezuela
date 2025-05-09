@@ -3,7 +3,6 @@ export type Category = {
   name: string;
   slug: string;
   description?: string;
-  image_url?: string;
   created_at: string;
   updated_at: string;
 };
@@ -14,7 +13,6 @@ export type Subcategory = {
   name: string;
   slug: string;
   description?: string;
-  image_url?: string;
   created_at: string;
   updated_at: string;
 };

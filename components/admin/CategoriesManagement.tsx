@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from '@/lib/supabase/client';
 import type { Category } from '@/lib/types/category';
+import CategoryActions from './CategoryActions';
 
 // Schema para validación de categorías
 const categorySchema = z.object({
@@ -53,7 +54,15 @@ const categorySchema = z.object({
 type CategoryFormData = z.infer<typeof categorySchema>;
 
 // Definición de columnas para la tabla
-const columns: ColumnDef<Category>[] = [
+const CategoriesManagement: FC = () => {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+  const columns: ColumnDef<Category>[] = [
     {
       accessorKey: "name",
       header: "Nombre",
@@ -71,48 +80,22 @@ const columns: ColumnDef<Category>[] = [
     },
     {
       id: "actions",
-      cell: ({ row }) => {
-        const category = row.original;
-        
-        // return (
-        //   <div className="flex space-x-2">
-        //     <Button
-        //       variant="ghost"
-        //       size="sm"
-        //       onClick={() => {
-        //         setSelectedCategory(category);
-        //         setIsEditOpen(true);
-        //       }}
-        //     >
-        //       <FontAwesomeIcon icon={faEdit} className="mr-2" />
-        //       Editar
-        //     </Button>
-        //     <Button
-        //       variant="ghost"
-        //       size="sm"
-        //       className="text-red-500 hover:text-red-700"
-        //       onClick={() => {
-        //         setSelectedCategory(category);
-        //         setIsDeleteOpen(true);
-        //       }}
-        //     >
-        //       <FontAwesomeIcon icon={faTrash} className="mr-2" />
-        //       Eliminar
-        //     </Button>
-        //   </div>
-        // )
-      }
+      cell: ({ row }) => (
+        <CategoryActions
+          category={row.original}
+          onEdit={(category) => {
+            setSelectedCategory(category);
+            setIsEditOpen(true);
+          }}
+          onDelete={(category) => {
+            setSelectedCategory(category);
+            setIsDeleteOpen(true);
+          }}
+        />
+      )
     }
   ];
 
-const CategoriesManagement: FC = () => {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  
   const supabase = createClient();
   const queryClient = useQueryClient();
 
@@ -262,13 +245,6 @@ const CategoriesManagement: FC = () => {
                   <Label htmlFor="description">Descripción</Label>
                   <Textarea id="description" {...register('description')} />
                 </div>
-                <div>
-                  <Label htmlFor="image_url">URL de Imagen</Label>
-                  <Input id="image_url" {...register('image_url')} />
-                  {errors.image_url && (
-                    <p className="text-sm text-red-500">{errors.image_url.message}</p>
-                  )}
-                </div>
               </div>
               <DialogFooter className="mt-6">
                 <Button type="submit" disabled={createMutation.isPending}>
@@ -397,17 +373,6 @@ const CategoriesManagement: FC = () => {
                   defaultValue={selectedCategory?.description}
                   {...register('description')}
                 />
-              </div>
-              <div>
-                <Label htmlFor="edit-image_url">URL de Imagen</Label>
-                <Input
-                  id="edit-image_url"
-                  defaultValue={selectedCategory?.image_url}
-                  {...register('image_url')}
-                />
-                {errors.image_url && (
-                  <p className="text-sm text-red-500">{errors.image_url.message}</p>
-                )}
               </div>
             </div>
             <DialogFooter className="mt-6">
