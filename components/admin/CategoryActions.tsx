@@ -1,8 +1,19 @@
 import { FC } from 'react';
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faEllipsisVertical, 
+  faPencilAlt, 
+  faTrash, 
+  faPlus 
+} from '@fortawesome/free-solid-svg-icons';
 import type { Category } from '@/lib/types/category';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface CategoryActionsProps {
   category: Category;
@@ -11,42 +22,45 @@ interface CategoryActionsProps {
   onAddSubcategory: (category: Category) => void;
 }
 
-const CategoryActions: FC<CategoryActionsProps> = ({ 
-  category, 
-  onEdit, 
+const CategoryActions: FC<CategoryActionsProps> = ({
+  category,
+  onEdit,
   onDelete,
-  onAddSubcategory 
+  onAddSubcategory
 }) => {
   return (
-    <div className="flex space-x-2">
-      {!category.parent_id && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onAddSubcategory(category)}
-        >
-          <FontAwesomeIcon icon={faPlus} className="mr-2" />
-          Subcategoría
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <FontAwesomeIcon icon={faEllipsisVertical} className="h-4 w-4" />
         </Button>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onEdit(category)}
-      >
-        <FontAwesomeIcon icon={faEdit} className="mr-2" />
-        Editar
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-red-500 hover:text-red-700"
-        onClick={() => onDelete(category)}
-      >
-        <FontAwesomeIcon icon={faTrash} className="mr-2" />
-        Eliminar
-      </Button>
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {!category.parent_id && (
+          <DropdownMenuItem
+            onClick={() => onAddSubcategory(category)}
+            className="text-blue-600 cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faPlus} className="mr-2 h-4 w-4" />
+            Agregar Subcategoría
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          onClick={() => onEdit(category)}
+          className="cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faPencilAlt} className="mr-2 h-4 w-4" />
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => onDelete(category)}
+          className="text-red-600 cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faTrash} className="mr-2 h-4 w-4" />
+          Eliminar
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

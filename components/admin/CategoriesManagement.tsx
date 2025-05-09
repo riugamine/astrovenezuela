@@ -128,17 +128,30 @@ const CategoriesManagement: FC = () => {
     resolver: zodResolver(categorySchema)
   });
 
-  // Obtener categorías
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const { data, error } = await supabaseAdmin
         .from('categories')
-        .select('*, subcategories:categories(*)')
+        .select('*')
+        .order('parent_id', { ascending: true, nullsFirst: true })
         .order('created_at', { ascending: true });
-
+  
       if (error) throw error;
-      return data as Category[];
+      
+      // Reorganizar las categorías para que las subcategorías aparezcan después de sus padres
+      const organizedCategories = data.reduce((acc: Category[], category) => {
+        if (!category.parent_id) {
+          // Agregar categoría principal
+          acc.push(category);
+          // Agregar subcategorías inmediatamente después
+          const subcategories = data.filter(sub => sub.parent_id === category.id);
+          acc.push(...subcategories);
+        }
+        return acc;
+      }, []);
+  
+      return organizedCategories as Category[];
     }
   });
 
