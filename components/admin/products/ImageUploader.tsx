@@ -130,49 +130,71 @@ export function ImageUploader({
   onMainImageChange,
   onDetailImagesChange
 }: ImageUploaderProps) {
+  const [uploadingMainImage, setUploadingMainImage] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadMainImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
-    setUploading(true);
+    const file = e.target.files[0];
+    setUploadingMainImage(true);
+
     try {
-      const file = e.target.files[0];
       const imageUrl = await uploadImageToSupabase(file, 'main-images');
       onMainImageChange(imageUrl);
-      toast.success('Imagen principal subida exitosamente');
+      toast.success('Imagen subida exitosamente');
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast.error(error instanceof Error ? error.message : 'Error al subir la imagen');
+      toast.error('Error al subir la imagen');}
+  }
+  // Función para manejar múltiples archivos
+  const handleMultipleFiles = async (files: FileList) => {
+    if (detailImages.length + files.length > 10) {
+      toast.error('No se pueden subir más de 10 imágenes en total');
+      return;
+    }
+
+    setUploading(true);
+    const totalFiles = files.length;
+    let uploadedCount = 0;
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        try {
+          const imageUrl = await uploadImageToSupabase(file, 'detail-images');
+          uploadedCount++;
+          setUploadProgress((uploadedCount / totalFiles) * 100);
+          
+          return {
+            id: crypto.randomUUID(),
+            image_url: imageUrl,
+            order_index: detailImages.length + uploadedCount
+          };
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          return null;
+        }
+      });
+
+      const newImages = (await Promise.all(uploadPromises)).filter((img): img is ProductDetailImage => img !== null);
+      
+      if (newImages.length > 0) {
+        onDetailImagesChange([...detailImages, ...newImages]);
+        toast.success(`${newImages.length} imágenes subidas exitosamente`);
+      }
+    } catch (error) {
+      console.error('Error in bulk upload:', error);
+      toast.error('Error al subir algunas imágenes');
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
   const handleDetailImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
-    if (detailImages.length >= 10) {
-      toast.error('Máximo 10 imágenes de detalle permitidas');
-      return;
-    }
-    
-    setUploading(true);
-    try {
-      const file = e.target.files[0];
-      const imageUrl = await uploadImageToSupabase(file, 'detail-images');
-      const newImage: ProductDetailImage = {
-        id: crypto.randomUUID(),
-        image_url: imageUrl,
-        order_index: detailImages.length + 1
-      };
-      onDetailImagesChange([...detailImages, newImage]);
-      toast.success('Imagen de detalle subida exitosamente');
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error(error instanceof Error ? error.message : 'Error al subir la imagen');
-    } finally {
-      setUploading(false);
-    }
+    await handleMultipleFiles(e.target.files);
   };
 
   const removeDetailImage = async (index: number) => {
@@ -212,8 +234,8 @@ export function ImageUploader({
             <Input
               type="file"
               accept="image/*"
-              onChange={handleMainImageUpload}
-              disabled={uploading}
+              onChange={handleUploadMainImage}
+              disabled={uploadingMainImage}
               className="w-full"
             />
             <p className="text-sm text-muted-foreground mt-2">
@@ -257,14 +279,10 @@ export function ImageUploader({
                 setDragOver(true);
               }}
               onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
+              onDrop={async (e) => {
                 e.preventDefault();
                 setDragOver(false);
-                const file = e.dataTransfer.files[0];
-                if (file) {
-                  const event = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
-                  handleDetailImageUpload(event);
-                }
+                await handleMultipleFiles(e.dataTransfer.files);
               }}
             >
               <Input
@@ -274,6 +292,7 @@ export function ImageUploader({
                 disabled={uploading}
                 className="hidden"
                 id="detail-image-upload"
+                multiple // Habilitamos la selección múltiple
               />
               <label
                 htmlFor="detail-image-upload"
@@ -284,7 +303,19 @@ export function ImageUploader({
                   className={`text-2xl mb-2 ${uploading ? 'animate-pulse' : ''}`} 
                 />
                 <span className="text-sm">
-                  {uploading ? 'Subiendo...' : 'Arrastra o haz clic para agregar'}
+                  {uploading ? (
+                    <div className="flex flex-col items-center">
+                      <span>Subiendo... {Math.round(uploadProgress)}%</span>
+                      <div className="w-32 h-1 bg-gray-200 rounded-full mt-2">
+                        <div 
+                          className="h-full bg-primary rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    'Arrastra o haz clic para agregar múltiples imágenes'
+                  )}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1">
                   Máximo 10MB por imagen

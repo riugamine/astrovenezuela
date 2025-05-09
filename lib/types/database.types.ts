@@ -15,6 +15,7 @@ export interface Product {
   reference_number: string;
   category_id: string;
   main_image_url: string;
+  stock: number;
   detail_images: ProductDetailImage[];
   created_at: string;
 }

@@ -30,18 +30,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
-
+import { Product} from '@/lib/types/database.types';
 // Definición del tipo para los productos
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  reference_number: string;
-  category_id: string;
-  main_image_url: string;
-  created_at: string;
-}
 
 export function ProductList() {
   const [sorting, setSorting] = useState<SortingState>([]);
