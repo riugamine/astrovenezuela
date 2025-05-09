@@ -43,7 +43,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { Category } from '@/lib/types/category';
 import CategoryActions from './CategoryActions';
-
+import { cn } from "@/lib/utils"
+import { SubcategoryDialog } from './SubcategoryDialog';
 // Schema para validación de categorías
 const categorySchema = z.object({
   name: z.string()
@@ -57,6 +58,7 @@ const categorySchema = z.object({
   image_url: z.string()
     .url("Debe ser una URL válida")
     .optional(),
+  parent_id: z.string().optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -69,12 +71,25 @@ const CategoriesManagement: FC = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
 
   const columns: ColumnDef<Category>[] = [
     {
       accessorKey: "name",
       header: "Nombre",
-      cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>
+      cell: ({ row }) => {
+        const depth = row.original.parent_id ? 1 : 0;
+        return (
+          <div 
+            className={cn(
+              "font-medium flex items-center",
+              row.original.parent_id && "pl-8 border-l-2 border-primary/20 bg-secondary/5"
+            )}
+          >
+            {row.getValue("name")}
+          </div>
+        );
+      }
     },
     {
       accessorKey: "description",
@@ -99,11 +114,14 @@ const CategoriesManagement: FC = () => {
             setSelectedCategory(category);
             setIsDeleteOpen(true);
           }}
+          onAddSubcategory={(category) => {
+            setSelectedCategory(category);
+            setIsSubcategoryOpen(true); 
+          }}
         />
       )
     }
   ];
-
   const queryClient = useQueryClient();
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<CategoryFormData>({
@@ -116,8 +134,8 @@ const CategoriesManagement: FC = () => {
     queryFn: async () => {
       const { data, error } = await supabaseAdmin
         .from('categories')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*, subcategories:categories(*)')
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
       return data as Category[];
@@ -160,10 +178,15 @@ const CategoriesManagement: FC = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Categoría creada exitosamente');
+      // Mensaje personalizado según si es categoría o subcategoría
+      const message = variables.parent_id 
+        ? 'Subcategoría creada exitosamente'
+        : 'Categoría creada exitosamente';
+      toast.success(message);
       setIsCreateOpen(false);
+      setIsSubcategoryOpen(false);
       reset();
     },
     onError: (error) => {
@@ -236,12 +259,11 @@ const CategoriesManagement: FC = () => {
             <DialogHeader>
               <DialogTitle>Crear Nueva Categoría</DialogTitle>
               <DialogDescription>
-                Añade una nueva categoría para los productos
+                Añade una nueva categoría o subcategoría para los productos
               </DialogDescription>
             </DialogHeader>
-            // En el formulario de creación
             <form onSubmit={handleSubmit(data => createMutation.mutate(data))}>
-              <div className="space-y-4">
+              <div className="space-y-4">                
                 <div>
                   <Label htmlFor="name">Nombre</Label>
                   <Input id="name" {...register('name')} />
@@ -435,6 +457,17 @@ const CategoriesManagement: FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Modal de Creación de Subcategoría */}
+      <SubcategoryDialog
+        isOpen={isSubcategoryOpen}
+        onClose={() => {
+          setIsSubcategoryOpen(false);
+          setSelectedCategory(null);
+        }}
+        parentCategory={selectedCategory}
+        onSubmit={(data) => createMutation.mutate(data)}
+        isLoading={createMutation.isPending}
+      />
     </div>
   );
 };
