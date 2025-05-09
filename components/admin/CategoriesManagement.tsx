@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -21,8 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faPlus, faTrash, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -40,24 +40,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import type { Category } from '@/lib/types/category';
-import CategoryActions from './CategoryActions';
-import { cn } from "@/lib/utils"
-import { SubcategoryDialog } from './SubcategoryDialog';
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import type { Category } from "@/lib/types/category";
+import CategoryActions from "./CategoryActions";
+import { cn } from "@/lib/utils";
+import { SubcategoryDialog } from "./SubcategoryDialog";
 // Schema para validación de categorías
 const categorySchema = z.object({
-  name: z.string()
+  name: z
+    .string()
     .min(3, "El nombre debe tener al menos 3 caracteres")
-    .refine(value => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value), {
-      message: "El nombre solo puede contener letras y espacios"
+    .refine((value) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value), {
+      message: "El nombre solo puede contener letras y espacios",
     }),
-  description: z.string()
+  description: z
+    .string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
     .optional(),
-  image_url: z.string()
-    .url("Debe ser una URL válida")
-    .optional(),
+  image_url: z.string().url("Debe ser una URL válida").optional(),
   parent_id: z.string().optional(),
 });
 
@@ -70,7 +70,9 @@ const CategoriesManagement: FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
 
   const columns: ColumnDef<Category>[] = [
@@ -80,26 +82,28 @@ const CategoriesManagement: FC = () => {
       cell: ({ row }) => {
         const depth = row.original.parent_id ? 1 : 0;
         return (
-          <div 
+          <div
             className={cn(
               "font-medium flex items-center",
-              row.original.parent_id && "pl-8 border-l-2 border-primary/20 bg-secondary/5"
+              row.original.parent_id &&
+                "pl-8 border-l-2 border-primary/20 bg-secondary/5"
             )}
           >
             {row.getValue("name")}
           </div>
         );
-      }
+      },
     },
     {
       accessorKey: "description",
       header: "Descripción",
-      cell: ({ row }) => row.getValue("description") || "Sin descripción"
+      cell: ({ row }) => row.getValue("description") || "Sin descripción",
     },
     {
       accessorKey: "created_at",
       header: "Fecha de Creación",
-      cell: ({ row }) => new Date(row.getValue("created_at")).toLocaleDateString()
+      cell: ({ row }) =>
+        new Date(row.getValue("created_at")).toLocaleDateString(),
     },
     {
       id: "actions",
@@ -116,43 +120,58 @@ const CategoriesManagement: FC = () => {
           }}
           onAddSubcategory={(category) => {
             setSelectedCategory(category);
-            setIsSubcategoryOpen(true); 
+            setIsSubcategoryOpen(true);
           }}
         />
-      )
-    }
+      ),
+    },
   ];
   const queryClient = useQueryClient();
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<CategoryFormData>({
+    resolver: zodResolver(categorySchema),
   });
-
+  useEffect(() => {
+    if (selectedCategory && isEditOpen) {
+      reset({
+        name: selectedCategory.name,
+        description: selectedCategory.description,
+      });
+    }
+  }, [selectedCategory, isEditOpen, reset]);
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabaseAdmin
-        .from('categories')
-        .select('*')
-        .order('parent_id', { ascending: true, nullsFirst: true })
-        .order('created_at', { ascending: true });
-  
+        .from("categories")
+        .select("*")
+        .order("parent_id", { ascending: true, nullsFirst: true })
+        .order("created_at", { ascending: true });
+
       if (error) throw error;
-      
+
       // Reorganizar las categorías para que las subcategorías aparezcan después de sus padres
       const organizedCategories = data.reduce((acc: Category[], category) => {
         if (!category.parent_id) {
           // Agregar categoría principal
           acc.push(category);
           // Agregar subcategorías inmediatamente después
-          const subcategories = data.filter(sub => sub.parent_id === category.id);
+          const subcategories = data.filter(
+            (sub) => sub.parent_id === category.id
+          );
           acc.push(...subcategories);
         }
         return acc;
       }, []);
-  
+
       return organizedCategories as Category[];
-    }
+    },
   });
 
   // Configuración de la tabla
@@ -180,11 +199,13 @@ const CategoriesManagement: FC = () => {
   const createMutation = useMutation({
     mutationFn: async (newCategory: CategoryFormData) => {
       const { data, error } = await supabaseAdmin
-        .from('categories')
-        .insert([{ 
-          ...newCategory,
-          slug: newCategory.name.toLowerCase().replace(/\s+/g, '-')
-        }])
+        .from("categories")
+        .insert([
+          {
+            ...newCategory,
+            slug: newCategory.name.toLowerCase().replace(/\s+/g, "-"),
+          },
+        ])
         .select()
         .single();
 
@@ -192,70 +213,75 @@ const CategoriesManagement: FC = () => {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       // Mensaje personalizado según si es categoría o subcategoría
-      const message = variables.parent_id 
-        ? 'Subcategoría creada exitosamente'
-        : 'Categoría creada exitosamente';
+      const message = variables.parent_id
+        ? "Subcategoría creada exitosamente"
+        : "Categoría creada exitosamente";
       toast.success(message);
       setIsCreateOpen(false);
       setIsSubcategoryOpen(false);
       reset();
     },
     onError: (error) => {
-      toast.error('Error al crear la categoría');
+      toast.error("Error al crear la categoría");
       console.error(error);
-    }
+    },
   });
 
   // Actualizar categoría
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: CategoryFormData }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: CategoryFormData;
+    }) => {
       const { error } = await supabaseAdmin
-        .from('categories')
-        .update({ 
+        .from("categories")
+        .update({
           ...data,
-          slug: data.name.toLowerCase().replace(/\s+/g, '-'),
-          updated_at: new Date().toISOString()
+          slug: data.name.toLowerCase().replace(/\s+/g, "-"),
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Categoría actualizada exitosamente');
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Categoría actualizada exitosamente");
       setIsEditOpen(false);
       setSelectedCategory(null);
     },
     onError: (error) => {
-      toast.error('Error al actualizar la categoría');
+      toast.error("Error al actualizar la categoría");
       console.error(error);
-    }
+    },
   });
 
   // Eliminar categoría
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabaseAdmin
-        .from('categories')
+        .from("categories")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Categoría eliminada exitosamente');
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Categoría eliminada exitosamente");
       setIsDeleteOpen(false);
       setSelectedCategory(null);
     },
     onError: (error) => {
-      toast.error('Error al eliminar la categoría');
+      toast.error("Error al eliminar la categoría");
       console.error(error);
-    }
+    },
   });
-
 
   return (
     <div className="space-y-6">
@@ -275,40 +301,48 @@ const CategoriesManagement: FC = () => {
                 Añade una nueva categoría o subcategoría para los productos
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit(data => createMutation.mutate(data))}>
-              <div className="space-y-4">                
+            <form
+              onSubmit={handleSubmit((data) => createMutation.mutate(data))}
+            >
+              <div className="space-y-4">
                 <div>
                   <Label htmlFor="name">Nombre</Label>
-                  <Input id="name" {...register('name')} />
+                  <Input id="name" {...register("name")} />
                   {errors.name && (
-                    <p className="text-sm text-red-500">{errors.name.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
-                
+
                 <div>
                   <Label htmlFor="slug">Slug (URL)</Label>
-                  <Input 
-                    id="slug" 
-                    disabled 
-                    value={watch('name')?.toLowerCase().replace(/\s+/g, '-') || ''}
+                  <Input
+                    id="slug"
+                    disabled
+                    value={
+                      watch("name")?.toLowerCase().replace(/\s+/g, "-") || ""
+                    }
                     className="bg-muted"
                   />
                   <p className="text-sm text-muted-foreground mt-1">
                     Este será el identificador único en la URL
                   </p>
                 </div>
-            
+
                 <div>
                   <Label htmlFor="description">Descripción</Label>
-                  <Textarea id="description" {...register('description')} />
+                  <Textarea id="description" {...register("description")} />
                   {errors.description && (
-                    <p className="text-sm text-red-500">{errors.description.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.description.message}
+                    </p>
                   )}
                 </div>
               </div>
               <DialogFooter className="mt-6">
                 <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creando...' : 'Crear Categoría'}
+                  {createMutation.isPending ? "Creando..." : "Crear Categoría"}
                 </Button>
               </DialogFooter>
             </form>
@@ -349,7 +383,10 @@ const CategoriesManagement: FC = () => {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
                     <div className="flex justify-center items-center">
                       Cargando categorías...
                     </div>
@@ -363,7 +400,10 @@ const CategoriesManagement: FC = () => {
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -403,7 +443,16 @@ const CategoriesManagement: FC = () => {
       </div>
 
       {/* Modal de Edición */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) {
+            setSelectedCategory(null);
+            reset();
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Categoría</DialogTitle>
@@ -411,16 +460,20 @@ const CategoriesManagement: FC = () => {
               Modifica los detalles de la categoría
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit(data => 
-            selectedCategory && updateMutation.mutate({ id: selectedCategory.id, data })
-          )}>
+          <form
+            onSubmit={handleSubmit(
+              (data) =>
+                selectedCategory &&
+                updateMutation.mutate({ id: selectedCategory.id, data })
+            )}
+          >
             <div className="space-y-4">
               <div>
                 <Label htmlFor="edit-name">Nombre</Label>
                 <Input
                   id="edit-name"
                   defaultValue={selectedCategory?.name}
-                  {...register('name')}
+                  {...register("name")}
                 />
                 {errors.name && (
                   <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -431,13 +484,15 @@ const CategoriesManagement: FC = () => {
                 <Textarea
                   id="edit-description"
                   defaultValue={selectedCategory?.description}
-                  {...register('description')}
+                  {...register("description")}
                 />
               </div>
             </div>
             <DialogFooter className="mt-6">
               <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'Actualizando...' : 'Actualizar Categoría'}
+                {updateMutation.isPending
+                  ? "Actualizando..."
+                  : "Actualizar Categoría"}
               </Button>
             </DialogFooter>
           </form>
@@ -445,27 +500,44 @@ const CategoriesManagement: FC = () => {
       </Dialog>
 
       {/* Modal de Confirmación de Eliminación */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+      <Dialog 
+        open={isDeleteOpen} 
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {
+            setSelectedCategory(null); // Limpiamos la categoría seleccionada al cerrar
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Eliminar Categoría</DialogTitle>
+            <DialogTitle>
+              Eliminar {selectedCategory?.parent_id ? 'Subcategoría' : 'Categoría'}
+            </DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que deseas eliminar esta categoría? Esta acción no se puede deshacer.
+              ¿Estás seguro de que deseas eliminar {selectedCategory?.parent_id ? 'la subcategoría' : 'la categoría'} "{selectedCategory?.name}"? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setIsDeleteOpen(false)}
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                setIsDeleteOpen(false);
+                setSelectedCategory(null); // Limpiamos también al cancelar
+              }}
             >
               Cancelar
             </Button>
             <Button
               variant="destructive"
-              onClick={() => selectedCategory && deleteMutation.mutate(selectedCategory.id)}
+              onClick={() => {
+                if (selectedCategory) {
+                  deleteMutation.mutate(selectedCategory.id);
+                }
+              }}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+              {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
             </Button>
           </DialogFooter>
         </DialogContent>
