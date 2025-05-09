@@ -16,10 +16,11 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faSpinner, faDollarSign } from "@fortawesome/free-solid-svg-icons";
 import { ImageUploader } from "./ImageUploader";
 import { VariantForm } from "./VariantForm";
 import { CategorySelect } from "./CategorySelect";
+import { SubcategorySelect } from "./SubcategorySelect";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -134,17 +135,22 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
   const onSubmit = async (data: ProductFormData) => {
     createProduct.mutate(data);
   };
-
+  const handleCategoryChange = (categoryId: string) => {
+    // Resetear el subcategory_id cuando cambia la categoría
+    form.setValue("subcategory_id", "");
+  };
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Basic Information Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold tracking-tight">Información Básica</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Información Básica
+            </h2>
             <div className="text-sm text-gray-500">* Campos requeridos</div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
@@ -153,7 +159,12 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
                 <FormItem>
                   <FormLabel>Nombre del Producto *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: Camisa Casual" {...field} />
+                    <Input
+                      placeholder="Ej: Camisa Casual"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,7 +178,12 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
                 <FormItem>
                   <FormLabel>Número de Referencia *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: REF-001" {...field} />
+                    <Input
+                      placeholder="Ej: REF-001"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -182,13 +198,18 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
                   <FormLabel>Precio *</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                      <Input 
-                        type="number" 
-                        step="0.01" 
+                      <FontAwesomeIcon
+                        icon={faDollarSign}
+                        className="absolute left-3 top-1/4 -translate-y-1/2 text-gray-500 text-sm"
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
                         className="pl-8"
                         placeholder="0.00"
-                        {...field} 
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ""}
                       />
                     </div>
                   </FormControl>
@@ -197,12 +218,19 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
               )}
             />
 
-            <CategorySelect
-              control={form.control}
-              name="category"
-              setValue={form.setValue}
-              getValues={form.getValues}
-            />
+            <div className="space-y-4">
+              <CategorySelect
+                control={form.control}
+                name="category_id" 
+                onCategoryChange={handleCategoryChange}
+              />
+
+              <SubcategorySelect
+                control={form.control}
+                name="subcategory_id"
+                parentCategoryId={form.watch("category_id")}
+              />
+            </div>
           </div>
 
           <FormField
@@ -212,10 +240,12 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
               <FormItem>
                 <FormLabel>Descripción *</FormLabel>
                 <FormControl>
-                  <Textarea 
+                  <Textarea
                     placeholder="Describe las características principales del producto..."
                     className="min-h-[120px]"
-                    {...field} 
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    value={field.value || ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -232,7 +262,9 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
               <ImageUploader
                 mainImage={form.watch("main_image_url")}
                 detailImages={form.watch("detail_images")}
-                onMainImageChange={(url) => form.setValue("main_image_url", url)}
+                onMainImageChange={(url) =>
+                  form.setValue("main_image_url", url)
+                }
                 onDetailImagesChange={(images) =>
                   form.setValue("detail_images", images)
                 }
@@ -257,26 +289,29 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
         {/* Form Actions */}
         <div className="sticky bottom-0 bg-white border-t py-4 px-6 -mx-6 mt-8">
           <div className="flex justify-end gap-4 max-w-[1400px] mx-auto">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onClose}
               className="min-w-[100px]"
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               type="submit"
               className="min-w-[100px]"
               disabled={createProduct.isPending}
             >
               {createProduct.isPending ? (
                 <>
-                  <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    className="animate-spin mr-2"
+                  />
                   Guardando...
                 </>
               ) : (
-                'Guardar Producto'
+                "Guardar Producto"
               )}
             </Button>
           </div>
