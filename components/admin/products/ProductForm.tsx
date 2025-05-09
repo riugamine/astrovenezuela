@@ -14,6 +14,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Card, CardContent } from "@/components/ui/card";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { ImageUploader } from "./ImageUploader";
 import { VariantForm } from "./VariantForm";
 import { CategorySelect } from "./CategorySelect";
@@ -134,62 +137,85 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nombre del Producto</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Basic Information Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold tracking-tight">Información Básica</h2>
+            <div className="text-sm text-gray-500">* Campos requeridos</div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre del Producto *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ej: Camisa Casual" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="reference_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Número de Referencia *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ej: REF-001" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Precio *</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        className="pl-8"
+                        placeholder="0.00"
+                        {...field} 
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <CategorySelect
+              control={form.control}
+              name="category"
+              setValue={form.setValue}
+              getValues={form.getValues}
+            />
+          </div>
 
           <FormField
             control={form.control}
-            name="reference_number"
+            name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Número de Referencia</FormLabel>
+                <FormLabel>Descripción *</FormLabel>
                 <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Precio</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="category_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Categoría</FormLabel>
-                <FormControl>
-                  <CategorySelect
-                    control={form.control}
-                    name="category"
-                    setValue={form.setValue}
-                    getValues={form.getValues}
+                  <Textarea 
+                    placeholder="Describe las características principales del producto..."
+                    className="min-h-[120px]"
+                    {...field} 
                   />
                 </FormControl>
                 <FormMessage />
@@ -198,45 +224,62 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descripción</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Imágenes</h3>
-          <ImageUploader
-            mainImage={form.watch("main_image_url")}
-            detailImages={form.watch("detail_images")}
-            onMainImageChange={(url) => form.setValue("main_image_url", url)}
-            onDetailImagesChange={(images) =>
-              form.setValue("detail_images", images)
-            }
-          />
+        {/* Images Section */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold tracking-tight">Imágenes</h2>
+          <Card>
+            <CardContent className="p-6">
+              <ImageUploader
+                mainImage={form.watch("main_image_url")}
+                detailImages={form.watch("detail_images")}
+                onMainImageChange={(url) => form.setValue("main_image_url", url)}
+                onDetailImagesChange={(images) =>
+                  form.setValue("detail_images", images)
+                }
+              />
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Variantes</h3>
-          <VariantForm
-            variants={form.watch("variants")}
-            onChange={(variants) => form.setValue("variants", variants)}
-          />
+        {/* Variants Section */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold tracking-tight">Variantes</h2>
+          <Card>
+            <CardContent className="p-6">
+              <VariantForm
+                variants={form.watch("variants")}
+                onChange={(variants) => form.setValue("variants", variants)}
+              />
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit">Guardar Producto</Button>
+        {/* Form Actions */}
+        <div className="sticky bottom-0 bg-white border-t py-4 px-6 -mx-6 mt-8">
+          <div className="flex justify-end gap-4 max-w-[1400px] mx-auto">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="min-w-[100px]"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit"
+              className="min-w-[100px]"
+              disabled={createProduct.isPending}
+            >
+              {createProduct.isPending ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
+                  Guardando...
+                </>
+              ) : (
+                'Guardar Producto'
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

@@ -23,30 +23,90 @@ interface ImageUploaderProps {
  * @param path - Ruta en el bucket donde se guardará
  * @returns URL pública de la imagen
  */
+const compressImage = async (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1920;
+        const MAX_HEIGHT = 1080;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const newFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(newFile);
+            } else {
+              reject(new Error('Error al comprimir la imagen'));
+            }
+          },
+          'image/jpeg',
+          0.7
+        );
+      };
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 const uploadImageToSupabase = async (file: File, path: string): Promise<string> => {
-  // Validar tamaño del archivo (max 5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    throw new Error('La imagen no debe superar los 5MB');
+  // Aumentar límite a 10MB
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('La imagen no debe superar los 10MB');
   }
 
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${crypto.randomUUID()}.${fileExt}`;
-  const filePath = `${path}/${fileName}`;
+  try {
+    // Comprimir imagen antes de subir
+    const compressedFile = await compressImage(file);
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `${path}/${fileName}`;
 
-  const { data, error } = await supabaseAdmin.storage
-    .from('products')
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
+    const { data, error } = await supabaseAdmin.storage
+      .from('products')
+      .upload(filePath, compressedFile, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-  if (error) throw error;
+    if (error) throw error;
 
-  const { data: { publicUrl } } = supabaseAdmin.storage
-    .from('products')
-    .getPublicUrl(data.path);
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from('products')
+      .getPublicUrl(data.path);
 
-  return publicUrl;
+    return publicUrl;
+  } catch (error) {
+    console.error('Error en la compresión/subida:', error);
+    throw error;
+  }
 };
 
 /**
@@ -71,6 +131,7 @@ export function ImageUploader({
   onDetailImagesChange
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
@@ -133,26 +194,32 @@ export function ImageUploader({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="space-y-2">
         <label className="block font-medium">Imagen Principal</label>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row items-start gap-4">
           {mainImage && (
-            <div className="relative w-32 h-32">
+            <div className="relative w-full md:w-32 h-32 rounded-lg overflow-hidden">
               <Image
                 src={mainImage}
                 alt="Main product image"
                 fill
-                className="object-cover rounded-lg"
+                className="object-cover"
               />
             </div>
           )}
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={handleMainImageUpload}
-            disabled={uploading}
-          />
+          <div className="flex-1 w-full">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleMainImageUpload}
+              disabled={uploading}
+              className="w-full"
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              Formato: JPG, PNG. Tamaño máximo: 10MB
+            </p>
+          </div>
         </div>
       </div>
 
@@ -162,27 +229,44 @@ export function ImageUploader({
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {detailImages.map((image, index) => (
-            <div key={image.id} className="relative">
+            <div key={image.id} className="relative aspect-square">
               <Image
                 src={image.image_url}
                 alt={`Detail ${index + 1}`}
-                width={200}
-                height={200}
+                fill
                 className="object-cover rounded-lg"
               />
               <Button
                 variant="destructive"
                 size="icon"
-                className="absolute top-2 right-2"
+                className="absolute top-2 right-2 opacity-0 hover:opacity-100 transition-opacity"
                 onClick={() => removeDetailImage(index)}
                 disabled={uploading}
               >
-                <FontAwesomeIcon icon={faTrash} />
+                <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
               </Button>
             </div>
           ))}
           {detailImages.length < 10 && (
-            <div className="border-2 border-dashed rounded-lg p-4 flex items-center justify-center">
+            <div 
+              className={`border-2 border-dashed rounded-lg aspect-square flex items-center justify-center transition-colors ${
+                dragOver ? 'border-primary bg-primary/5' : 'border-border'
+              }`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                  const event = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+                  handleDetailImageUpload(event);
+                }
+              }}
+            >
               <Input
                 type="file"
                 accept="image/*"
@@ -193,13 +277,18 @@ export function ImageUploader({
               />
               <label
                 htmlFor="detail-image-upload"
-                className="cursor-pointer flex flex-col items-center"
+                className="cursor-pointer flex flex-col items-center p-4 text-center"
               >
                 <FontAwesomeIcon 
                   icon={faUpload} 
                   className={`text-2xl mb-2 ${uploading ? 'animate-pulse' : ''}`} 
                 />
-                <span>{uploading ? 'Subiendo...' : 'Agregar imagen'}</span>
+                <span className="text-sm">
+                  {uploading ? 'Subiendo...' : 'Arrastra o haz clic para agregar'}
+                </span>
+                <span className="text-xs text-muted-foreground mt-1">
+                  Máximo 10MB por imagen
+                </span>
               </label>
             </div>
           )}
