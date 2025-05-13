@@ -49,8 +49,9 @@ const productSchema = z.object({
       size: z.string(),
       color: z.string(),
       stock: z.number().int().positive(),
-    })
+    }),
   ),
+  isEditing: z.boolean(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -82,6 +83,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
             price: data.price,
             reference_number: data.reference_number,
             category_id: data.category_id,
+            subcategory_id: data.subcategory_id || null,
             main_image_url: data.main_image_url,
             slug: data.name.toLowerCase().replace(/\s+/g, "-"),
           },
@@ -91,14 +93,15 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
       if (productError) throw productError;
 
-      // Insertar imágenes de detalle
+      // Insertar imágenes de detalle con product_id
       if (data.detail_images.length > 0) {
         const { error: imagesError } = await supabaseAdmin
           .from("product_images")
           .insert(
             data.detail_images.map((img) => ({
-              ...img,
-              product_id: product.id,
+              image_url: img.image_url,
+              order_index: img.order_index,
+              product_id: product.id
             }))
           );
 

@@ -18,10 +18,9 @@ interface ImageUploaderProps {
 }
 
 /**
- * Sube una imagen a Supabase Storage y retorna su URL pública
- * @param file - Archivo a subir
- * @param path - Ruta en el bucket donde se guardará
- * @returns URL pública de la imagen
+ * Comprime una imagen antes de subirla
+ * @param file - Archivo a comprimir
+ * @returns Archivo comprimido
  */
 const compressImage = async (file: File): Promise<File> => {
   return new Promise((resolve, reject) => {
@@ -75,14 +74,18 @@ const compressImage = async (file: File): Promise<File> => {
   });
 };
 
+/**
+ * Sube una imagen a Supabase Storage
+ * @param file - Archivo a subir
+ * @param path - Ruta en el bucket
+ * @returns URL pública de la imagen
+ */
 const uploadImageToSupabase = async (file: File, path: string): Promise<string> => {
-  // Aumentar límite a 10MB
   if (file.size > 10 * 1024 * 1024) {
     throw new Error('La imagen no debe superar los 10MB');
   }
 
   try {
-    // Comprimir imagen antes de subir
     const compressedFile = await compressImage(file);
     
     const fileExt = file.name.split('.').pop();
@@ -146,9 +149,12 @@ export function ImageUploader({
       toast.success('Imagen subida exitosamente');
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast.error('Error al subir la imagen');}
-  }
-  // Función para manejar múltiples archivos
+      toast.error('Error al subir la imagen');
+    } finally {
+      setUploadingMainImage(false);
+    }
+  };
+
   const handleMultipleFiles = async (files: FileList) => {
     if (detailImages.length + files.length > 10) {
       toast.error('No se pueden subir más de 10 imágenes en total');
@@ -166,18 +172,23 @@ export function ImageUploader({
           uploadedCount++;
           setUploadProgress((uploadedCount / totalFiles) * 100);
           
-          return {
+          // Creamos un objeto que coincida exactamente con ProductDetailImage
+          const newImage: ProductDetailImage = {
             id: crypto.randomUUID(),
             image_url: imageUrl,
-            order_index: detailImages.length + uploadedCount
+            order_index: detailImages.length + uploadedCount,
+            product_id: '' // Asignamos un string vacío temporalmente
           };
+          
+          return newImage;
         } catch (error) {
           console.error('Error uploading image:', error);
           return null;
         }
       });
 
-      const newImages = (await Promise.all(uploadPromises)).filter((img): img is ProductDetailImage => img !== null);
+      const newImages = (await Promise.all(uploadPromises))
+        .filter((img): img is ProductDetailImage => img !== null);
       
       if (newImages.length > 0) {
         onDetailImagesChange([...detailImages, ...newImages]);
@@ -202,7 +213,6 @@ export function ImageUploader({
       const imageToRemove = detailImages[index];
       await deleteImageFromSupabase(imageToRemove.image_url);
       const newImages = detailImages.filter((_, i) => i !== index);
-      // Reordenar índices
       const updatedImages = newImages.map((img, idx) => ({
         ...img,
         order_index: idx + 1
@@ -292,7 +302,7 @@ export function ImageUploader({
                 disabled={uploading}
                 className="hidden"
                 id="detail-image-upload"
-                multiple // Habilitamos la selección múltiple
+                multiple
               />
               <label
                 htmlFor="detail-image-upload"

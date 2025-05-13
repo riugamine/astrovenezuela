@@ -84,14 +84,50 @@ export function ProductList() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const { data, error } = await supabaseAdmin
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabaseAdmin
+          .from('products')
+          .select(`
+            *,
+            product_images (
+              id,
+              product_id,
+              image_url,
+              order_index
+            ),
+            variants:product_variants (
+              id,
+              product_id,
+              size,
+              color,
+              stock,
+              image_url,
+              created_at,
+              updated_at
+            )
+          `)
+          .order('created_at', { ascending: false });
+          // Debbuging
+            console.log('Productos obtenidos:', data);3
+        if (error) {
+          console.error('Error al obtener productos:', error);
+          throw error;
+        }
 
-      if (error) throw error;
-      return data as Product[];
-    }
+        if (!data) {
+          console.log('No se encontraron productos');
+          return [];
+        }
+
+        console.log('Productos obtenidos:', data);
+        return data as Product[];
+      } catch (error) {
+        console.error('Error en la consulta:', error);
+        throw error;
+      }
+    },
+    refetchOnWindowFocus: false,
+    retry: 1
   });
 
   // Configuración de la tabla
@@ -163,8 +199,8 @@ export function ProductList() {
                   <TableRow key={index}>
                     <TableCell colSpan={columns.length}>
                       <div className="flex items-center space-x-4">
-                        <Skeleton className="h-12 w-12 rounded-md" />
-                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-12 w-12 rounded-md bg-primary" />
+                        <Skeleton className="h-4 w-[200px] bg-secondary" />
                       </div>
                     </TableCell>
                   </TableRow>

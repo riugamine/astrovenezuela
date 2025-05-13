@@ -14,22 +14,33 @@ import { ProductViewDialog } from './ProductViewDialog';
 import { ProductDeleteDialog } from './ProductDeleteDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { Product } from '@/lib/types/database.types';
+import { ProductEditDialog } from './ProductEditDialog';
 interface ProductActionsProps {
   onEdit: () => void;
   onDelete: () => void;
-  product: Product; // Reemplazar con el tipo correcto cuando esté disponible
+  product: Product;
   onView: () => void;
 }
 
 export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const handleClose = () => {
+  // Separamos los manejadores para cada diálogo
+  const handleViewClose = () => {
     setIsViewOpen(false);
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+  };
+
+  const handleEditClose = () => {
+    setIsEditOpen(false);
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+  };
+
+  const handleDeleteClose = () => {
     setIsDeleteOpen(false);
-    // Resetear el caché de productos para actualizar los índices
     queryClient.invalidateQueries({ queryKey: ['products'] });
   };
 
@@ -50,7 +61,7 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
             Ver Detalles
           </DropdownMenuItem>
           <DropdownMenuItem 
-            onClick={() => window.location.href = `/admin/products/edit/${product.id}`}
+            onClick={() => setIsEditOpen(true)}
             className="cursor-pointer"
           >
             <FontAwesomeIcon icon={faPencilAlt} className="mr-2 h-4 w-4" />
@@ -69,14 +80,20 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
       <ProductViewDialog
         product={product}
         isOpen={isViewOpen}
-        onClose={handleClose}
+        onClose={handleViewClose}
+      />
+
+      <ProductEditDialog
+        product={product}
+        isOpen={isEditOpen}
+        onClose={handleEditClose}
       />
 
       <ProductDeleteDialog
         productId={product.id}
         productName={product.name}
         isOpen={isDeleteOpen}
-        onClose={handleClose}
+        onClose={handleDeleteClose}
       />
     </>
   );

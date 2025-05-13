@@ -5,13 +5,17 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
-
+import { Product, ProductVariant, ProductDetailImage } from "@/lib/types/database.types";
 interface ProductViewDialogProps {
-  product: any; // Reemplazar con el tipo correcto cuando esté disponible
+  product: Product & {
+    variants?: ProductVariant[];
+    product_images?: ProductDetailImage[];
+  };
   isOpen: boolean;
   onClose: () => void;
 }
@@ -19,11 +23,29 @@ interface ProductViewDialogProps {
 export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialogProps) {
   if (!product) return null;
 
+  // Manejador del evento de cierre
+  const handleClose = () => {
+    // Aseguramos que el estado se actualice correctamente
+    if (isOpen) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose();
+        }
+      }}
+    >
       <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Detalles del Producto</DialogTitle>
+          <DialogDescription>
+            Información detallada del producto y sus variantes
+          </DialogDescription>
         </DialogHeader>
         <ScrollArea className="flex-1">
           <div className="space-y-6 p-1">
@@ -52,11 +74,11 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
             </div>
 
             {/* Imágenes de Detalle */}
-            {product.detail_images?.length > 0 && (
+            {(product.product_images && product.product_images.length > 0) && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Imágenes de Detalle</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {product.detail_images.map((image: any, index: number) => (
+                  {product.product_images.map((image: any, index: number) => (
                     <div
                       key={image.id}
                       className="relative aspect-square rounded-lg overflow-hidden"
@@ -74,11 +96,11 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
             )}
 
             {/* Variantes */}
-            {product.variants?.length > 0 && (
+            {product.variants && product.variants.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Variantes Disponibles</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {product.variants.map((variant: any) => (
+                  {product.variants.map((variant: ProductVariant) => (
                     <div
                       key={variant.id}
                       className="p-4 rounded-lg border bg-card"

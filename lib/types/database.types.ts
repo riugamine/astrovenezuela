@@ -16,12 +16,15 @@ export interface Product {
   category_id: string;
   main_image_url: string;
   stock: number;
-  detail_images: ProductDetailImage[];
   created_at: string;
+  updated_at: string;
+  detail_images?: ProductDetailImage[];
+  variants?: ProductVariant[];
 }
 
 export interface ProductDetailImage {
   id: string;
+  product_id?: string;
   image_url: string;
   order_index: number;
 }
@@ -32,7 +35,9 @@ export interface ProductVariant {
   size: string;
   color: string;
   stock: number;
+  image_url: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Profile {
