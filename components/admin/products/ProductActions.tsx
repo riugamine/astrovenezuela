@@ -15,6 +15,7 @@ import { ProductDeleteDialog } from './ProductDeleteDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { Product } from '@/lib/types/database.types';
 import { ProductEditDialog } from './ProductEditDialog';
+
 interface ProductActionsProps {
   onEdit: () => void;
   onDelete: () => void;
@@ -26,9 +27,26 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Separamos los manejadores para cada diálogo
+  // Manejadores actualizados para cerrar el dropdown
+  const handleViewClick = () => {
+    setIsViewOpen(true);
+    setIsDropdownOpen(false);
+  };
+
+  const handleEditClick = () => {
+    setIsEditOpen(true);
+    setIsDropdownOpen(false);
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteOpen(true);
+    setIsDropdownOpen(false);
+  };
+
+  // Manejadores para cerrar los diálogos
   const handleViewClose = () => {
     setIsViewOpen(false);
     queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -46,7 +64,7 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
             <FontAwesomeIcon icon={faEllipsisVertical} className="h-4 w-4" />
@@ -54,21 +72,21 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem 
-            onClick={() => setIsViewOpen(true)}
+            onClick={handleViewClick}
             className="cursor-pointer"
           >
             <FontAwesomeIcon icon={faEye} className="mr-2 h-4 w-4" />
             Ver Detalles
           </DropdownMenuItem>
           <DropdownMenuItem 
-            onClick={() => setIsEditOpen(true)}
+            onClick={handleEditClick}
             className="cursor-pointer"
           >
             <FontAwesomeIcon icon={faPencilAlt} className="mr-2 h-4 w-4" />
             Editar
           </DropdownMenuItem>
           <DropdownMenuItem 
-            onClick={() => setIsDeleteOpen(true)}
+            onClick={handleDeleteClick}
             className="text-red-600 cursor-pointer"
           >
             <FontAwesomeIcon icon={faTrash} className="mr-2 h-4 w-4" />

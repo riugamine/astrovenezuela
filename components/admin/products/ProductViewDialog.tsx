@@ -23,22 +23,10 @@ interface ProductViewDialogProps {
 export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialogProps) {
   if (!product) return null;
 
-  // Manejador del evento de cierre
-  const handleClose = () => {
-    // Aseguramos que el estado se actualice correctamente
-    if (isOpen) {
-      onClose();
-    }
-  };
-
   return (
     <Dialog 
       open={isOpen} 
-      onOpenChange={(open) => {
-        if (!open) {
-          handleClose();
-        }
-      }}
+      onOpenChange={onClose}
     >
       <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
         <DialogHeader>

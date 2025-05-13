@@ -107,8 +107,6 @@ export function ProductList() {
             )
           `)
           .order('created_at', { ascending: false });
-          // Debbuging
-            console.log('Productos obtenidos:', data);3
         if (error) {
           console.error('Error al obtener productos:', error);
           throw error;
@@ -118,8 +116,6 @@ export function ProductList() {
           console.log('No se encontraron productos');
           return [];
         }
-
-        console.log('Productos obtenidos:', data);
         return data as Product[];
       } catch (error) {
         console.error('Error en la consulta:', error);

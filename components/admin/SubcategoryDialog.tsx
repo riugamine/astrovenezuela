@@ -50,6 +50,7 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
   });
 
   const handleFormSubmit = (data: CategoryFormData) => {
+    if (!parentCategory) return;
     onSubmit({
       ...data,
       parent_id: parentCategory?.id

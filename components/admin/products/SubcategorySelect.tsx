@@ -35,7 +35,6 @@ export function SubcategorySelect({ control, name, parentCategoryId }: Subcatego
     },
     enabled: !!parentCategoryId
   });
-  console.log(subcategories)
 
   if (!parentCategoryId) {
     return null;

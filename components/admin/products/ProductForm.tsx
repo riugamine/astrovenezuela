@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,15 +27,13 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const productSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
-  description: z
-    .string()
-    .min(10, "La descripción debe tener al menos 10 caracteres"),
+  description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
   price: z.number().positive("El precio debe ser mayor a 0"),
   reference_number: z.string().min(1, "El número de referencia es requerido"),
   category_id: z.string().min(1, "La categoría es requerida"),
   subcategory_id: z.string().optional(),
   main_image_url: z.string().url("La imagen principal es requerida"),
-  detail_images: z
+  product_images: z
     .array(
       z.object({
         id: z.string(),
@@ -58,7 +56,7 @@ type ProductFormData = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
   onClose: () => void;
-  initialData?: ProductFormData;
+  initialData?: any; // Cambiamos el tipo para aceptar los datos del producto
 }
 
 export function ProductForm({ onClose, initialData }: ProductFormProps) {
@@ -66,82 +64,188 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: initialData || {
-      detail_images: [],
+      product_images: [],
       variants: [],
+      isEditing: false
     },
   });
 
-  const createProduct = useMutation({
+  const createOrUpdateProduct = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      // Crear el producto
-      const { data: product, error: productError } = await supabaseAdmin
-        .from("products")
-        .insert([
-          {
+      if (data.isEditing) {
+        const { data: product, error: productError } = await supabaseAdmin
+          .from("products")
+          .update({
             name: data.name,
             description: data.description,
             price: data.price,
             reference_number: data.reference_number,
-            category_id: data.category_id,
-            subcategory_id: data.subcategory_id || null,
+            category_id: data.subcategory_id || data.category_id, // Usamos subcategory_id si existe, sino category_id
             main_image_url: data.main_image_url,
             slug: data.name.toLowerCase().replace(/\s+/g, "-"),
-          },
-        ])
-        .select()
-        .single();
+          })
+          .eq('id', initialData.id)
+          .select()
+          .single();
 
-      if (productError) throw productError;
+        if (productError) throw productError;
 
-      // Insertar imágenes de detalle con product_id
-      if (data.detail_images.length > 0) {
-        const { error: imagesError } = await supabaseAdmin
-          .from("product_images")
-          .insert(
-            data.detail_images.map((img) => ({
-              image_url: img.image_url,
-              order_index: img.order_index,
-              product_id: product.id
-            }))
-          );
+        // Actualizar imágenes de detalle
+        if (data.product_images.length > 0) {
+          // Primero eliminamos las imágenes existentes
+          await supabaseAdmin
+            .from("product_images")
+            .delete()
+            .eq('product_id', initialData.id);
 
-        if (imagesError) throw imagesError;
+          // Luego insertamos las nuevas
+          const { error: imagesError } = await supabaseAdmin
+            .from("product_images")
+            .insert(
+              data.product_images.map((img) => ({
+                image_url: img.image_url,
+                order_index: img.order_index,
+                product_id: initialData.id
+              }))
+            );
+
+          if (imagesError) throw imagesError;
+        }
+
+        // Actualizar variantes
+        if (data.variants.length > 0) {
+          // Primero eliminamos las variantes existentes
+          await supabaseAdmin
+            .from("product_variants")
+            .delete()
+            .eq('product_id', initialData.id);
+
+          // Luego insertamos las nuevas
+          const { error: variantsError } = await supabaseAdmin
+            .from("product_variants")
+            .insert(
+              data.variants.map((variant) => ({
+                ...variant,
+                product_id: initialData.id,
+              }))
+            );
+
+          if (variantsError) throw variantsError;
+        }
+
+        return product;
+      } else {
+        const { data: product, error: productError } = await supabaseAdmin
+          .from("products")
+          .insert([
+            {
+              name: data.name,
+              description: data.description,
+              price: data.price,
+              reference_number: data.reference_number,
+              category_id: data.subcategory_id || data.category_id, // Usamos subcategory_id si existe, sino category_id
+              main_image_url: data.main_image_url,
+              slug: data.name.toLowerCase().replace(/\s+/g, "-"),
+            },
+          ])
+          .select()
+          .single();
+
+        if (productError) throw productError;
+
+        // Insertar imágenes de detalle con product_id
+        if (data.product_images.length > 0) {
+          const { error: imagesError } = await supabaseAdmin
+            .from("product_images")
+            .insert(
+              data.product_images.map((img) => ({
+                image_url: img.image_url,
+                order_index: img.order_index,
+                product_id: product.id
+              }))
+            );
+
+          if (imagesError) throw imagesError;
+        }
+
+        // Insertar variantes
+        if (data.variants.length > 0) {
+          const { error: variantsError } = await supabaseAdmin
+            .from("product_variants")
+            .insert(
+              data.variants.map((variant) => ({
+                ...variant,
+                product_id: product.id,
+              }))
+            );
+
+          if (variantsError) throw variantsError;
+        }
+
+        return product;
       }
-
-      // Insertar variantes
-      if (data.variants.length > 0) {
-        const { error: variantsError } = await supabaseAdmin
-          .from("product_variants")
-          .insert(
-            data.variants.map((variant) => ({
-              ...variant,
-              product_id: product.id,
-            }))
-          );
-
-        if (variantsError) throw variantsError;
-      }
-
-      return product;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success("Producto creado exitosamente");
+      toast.success(initialData ? "Producto actualizado exitosamente" : "Producto creado exitosamente");
       onClose();
     },
     onError: (error) => {
-      console.error("Error al crear el producto:", error);
-      toast.error("Error al crear el producto");
+      console.error(initialData ? "Error al actualizar el producto:" : "Error al crear el producto:", error);
+      toast.error(initialData ? "Error al actualizar el producto" : "Error al crear el producto");
     },
   });
 
   const onSubmit = async (data: ProductFormData) => {
-    createProduct.mutate(data);
+    createOrUpdateProduct.mutate({
+      ...data,
+      isEditing: !!initialData
+    });
   };
-  const handleCategoryChange = (categoryId: string) => {
-    // Resetear el subcategory_id cuando cambia la categoría
-    form.setValue("subcategory_id", "");
+  const handleCategoryChange = async (categoryId: string) => {
+    // Verificar si la categoría seleccionada es una categoría principal
+    const { data: selectedCategory } = await supabaseAdmin
+      .from('categories')
+      .select('parent_id')
+      .eq('id', categoryId)
+      .single();
+
+    if (selectedCategory?.parent_id) {
+      // Si tiene parent_id, es una subcategoría
+      form.setValue('subcategory_id', categoryId);
+      form.setValue('category_id', selectedCategory.parent_id);
+    } else {
+      // Si no tiene parent_id, es una categoría principal
+      form.setValue('category_id', categoryId);
+      form.setValue('subcategory_id', '');
+    }
   };
+
+  // En el useEffect para cargar datos iniciales
+  useEffect(() => {
+    if (initialData) {
+      const loadCategoryData = async () => {
+        // Verificar si la categoría del producto es una subcategoría
+        const { data: productCategory } = await supabaseAdmin
+          .from('categories')
+          .select('parent_id')
+          .eq('id', initialData.category_id)
+          .single();
+
+        if (productCategory?.parent_id) {
+          // Si es una subcategoría
+          form.setValue('category_id', productCategory.parent_id);
+          form.setValue('subcategory_id', initialData.category_id);
+        } else {
+          // Si es una categoría principal
+          form.setValue('category_id', initialData.category_id);
+        }
+      };
+
+      loadCategoryData();
+    }
+  }, [initialData, form]);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -264,12 +368,12 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
             <CardContent className="p-6">
               <ImageUploader
                 mainImage={form.watch("main_image_url")}
-                detailImages={form.watch("detail_images")}
+                detailImages={form.watch("product_images")}
                 onMainImageChange={(url) =>
                   form.setValue("main_image_url", url)
                 }
                 onDetailImagesChange={(images) =>
-                  form.setValue("detail_images", images)
+                  form.setValue("product_images", images)
                 }
               />
             </CardContent>
@@ -303,9 +407,9 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
             <Button
               type="submit"
               className="min-w-[100px]"
-              disabled={createProduct.isPending}
+              disabled={createOrUpdateProduct.isPending}
             >
-              {createProduct.isPending ? (
+              {createOrUpdateProduct.isPending ? (
                 <>
                   <FontAwesomeIcon
                     icon={faSpinner}

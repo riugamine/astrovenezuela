@@ -203,12 +203,14 @@ const CategoriesManagement: FC = () => {
         .insert([
           {
             ...newCategory,
-            slug: newCategory.name.toLowerCase().replace(/\s+/g, "-"),
+            slug: newCategory.parent_id 
+              ? `${categories.find(cat => cat.id === newCategory.parent_id)?.slug}/${newCategory.name.toLowerCase().replace(/\s+/g, "-")}`
+              : newCategory.name.toLowerCase().replace(/\s+/g, "-"),
           },
         ])
         .select()
         .single();
-
+  
       if (error) throw error;
       return data;
     },
@@ -238,15 +240,22 @@ const CategoriesManagement: FC = () => {
       id: string;
       data: CategoryFormData;
     }) => {
+      const category = categories.find(cat => cat.id === id);
+      const parentCategory = category?.parent_id 
+        ? categories.find(cat => cat.id === category.parent_id)
+        : null;
+  
       const { error } = await supabaseAdmin
         .from("categories")
         .update({
           ...data,
-          slug: data.name.toLowerCase().replace(/\s+/g, "-"),
+          slug: category?.parent_id
+            ? `${parentCategory?.slug}/${data.name.toLowerCase().replace(/\s+/g, "-")}`
+            : data.name.toLowerCase().replace(/\s+/g, "-"),
           updated_at: new Date().toISOString(),
         })
         .eq("id", id);
-
+  
       if (error) throw error;
     },
     onSuccess: () => {
