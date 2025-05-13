@@ -12,7 +12,7 @@ export async function authMiddleware(request: NextRequest) {
   // Crear cliente de Supabase
   const supabase = await createClient();
   
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   // Rutas protegidas que requieren autenticación
   const protectedRoutes = ['/admin', '/profile', '/orders'];
@@ -20,7 +20,7 @@ export async function authMiddleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
-  if (isProtectedRoute && !session) {
+  if (isProtectedRoute && !user) {
     return NextResponse.redirect(new URL('/auth', request.url));
   }
 
@@ -30,7 +30,7 @@ export async function authMiddleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
-  if (isAuthRoute && session) {
+  if (isAuthRoute && user) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 

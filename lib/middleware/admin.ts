@@ -10,18 +10,18 @@ export async function adminMiddleware(request: NextRequest) {
   const res = NextResponse.next();
   const supabase = await createClient();
   
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   // Verificar si la ruta es administrativa
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
   if (isAdminRoute) {
-    if (!session) {
+    if (!user) {
       return NextResponse.redirect(new URL('/auth', request.url));
     }
 
     // Verificar rol de administrador en los metadatos del usuario
-    const userRole = session.user.user_metadata?.role;
+    const userRole = user.user_metadata?.role;
     
     if (userRole !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url));
