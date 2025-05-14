@@ -33,7 +33,7 @@ const productSchema = z.object({
   category_id: z.string().min(1, "La categoría es requerida"),
   subcategory_id: z.string().optional(),
   main_image_url: z.string().url("La imagen principal es requerida"),
-  stock: z.number().int().positive("El stock debe ser un número entero positivo"),
+  
   product_images: z
     .array(
       z.object({
@@ -46,8 +46,7 @@ const productSchema = z.object({
   variants: z.array(
     z.object({
       size: z.string(),
-      color: z.string(),
-      stock: z.number().int().positive(),
+      stock: z.number().int().positive("El stock debe ser un número entero positivo"),
     }),
   ),
   isEditing: z.boolean(),
@@ -81,10 +80,11 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
             description: data.description,
             price: data.price,
             reference_number: data.reference_number,
-            category_id: data.subcategory_id || data.category_id, // Usamos subcategory_id si existe, sino category_id
+            category_id: data.subcategory_id || data.category_id,
             main_image_url: data.main_image_url,
             slug: data.name.toLowerCase().replace(/\s+/g, "-"),
-            stock: data.stock,
+            stock: data.variants.reduce((sum, variant) => sum + variant.stock, 0),
+            is_active: true
           })
           .eq('id', initialData.id)
           .select()
@@ -92,42 +92,19 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
         if (productError) throw productError;
 
-        // Actualizar imágenes de detalle
-        if (data.product_images.length > 0) {
-          // Primero eliminamos las imágenes existentes
-          await supabaseAdmin
-            .from("product_images")
-            .delete()
-            .eq('product_id', initialData.id);
-
-          // Luego insertamos las nuevas
-          const { error: imagesError } = await supabaseAdmin
-            .from("product_images")
-            .insert(
-              data.product_images.map((img) => ({
-                image_url: img.image_url,
-                order_index: img.order_index,
-                product_id: initialData.id
-              }))
-            );
-
-          if (imagesError) throw imagesError;
-        }
-
-        // Actualizar variantes
+        // Update variants
         if (data.variants.length > 0) {
-          // Primero eliminamos las variantes existentes
           await supabaseAdmin
             .from("product_variants")
             .delete()
             .eq('product_id', initialData.id);
 
-          // Luego insertamos las nuevas
           const { error: variantsError } = await supabaseAdmin
             .from("product_variants")
             .insert(
               data.variants.map((variant) => ({
-                ...variant,
+                size: variant.size,
+                stock: variant.stock,
                 product_id: initialData.id,
               }))
             );
@@ -145,10 +122,11 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
               description: data.description,
               price: data.price,
               reference_number: data.reference_number,
-              category_id: data.subcategory_id || data.category_id, // Usamos subcategory_id si existe, sino category_id
+              category_id: data.subcategory_id || data.category_id,
               main_image_url: data.main_image_url,
               slug: data.name.toLowerCase().replace(/\s+/g, "-"),
-              stock: data.stock,
+              stock: data.variants.reduce((sum, variant) => sum + variant.stock, 0),
+              is_active: true
             },
           ])
           .select()
@@ -156,28 +134,13 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
         if (productError) throw productError;
 
-        // Insertar imágenes de detalle con product_id
-        if (data.product_images.length > 0) {
-          const { error: imagesError } = await supabaseAdmin
-            .from("product_images")
-            .insert(
-              data.product_images.map((img) => ({
-                image_url: img.image_url,
-                order_index: img.order_index,
-                product_id: product.id
-              }))
-            );
-
-          if (imagesError) throw imagesError;
-        }
-
-        // Insertar variantes
         if (data.variants.length > 0) {
           const { error: variantsError } = await supabaseAdmin
             .from("product_variants")
             .insert(
               data.variants.map((variant) => ({
-                ...variant,
+                size: variant.size,
+                stock: variant.stock,
                 product_id: product.id,
               }))
             );
@@ -328,25 +291,6 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stock *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Cantidad en Stock"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <div className="space-y-4">
               <CategorySelect
                 control={form.control}

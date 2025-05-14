@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -23,14 +23,14 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { ProductActions } from './ProductActions';
-import { formatCurrency } from '@/lib/utils';
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { ProductActions } from "./ProductActions";
+import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
-import { Product} from '@/lib/types/database.types';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { Product } from "@/lib/types/database.types";
 // Definición del tipo para los productos
 
 export function ProductList() {
@@ -44,14 +44,14 @@ export function ProductList() {
       header: "Nombre",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <img 
-            src={row.original.main_image_url} 
-            alt={row.getValue("name")} 
+          <img
+            src={row.original.main_image_url}
+            alt={row.getValue("name")}
             className="w-10 h-10 object-cover rounded-md"
           />
           <span className="font-medium">{row.getValue("name")}</span>
         </div>
-      )
+      ),
     },
     {
       accessorKey: "reference_number",
@@ -60,40 +60,69 @@ export function ProductList() {
     {
       accessorKey: "price",
       header: "Precio",
-      cell: ({ row }) => formatCurrency(row.getValue("price"))
+      cell: ({ row }) => formatCurrency(row.getValue("price")),
+    },
+
+    {
+      accessorKey: "stock",
+      header: "Stock",
+      cell: ({ row }) => {
+        const variants = row.original.variants || [];
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">{row.getValue("stock")} unidades</div>
+            <div className="text-xs text-gray-500">
+              {variants.map((v: any) => (
+                <span key={v.id} className="inline-block mr-2">
+                  {v.size}: {v.stock}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "is_active",
+      header: "Estado",
+      cell: ({ row }) => (
+        <div
+          className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center ${
+            row.original.is_active
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full mr-1.5 ${
+              row.original.is_active ? "bg-green-400" : "bg-red-400"
+            }`}
+          ></span>
+          {row.original.is_active ? "Activo" : "Inactivo"}
+        </div>
+      ),
     },
     {
       accessorKey: "created_at",
       header: "Fecha de Creación",
-      cell: ({ row }) => new Date(row.getValue("created_at")).toLocaleDateString()
-    },
-    {      accessorKey: "is_active",
-      header: "Estado",
-      cell: ({ row }) => (
-        <div className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center ${row.original.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-          <span className={`w-2 h-2 rounded-full mr-1.5 ${row.original.is_active ? 'bg-green-400' : 'bg-red-400'}`}></span>
-          {row.original.is_active ? 'Activo' : 'Inactivo'}
-        </div>
-      )
+      cell: ({ row }) =>
+        new Date(row.getValue("created_at")).toLocaleDateString(),
     },
     {
       id: "actions",
-      cell: ({ row }) => (
-        <ProductActions
-          product={row.original}
-        />
-      )
-    }
+      cell: ({ row }) => <ProductActions product={row.original} />,
+    },
   ];
 
   // Consulta para obtener productos
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products'],
+    queryKey: ["products"],
     queryFn: async () => {
       try {
         const { data, error } = await supabaseAdmin
-          .from('products')
-          .select(`
+          .from("products")
+          .select(
+            `
             *,
             product_images (
               id,
@@ -105,31 +134,31 @@ export function ProductList() {
               id,
               product_id,
               size,
-              color,
               stock,
               image_url,
               created_at,
               updated_at
             )
-          `)
-          .order('created_at', { ascending: false });
+          `
+          )
+          .order("created_at", { ascending: false });
         if (error) {
-          console.error('Error al obtener productos:', error);
+          console.error("Error al obtener productos:", error);
           throw error;
         }
 
         if (!data) {
-          console.log('No se encontraron productos');
+          console.log("No se encontraron productos");
           return [];
         }
         return data as Product[];
       } catch (error) {
-        console.error('Error en la consulta:', error);
+        console.error("Error en la consulta:", error);
         throw error;
       }
     },
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
   });
 
   // Configuración de la tabla
@@ -166,8 +195,8 @@ export function ProductList() {
             }
             className="pl-10"
           />
-          <FontAwesomeIcon 
-            icon={faSearch} 
+          <FontAwesomeIcon
+            icon={faSearch}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
         </div>
@@ -179,7 +208,7 @@ export function ProductList() {
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="bg-gray-50/50">
                   {headerGroup.headers.map((header) => (
-                    <TableHead 
+                    <TableHead
                       key={header.id}
                       className="font-semibold text-gray-600"
                     >
@@ -214,11 +243,11 @@ export function ProductList() {
                     className="hover:bg-gray-50/50 transition-colors"
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell 
-                        key={cell.id}
-                        className="py-4"
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      <TableCell key={cell.id} className="py-4">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -240,7 +269,7 @@ export function ProductList() {
         {/* Pagination Controls */}
         <div className="flex items-center justify-between gap-2 py-2">
           <p className="text-sm text-gray-500">
-            Página {table.getState().pagination.pageIndex + 1} de{' '}
+            Página {table.getState().pagination.pageIndex + 1} de{" "}
             {table.getPageCount()}
           </p>
           <div className="flex gap-2">

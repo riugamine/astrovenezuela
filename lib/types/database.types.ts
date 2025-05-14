@@ -56,9 +56,7 @@ export interface ProductVariant {
   id: string;
   product_id: string;
   size: string;
-  color: string;
   stock: number;
-  image_url: string;
   created_at: string;
   updated_at: string;
 }

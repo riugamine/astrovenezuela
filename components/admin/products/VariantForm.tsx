@@ -17,7 +17,6 @@ import {
 interface Variant {
   id?: string;
   size: string;
-  color: string;
   stock: number;
   product_id?: string;
 }
@@ -27,27 +26,14 @@ interface VariantFormProps {
   onChange: (variants: Variant[]) => void;
 }
 
-// Opciones predefinidas para tallas y colores
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-const COLORS = [
-  'Negro',
-  'Blanco',
-  'Gris',
-  'Azul',
-  'Rojo',
-  'Verde',
-  'Amarillo',
-  'Morado',
-  'Rosa',
-  'Naranja'
-];
+// Predefined size options including "única"
+const SIZES = ['Única', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export function VariantForm({ variants, onChange }: VariantFormProps) {
   const addVariant = () => {
     onChange([...variants, { 
       id: crypto.randomUUID(),
       size: '', 
-      color: '', 
       stock: 0 
     }]);
   };
@@ -70,11 +56,21 @@ export function VariantForm({ variants, onChange }: VariantFormProps) {
     onChange(newVariants);
   };
 
+  // Calculate total stock
+  const totalStock = variants.reduce((sum, variant) => sum + variant.stock, 0);
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">Variantes de Talla</h3>
+        <div className="text-sm text-gray-500">
+          Stock Total: {totalStock}
+        </div>
+      </div>
+
       {variants.map((variant, index) => (
         <Card key={variant.id || index} className="relative">
-          <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor={`size-${index}`}>Talla</Label>
               <Select
@@ -88,25 +84,6 @@ export function VariantForm({ variants, onChange }: VariantFormProps) {
                   {SIZES.map((size) => (
                     <SelectItem key={size} value={size}>
                       {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`color-${index}`}>Color</Label>
-              <Select
-                value={variant.color}
-                onValueChange={(value) => updateVariant(index, 'color', value)}
-              >
-                <SelectTrigger id={`color-${index}`}>
-                  <SelectValue placeholder="Seleccionar color" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COLORS.map((color) => (
-                    <SelectItem key={color} value={color}>
-                      {color}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -143,10 +120,17 @@ export function VariantForm({ variants, onChange }: VariantFormProps) {
         variant="outline"
         onClick={addVariant}
         className="w-full"
+        disabled={variants.some(v => v.size === 'Única') || variants.length >= SIZES.length}
       >
         <FontAwesomeIcon icon={faPlus} className="mr-2" />
         Agregar Variante
       </Button>
+
+      {variants.length === 0 && (
+        <p className="text-sm text-gray-500 text-center mt-4">
+          Agrega al menos una variante de talla para el producto.
+        </p>
+      )}
     </div>
   );
 }
