@@ -34,8 +34,6 @@ const AdminSidebar: FC = () => {
     { href: "/admin/categories", icon: faListUl, label: "Categorías" },
     { href: "/admin/orders", icon: faShoppingCart, label: "Órdenes" },
     { href: "/admin/users", icon: faUsers, label: "Usuarios" },
-    { href: "/admin/analytics", icon: faChartLine, label: "Análisis" },
-    { href: "/admin/settings", icon: faCog, label: "Configuración" },
   ];
 
   return (
