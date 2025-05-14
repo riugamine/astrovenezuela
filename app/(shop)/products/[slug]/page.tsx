@@ -11,10 +11,12 @@ async function getProduct(slug: string) {
     .select(`
       *,
       product_images (id, product_id, image_url, order_index),
+      variants:product_variants (id, size, stock),
       category:category_id (id, name, slug)
     `)
     .eq("slug", slug.toLowerCase())
-    
+    .neq("stock", 0)
+    .eq('is_active', true)
     .single();
 
   if (!product) {
@@ -26,11 +28,13 @@ async function getProduct(slug: string) {
     .from("products")
     .select(`
       *,
-      product_images (id, product_id, image_url, order_index)
+      product_images (id, product_id, image_url, order_index),
+      variants:product_variants (id, size, stock)
     `)
     .eq("category_id", product.category_id)
     .eq('is_active', true)
     .neq("id", product.id)
+    .neq("stock", 0)
     .limit(4);
 
   return {

@@ -1,49 +1,49 @@
-/**
- * Tipos de estado de orden
- */
-export type OrderStatus = 'created' | 'pending' | 'completed' | 'canceled';
+import { supabaseAdmin } from "../supabase/admin";
+import { Order, OrderItem, OrderStatus, PaymentMethod } from "../types/database.types";
 
-/**
- * Datos estáticos para las órdenes
- */
-export const orders = [
-  {
-    id: '1',
-    user_id: 'auth-user-id-2',
-    status: 'completed' as OrderStatus,
-    total_amount: 94.97,
-    shipping_address: 'Calle Principal 123, Caracas, Venezuela',
-    payment_method: 'zelle',
-    items: [
+interface CreateOrderParams {
+  user_id?: string;
+  total_amount: number;
+  shipping_address: string;
+  payment_method: PaymentMethod;
+  items: {
+    product_id: string;
+    variant_id: string;
+    quantity: number;
+    price: number;
+  }[];
+}
+
+export async function createOrder(params: CreateOrderParams) {
+  const { data: order, error: orderError } = await supabaseAdmin
+    .from("orders")
+    .insert([
       {
-        product_variant_id: '1',
-        quantity: 2,
-        price: 29.99
+        user_id: params.user_id,
+        status: 'created' as OrderStatus,
+        total_amount: params.total_amount,
+        shipping_address: params.shipping_address,
+        payment_method: params.payment_method,
       },
-      {
-        product_variant_id: '4',
-        quantity: 1,
-        price: 34.99
-      }
-    ],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    user_id: 'auth-user-id-2',
-    status: 'pending' as OrderStatus,
-    total_amount: 59.98,
-    shipping_address: 'Av. Libertador, Caracas, Venezuela',
-    payment_method: 'zelle',
-    items: [
-      {
-        product_variant_id: '2',
-        quantity: 2,
-        price: 29.99
-      }
-    ],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+    ])
+    .select()
+    .single();
+
+  if (orderError) throw orderError;
+
+  const orderItems = params.items.map((item) => ({
+    order_id: order.id,
+    product_id: item.product_id,
+    variant_id: item.variant_id,
+    quantity: item.quantity,
+    price: item.price,
+  }));
+
+  const { error: itemsError } = await supabaseAdmin
+    .from("order_items")
+    .insert(orderItems);
+
+  if (itemsError) throw itemsError;
+
+  return order;
+}

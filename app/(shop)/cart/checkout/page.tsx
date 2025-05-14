@@ -20,7 +20,7 @@ import {
 import Image from "next/image";
 import { useCustomerStore } from "@/lib/store/useCustomerStore";
 import { PlacesAutocomplete } from "@/components/ui/places-autocomplete";
-
+import { createOrder } from '@/lib/data/orders';
 interface ShippingMethod {
   id: string;
   name: string;

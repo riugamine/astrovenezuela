@@ -272,7 +272,10 @@ export function ImageUploader({
                 variant="destructive"
                 size="icon"
                 className="absolute top-2 right-2 opacity-0 hover:opacity-100 transition-opacity"
-                onClick={() => removeDetailImage(index)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  removeDetailImage(index);
+                }}
                 disabled={uploading}
               >
                 <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />

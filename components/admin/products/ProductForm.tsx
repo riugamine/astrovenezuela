@@ -73,6 +73,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
   const createOrUpdateProduct = useMutation({
     mutationFn: async (data: ProductFormData) => {
       if (data.isEditing) {
+        // Actualizar producto principal
         const { data: product, error: productError } = await supabaseAdmin
           .from("products")
           .update({
@@ -92,7 +93,29 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
         if (productError) throw productError;
 
-        // Update variants
+        // Actualizar imágenes de detalle
+        const { error: deleteImagesError } = await supabaseAdmin
+          .from("product_images")
+          .delete()
+          .eq('product_id', initialData.id);
+
+        if (deleteImagesError) throw deleteImagesError;
+
+        if (data.product_images.length > 0) {
+          const { error: imagesError } = await supabaseAdmin
+            .from("product_images")
+            .insert(
+              data.product_images.map((image, index) => ({
+                image_url: image.image_url,
+                order_index: index + 1,
+                product_id: initialData.id
+              }))
+            );
+
+          if (imagesError) throw imagesError;
+        }
+
+        // Actualizar variantes
         if (data.variants.length > 0) {
           await supabaseAdmin
             .from("product_variants")
@@ -114,6 +137,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
         return product;
       } else {
+        // Crear nuevo producto
         const { data: product, error: productError } = await supabaseAdmin
           .from("products")
           .insert([
@@ -134,6 +158,22 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
         if (productError) throw productError;
 
+        // Insertar imágenes de detalle
+        if (data.product_images.length > 0) {
+          const { error: imagesError } = await supabaseAdmin
+            .from("product_images")
+            .insert(
+              data.product_images.map((image, index) => ({
+                image_url: image.image_url,
+                order_index: index + 1,
+                product_id: product.id
+              }))
+            );
+
+          if (imagesError) throw imagesError;
+        }
+
+        // Insertar variantes
         if (data.variants.length > 0) {
           const { error: variantsError } = await supabaseAdmin
             .from("product_variants")

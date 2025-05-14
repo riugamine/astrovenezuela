@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,22 +7,40 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 import { useCartStore } from "@/lib/store/useCartStore";
 import { toast } from "sonner";
-import { Product, ProductDetailImage } from "@/lib/types/database.types";
+import {
+  Product,
+  ProductDetailImage,
+  ProductVariant,
+} from "@/lib/types/database.types";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductInfoProps {
   product: Product & {
     product_images: ProductDetailImage[];
+    variants: ProductVariant[];
   };
 }
 
 export function ProductInfo({ product }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>("");
   const addItem = useCartStore((state) => state.addItem);
+
+  // Get available sizes from variants
+  const sizeVariants = product.variants?.reduce((acc, variant) => {
+    acc[variant.size] = variant;
+    return acc;
+  }, {} as Record<string, ProductVariant>);
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      toast.error('Por favor selecciona una talla');
+      toast.error("Por favor selecciona una talla");
+      return;
+    }
+
+    const variant = sizeVariants[selectedSize];
+    if (!variant || variant.stock < quantity) {
+      toast.error("No hay suficiente stock disponible");
       return;
     }
 
@@ -32,36 +50,49 @@ export function ProductInfo({ product }: ProductInfoProps) {
       price: product.price,
       quantity,
       size: selectedSize,
-      image_url: product.main_image_url
+      variant_id: variant.id,
+      image_url: product.main_image_url,
+      max_stock: variant.stock,
     });
 
-    toast.success('Producto agregado al carrito');
+    toast.success("Producto agregado al carrito");
   };
-
-  const sizes = ['S', 'M', 'L', 'XL'];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{product.name}</h1>
         <p className="text-2xl font-semibold mt-2">
-          ${product.price.toLocaleString('en-US')}
+          ${product.price.toLocaleString("en-US")}
         </p>
       </div>
 
       <div className="space-y-2">
         <p className="font-medium">Talla</p>
-        <div className="flex gap-2">
-          {sizes.map((size) => (
-            <Button
-              key={size}
-              variant={selectedSize === size ? "default" : "outline"}
-              onClick={() => setSelectedSize(size)}
-              className="w-12 h-12"
-            >
-              {size}
-            </Button>
-          ))}
+        <div className="flex gap-2 flex-wrap">
+          {Object.entries(sizeVariants).map(([size, variant]) => {
+            const isOutOfStock = variant.stock === 0;
+            return (
+              <div key={size} className="relative">
+                <Button
+                  variant={selectedSize === size ? "default" : "outline"}
+                  onClick={() => !isOutOfStock && setSelectedSize(size)}
+                  disabled={isOutOfStock}
+                  className="w-12 h-12 relative"
+                >
+                  {size}
+                </Button>
+                {isOutOfStock && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 text-[10px] px-2"
+                  >
+                    Agotado
+                  </Badge>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -72,35 +103,60 @@ export function ProductInfo({ product }: ProductInfoProps) {
             variant="outline"
             size="icon"
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            disabled={!selectedSize}
           >
             <FontAwesomeIcon icon={faMinus} />
           </Button>
           <Input
             type="number"
             value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value))}
+            onChange={(e) => {
+              const value = parseInt(e.target.value);
+              if (selectedSize && sizeVariants[selectedSize]) {
+                const maxStock = sizeVariants[selectedSize].stock;
+                setQuantity(Math.min(Math.max(1, value), maxStock));
+              }
+            }}
             className="w-20 text-center"
             min={1}
+            max={selectedSize ? sizeVariants[selectedSize]?.stock : 1}
+            disabled={!selectedSize}
           />
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setQuantity(quantity + 1)}
+            onClick={() => {
+              if (selectedSize && sizeVariants[selectedSize]) {
+                const maxStock = sizeVariants[selectedSize].stock;
+                setQuantity(Math.min(quantity + 1, maxStock));
+              }
+            }}
+            disabled={
+              !selectedSize || 
+              quantity >= (sizeVariants[selectedSize]?.stock ?? 0)
+            }
           >
             <FontAwesomeIcon icon={faPlus} />
           </Button>
         </div>
+        {selectedSize && (
+          <p className="text-sm text-muted-foreground">
+            Stock disponible: {sizeVariants[selectedSize]?.stock}
+          </p>
+        )}
       </div>
 
-      <Button className="w-full py-6 text-lg" onClick={handleAddToCart}>
+      <Button
+        className="w-full py-6 text-lg"
+        onClick={handleAddToCart}
+        disabled={!selectedSize || quantity < 1}
+      >
         Añadir al carrito
       </Button>
 
       <div className="space-y-4 pt-6 border-t">
         <h2 className="font-semibold text-lg">Descripción</h2>
-        <p className="text-muted-foreground">
-          {product.description}
-        </p>
+        <p className="text-muted-foreground">{product.description}</p>
       </div>
     </div>
   );
