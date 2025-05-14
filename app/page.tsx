@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase/client";
 import { Meteors } from "@/components/magicui/meteors";
+import { HyperText } from "@/components/magicui/hyper-text";
 // Types for our data
 type Category = {
   id: string;
@@ -91,7 +92,9 @@ export default async function Home() {
         <div className="container relative mx-auto px-4 h-full flex items-center">
           <div className="max-w-2xl text-white">
             <h1 className="font-exo text-5xl font-bold mb-6">
+              <HyperText>
               Supera tus límites
+              </HyperText>
             </h1>
             <p className="font-gabarito text-xl mb-8">
               Equipamiento deportivo de alta calidad para atletas que buscan la
