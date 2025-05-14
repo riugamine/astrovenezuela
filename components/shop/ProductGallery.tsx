@@ -42,6 +42,8 @@ export function ProductGallery({ product }: ProductGalleryProps) {
               alt={image.alt}
               fill
               className="object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
             />
           </button>
         ))}
@@ -54,6 +56,7 @@ export function ProductGallery({ product }: ProductGalleryProps) {
           fill
           className="object-cover rounded-lg"
           priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
         />
       </div>
     </div>

@@ -26,6 +26,8 @@ export function ProductGrid({ initialProducts }: ProductGridProps) {
                 alt={product.name}
                 fill
                 className="object-cover transition-transform group-hover:scale-105"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
               />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
                 <Button variant="secondary" size="sm">
@@ -36,7 +38,7 @@ export function ProductGrid({ initialProducts }: ProductGridProps) {
             </div>
             
             <div className="p-4">
-              <Link href={`/products/${product.slug}`} className="block">
+              <Link href={`/products/${product.slug.toLowerCase().replace(/ /g, '-')}`}  className="block">
                 <h3 className="font-medium hover:text-primary transition-colors">
                   {product.name}
                 </h3>

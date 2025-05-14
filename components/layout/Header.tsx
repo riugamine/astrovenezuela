@@ -23,6 +23,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetDescription
 } from "@/components/ui/sheet";
 import Link from "next/link";
 import { useState } from "react";
@@ -72,10 +73,8 @@ const Header = () => {
   // Transformar las categorías en items de navegación
   const navigationItems: NavigationItem[] = categories.map((category) => ({
     title: category.name,
-    href: `/categories/${category.slug}`,
-    description:
-      category.description ||
-      `Explora nuestra colección de ${category.name.toLowerCase()}`,
+    href: `/categories/${category.slug.toLowerCase().replace(/ /g, '-')}`,
+    description: category.description || `Explora nuestra colección de ${category.name.toLowerCase()}`
   }));
 
   // Función para obtener las iniciales del nombre
@@ -222,6 +221,9 @@ const Header = () => {
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <SheetHeader>
                 <SheetTitle className="font-exo text-left">Menú</SheetTitle>
+                <SheetDescription className="text-sm text-muted-foreground">
+                  Navega por nuestra colección de productos
+                </SheetDescription>
               </SheetHeader>
               <div className="flex flex-col space-y-4 mt-8">
                 {/* Theme Toggle en Menú Móvil */}

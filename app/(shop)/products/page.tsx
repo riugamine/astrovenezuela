@@ -18,9 +18,9 @@ async function getData() {
       product_images (id, product_id, image_url, order_index),
       category:category_id (id, name, slug)
     `)
-    .eq("is_active", true)
+    
     .order("created_at", { ascending: false });
-
+    console.log(products);
   return {
     categories: (categories as Category[]) || [],
     products: products || [],
