@@ -2,11 +2,11 @@ import { Category } from '@/lib/types/database.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import Image from 'next/image';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseClient } from '@/lib/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
 async function getCategories() {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabaseClient
     .from('categories')
     .select('*')
     .eq('is_active', true)

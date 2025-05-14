@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseClient } from '@/lib/supabase/client';
 
 interface CategoryPageProps {
   params: {
@@ -13,7 +13,7 @@ interface CategoryPageProps {
 
 async function getCategoryWithProducts(slug: string) {
   // Obtener la categoría
-  const { data: category, error: categoryError } = await supabaseAdmin
+  const { data: category, error: categoryError } = await supabaseClient
     .from('categories')
     .select('*')
     .eq('slug', slug)
@@ -23,7 +23,7 @@ async function getCategoryWithProducts(slug: string) {
   if (categoryError || !category) return null;
 
   // Obtener los productos de la categoría
-  const { data: products, error: productsError } = await supabaseAdmin
+  const { data: products, error: productsError } = await supabaseClient
     .from('products')
     .select('*')
     .eq('category_id', category.id)
