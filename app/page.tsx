@@ -8,23 +8,13 @@ import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase/client";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
-// Types for our data
-type Category = {
-  id: string;
-  name: string;
-  slug: string;
-  image_url: string;
-};
+import { Category, Product, ProductDetailImage } from "@/lib/types/database.types";
+import { Marquee } from "@/components/magicui/marquee";
+import { ProductCard } from "@/components/shop/ProductCard";
 
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  main_image_url: string;
-  created_at: string;
+type ProductWithImages = Product & {
+  product_images: ProductDetailImage[];
 };
-
 // Component for category cards
 const CategoryCard = ({
   title,
@@ -35,10 +25,10 @@ const CategoryCard = ({
   image: string;
   href: string;
 }) => (
-  <Link href={href} className="group relative overflow-hidden rounded-lg">
-    <div className="relative aspect-[4/5] w-full overflow-hidden">
+  <Link href={href} className="group relative overflow-hidden rounded-lg mx-4">
+    <div className="relative aspect-[4/5] w-72 overflow-hidden">
       <Image
-        src={image}
+        src={image || "https://placehold.co/600x400.jpg?text=Categoría"}
         alt={title}
         fill
         className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -53,21 +43,32 @@ const CategoryCard = ({
 
 // Fetch data server-side
 async function getData() {
-  const { data: categories } = await supabaseClient
+  const { data: categoriesData, error: categoriesError } = await supabaseClient
     .from("categories")
     .select("*")
-    .eq("parent_id", null)
-    .limit(4);
+    .eq("is_active", true)
+    .limit(20);
 
-  const { data: latestProducts } = await supabaseClient
+  const { data: productsData, error: productsError } = await supabaseClient
     .from("products")
-    .select("*")
+    .select(`
+      *,
+      product_images (id, product_id, image_url, order_index)
+    `)
     .order("created_at", { ascending: false })
     .limit(4);
 
+  if (categoriesError) {
+    console.error('Error fetching categories:', categoriesError);
+  }
+
+  if (productsError) {
+    console.error('Error fetching products:', productsError);
+  }
+
   return {
-    categories: (categories as Category[]) || [],
-    latestProducts: (latestProducts as Product[]) || [],
+    categories: (categoriesData || []) as Category[],
+    latestProducts: (productsData || []) as ProductWithImages[],
   };
 }
 
@@ -92,9 +93,7 @@ export default async function Home() {
         <div className="container relative mx-auto px-4 h-full flex items-center">
           <div className="max-w-2xl text-white">
             <h1 className="font-exo text-5xl font-bold mb-6">
-              <HyperText>
-              Supera tus límites
-              </HyperText>
+              <HyperText>Supera tus límites</HyperText>
             </h1>
             <p className="font-gabarito text-xl mb-8">
               Equipamiento deportivo de alta calidad para atletas que buscan la
@@ -119,16 +118,16 @@ export default async function Home() {
           <h2 className="font-exo text-3xl font-bold text-center mb-12">
             Categorías
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Marquee className="py-4" pauseOnHover>
             {categories.map((category) => (
               <CategoryCard
                 key={category.id}
                 title={category.name}
-                image={category.image_url}
+                image={category.banner_url}
                 href={`/categories/${category.slug}`}
               />
             ))}
-          </div>
+          </Marquee>
         </div>
       </section>
 
@@ -140,35 +139,7 @@ export default async function Home() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {latestProducts.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className="group"
-              >
-                <Card className="overflow-hidden border-none shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <CardContent className="p-0">
-                    <div className="relative aspect-square">
-                      <Image
-                        src={
-                          product.main_image_url ||
-                          "https://placehold.co/600x400?text=Producto"
-                        }
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-exo text-lg font-medium">
-                        {product.name}
-                      </h3>
-                      <p className="font-gabarito text-2xl font-bold mt-2 text-primary">
-                        ${product.price.toLocaleString("es-VE")}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
           <div className="text-center mt-12">

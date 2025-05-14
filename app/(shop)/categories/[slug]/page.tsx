@@ -38,7 +38,8 @@ async function getCategoryWithProducts(slug: string) {
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const data = await getCategoryWithProducts(params.slug);
+  const resolvedParams = await Promise.resolve(params);
+  const data = await getCategoryWithProducts(resolvedParams.slug);
   
   if (!data) {
     notFound();
