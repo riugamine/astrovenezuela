@@ -33,6 +33,7 @@ const productSchema = z.object({
   category_id: z.string().min(1, "La categoría es requerida"),
   subcategory_id: z.string().optional(),
   main_image_url: z.string().url("La imagen principal es requerida"),
+  stock: z.number().int().positive("El stock debe ser un número entero positivo"),
   product_images: z
     .array(
       z.object({
@@ -83,6 +84,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
             category_id: data.subcategory_id || data.category_id, // Usamos subcategory_id si existe, sino category_id
             main_image_url: data.main_image_url,
             slug: data.name.toLowerCase().replace(/\s+/g, "-"),
+            stock: data.stock,
           })
           .eq('id', initialData.id)
           .select()
@@ -146,6 +148,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
               category_id: data.subcategory_id || data.category_id, // Usamos subcategory_id si existe, sino category_id
               main_image_url: data.main_image_url,
               slug: data.name.toLowerCase().replace(/\s+/g, "-"),
+              stock: data.stock,
             },
           ])
           .select()
@@ -325,6 +328,25 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="stock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stock *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Cantidad en Stock"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="space-y-4">
               <CategorySelect
                 control={form.control}
