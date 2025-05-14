@@ -1,9 +1,9 @@
-import { categories } from '@/lib/data/categories';
-import { products } from '@/lib/data/products';
+import { Category, Product } from '@/lib/types/database.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 interface CategoryPageProps {
   params: {
@@ -11,18 +11,43 @@ interface CategoryPageProps {
   };
 }
 
+async function getCategoryWithProducts(slug: string) {
+  // Obtener la categoría
+  const { data: category, error: categoryError } = await supabaseAdmin
+    .from('categories')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .single();
+
+  if (categoryError || !category) return null;
+
+  // Obtener los productos de la categoría
+  const { data: products, error: productsError } = await supabaseAdmin
+    .from('products')
+    .select('*')
+    .eq('category_id', category.id)
+    .eq('is_active', true);
+
+  if (productsError) return null;
+
+  return {
+    category,
+    products: products || []
+  };
+}
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const resolvedParams = await Promise.resolve(params);
-  const category = categories.find(cat => cat.slug === resolvedParams.slug);
+  const data = await getCategoryWithProducts(params.slug);
   
-  if (!category) {
+  if (!data) {
     notFound();
   }
 
-  const categoryProducts = products.filter(product => product.category_id === category.id);
+  const { category, products } = data;
 
   return (
-    <div className="container mx-auto px-4 py-8 ">
+    <div className="container mx-auto px-4 py-8">
       {/* Banner de categoría */}
       <div className="relative h-64 w-full mb-8 rounded-lg overflow-hidden">
         <Image
@@ -44,7 +69,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
       {/* Grid de productos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categoryProducts.map((product) => (
+        {products.map((product) => (
           <Link key={product.id} href={`/products/${product.slug}`}>
             <Card className="hover:shadow-lg transition-shadow h-full">
               <div className="relative h-48 w-full">

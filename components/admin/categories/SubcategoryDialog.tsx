@@ -34,6 +34,10 @@ const subcategorySchema = z.object({
     .min(10, "La descripción debe tener al menos 10 caracteres")
     .optional(),
     parent_id: z.string().optional(),
+  is_active: z.boolean().optional(),
+  banner_url: z.string()
+   .min(10, "La URL del banner debe tener al menos 10 caracteres")
+   .optional(),
 });
 
 type CategoryFormData = z.infer<typeof subcategorySchema>;
@@ -46,7 +50,10 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
   isLoading
 }) => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CategoryFormData>({
-    resolver: zodResolver(subcategorySchema)
+    resolver: zodResolver(subcategorySchema),
+    defaultValues: {
+      is_active: true
+    }
   });
 
   const handleFormSubmit = (data: CategoryFormData) => {
@@ -82,6 +89,14 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
               <Textarea id="description" {...register('description')} />
               {errors.description && (
                 <p className="text-sm text-red-500 mt-1">{errors.description.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="banner_url">URL del Banner</Label>
+              <Input id="banner_url" {...register('banner_url')} />
+              {errors.banner_url && (
+                <p className="text-sm text-red-500 mt-1">{errors.banner_url.message}</p>
               )}
             </div>
           </div>

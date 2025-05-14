@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import AdminLayout from '@/components/layout/admin/AdminLayout';
-import CategoriesManagement from '@/components/admin/CategoriesManagement';
+import CategoriesManagement from '@/components/admin/categories/CategoriesManagement';
 
 export const metadata: Metadata = {
   title: 'Gestión de Categorías | Astro Venezuela',

@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faEllipsisVertical, 
-  faPencilAlt, 
-  faTrash, 
+  faPencilAlt,
+  faToggleOn,
+  faToggleOff,
   faPlus 
 } from '@fortawesome/free-solid-svg-icons';
-import type { Category } from '@/lib/types/category';
+import type { Category } from '@/lib/types/database.types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,14 +19,14 @@ import {
 interface CategoryActionsProps {
   category: Category;
   onEdit: (category: Category) => void;
-  onDelete: (category: Category) => void;
+  onToggleActive: (category: Category) => void;
   onAddSubcategory: (category: Category) => void;
 }
 
 const CategoryActions: FC<CategoryActionsProps> = ({
   category,
   onEdit,
-  onDelete,
+  onToggleActive,
   onAddSubcategory
 }) => {
   return (
@@ -53,11 +54,14 @@ const CategoryActions: FC<CategoryActionsProps> = ({
           Editar
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => onDelete(category)}
-          className="text-red-600 cursor-pointer"
+          onClick={() => onToggleActive(category)}
+          className={`cursor-pointer ${category.is_active ? 'text-red-600' : 'text-green-600'}`}
         >
-          <FontAwesomeIcon icon={faTrash} className="mr-2 h-4 w-4" />
-          Eliminar
+          <FontAwesomeIcon 
+            icon={category.is_active ? faToggleOff : faToggleOn} 
+            className="mr-2 h-4 w-4" 
+          />
+          {category.is_active ? 'Desactivar' : 'Activar'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
