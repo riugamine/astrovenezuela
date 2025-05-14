@@ -3,7 +3,7 @@
 import { FC, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisVertical, faPencilAlt, faTrash, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsisVertical, faPencilAlt, faTrash, faEye, faToggleOn, faToggleOff } from '@fortawesome/free-solid-svg-icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +15,11 @@ import { ProductDeleteDialog } from './ProductDeleteDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { Product } from '@/lib/types/database.types';
 import { ProductEditDialog } from './ProductEditDialog';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { toast } from 'sonner';
 
 interface ProductActionsProps {
-  onEdit: () => void;
-  onDelete: () => void;
   product: Product;
-  onView: () => void;
 }
 
 export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
@@ -44,6 +43,24 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
   const handleDeleteClick = () => {
     setIsDeleteOpen(true);
     setIsDropdownOpen(false);
+  };
+
+  const handleToggleActive = async () => {
+    try {
+      const { error } = await supabaseAdmin
+        .from('products')
+        .update({ is_active: !product.is_active })
+        .eq('id', product.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(`Producto ${product.is_active ? 'desactivado' : 'activado'} exitosamente`);
+      setIsDropdownOpen(false);
+    } catch (error) {
+      console.error('Error al cambiar estado del producto:', error);
+      toast.error('Error al cambiar estado del producto');
+    }
   };
 
   // Manejadores para cerrar los diálogos
@@ -86,11 +103,14 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
             Editar
           </DropdownMenuItem>
           <DropdownMenuItem 
-            onClick={handleDeleteClick}
-            className="text-red-600 cursor-pointer"
+            onClick={handleToggleActive}
+            className="cursor-pointer"
           >
-            <FontAwesomeIcon icon={faTrash} className="mr-2 h-4 w-4" />
-            Eliminar
+            <FontAwesomeIcon 
+              icon={product.is_active ? faToggleOff : faToggleOn} 
+              className="mr-2 h-4 w-4" 
+            />
+            {product.is_active ? 'Desactivar' : 'Activar'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

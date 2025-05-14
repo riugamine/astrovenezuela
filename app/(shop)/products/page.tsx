@@ -2,7 +2,7 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { CategoryFilter } from "@/components/shop/CategoryFilter";
 import { SortFilter } from "@/components/shop/SortFilter";
 import { supabaseClient } from "@/lib/supabase/client";
-import { Product, Category } from "@/lib/types/database.types";
+import {  Category } from "@/lib/types/database.types";
 
 // Fetch data server-side
 async function getData() {
@@ -18,9 +18,8 @@ async function getData() {
       product_images (id, product_id, image_url, order_index),
       category:category_id (id, name, slug)
     `)
-    
+    .eq('is_active', true)
     .order("created_at", { ascending: false });
-    console.log(products);
   return {
     categories: (categories as Category[]) || [],
     products: products || [],

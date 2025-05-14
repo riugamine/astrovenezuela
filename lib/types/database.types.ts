@@ -38,6 +38,7 @@ export interface Product {
   category_id: string;
   main_image_url: string;
   stock: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
   detail_images?: ProductDetailImage[];

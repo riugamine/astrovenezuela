@@ -29,7 +29,7 @@ async function getProduct(slug: string) {
       product_images (id, product_id, image_url, order_index)
     `)
     .eq("category_id", product.category_id)
-    
+    .eq('is_active', true)
     .neq("id", product.id)
     .limit(4);
 

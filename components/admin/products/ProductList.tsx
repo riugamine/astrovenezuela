@@ -67,14 +67,20 @@ export function ProductList() {
       header: "Fecha de Creación",
       cell: ({ row }) => new Date(row.getValue("created_at")).toLocaleDateString()
     },
+    {      accessorKey: "is_active",
+      header: "Estado",
+      cell: ({ row }) => (
+        <div className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center ${row.original.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <span className={`w-2 h-2 rounded-full mr-1.5 ${row.original.is_active ? 'bg-green-400' : 'bg-red-400'}`}></span>
+          {row.original.is_active ? 'Activo' : 'Inactivo'}
+        </div>
+      )
+    },
     {
       id: "actions",
       cell: ({ row }) => (
         <ProductActions
           product={row.original}
-          onEdit={() => console.log('Edit', row.original)}
-          onDelete={() => console.log('Delete', row.original)}
-          onView={() => console.log('View', row.original)}
         />
       )
     }
