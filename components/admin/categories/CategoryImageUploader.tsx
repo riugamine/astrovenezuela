@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface CategoryImageUploaderProps {
   bannerUrl: string;
@@ -76,13 +77,20 @@ export function CategoryImageUploader({
           </div>
         )}
         <div className="flex-1 w-full">
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={handleUpload}
-            disabled={uploading}
-            className="w-full"
-          />
+          <div className="relative">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleUpload}
+              disabled={uploading}
+              className="w-full"
+            />
+            {uploading && (
+              <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground mt-2">
             Formato: JPG, PNG. Tamaño máximo: 10MB
           </p>
