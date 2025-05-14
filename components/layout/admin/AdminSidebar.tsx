@@ -6,8 +6,6 @@ import {
   faHome,
   faBox,
   faUsers,
-  faChartLine,
-  faCog,
   faBars,
   faShoppingCart,
   faSignOut,

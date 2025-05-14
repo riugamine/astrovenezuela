@@ -92,13 +92,13 @@
     /* Colores base del sistema - Tema Claro */
     --background: 0 0% 100%; /* #FFFFFF */
     --foreground: 212 100% 10%; /* #001730 */
-    
+
     --card: 0 0% 100%;
     --card-foreground: 212 100% 10%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 212 100% 10%;
-    
+
     /* Color primario - Azul marino más oscuro para mejor contraste */
     --primary: 212 100% 15%; /* #002347 */
     --primary-foreground: 0 0% 100%;
@@ -112,27 +112,27 @@
     --primary-700: 212 100% 30%;
     --primary-800: 212 100% 20%;
     --primary-900: 212 100% 15%;
-    
+
     /* Color secundario - Morado más oscuro */
     --secondary: 255 72% 25%; /* #291A64 */
     --secondary-foreground: 0 0% 100%;
-    
+
     /* Color de acento - Beige más oscuro para mejor contraste */
     --accent: 39 100% 88%; /* #FFE9C2 */
     --accent-foreground: 212 100% 10%;
-    
+
     /* Color muted - Gris más oscuro para mejor contraste */
     --muted: 220 13% 75%; /* #BABABA */
     --muted-foreground: 212 100% 10%;
-    
+
     /* Colores de estado y feedback */
     --destructive: 0 84% 50%; /* Rojo más oscuro */
     --destructive-foreground: 0 0% 100%;
-    
+
     --border: 220 13% 75%;
     --input: 220 13% 75%;
     --ring: 212 100% 15%;
-    
+
     --radius: 0.5rem;
     /* Colores de gráficos */
     --chart-1: 12 76% 61%;
@@ -141,38 +141,38 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
-  
+
   .dark {
     /* Modo oscuro - Fondo más oscuro para mejor contraste */
     --background: 212 100% 5%; /* #000C19 */
     --foreground: 0 0% 98%; /* Casi blanco para mejor legibilidad */
-    
+
     --card: 212 100% 7%; /* #001221 */
     --card-foreground: 0 0% 98%;
-    
+
     --popover: 212 100% 7%;
     --popover-foreground: 0 0% 98%;
-    
+
     /* Color primario más claro en modo oscuro */
     --primary: 219 35% 75%; /* #A5B8DC */
     --primary-foreground: 212 100% 5%;
-    
+
     /* Color secundario más brillante */
     --secondary: 255 72% 40%; /* #432CA3 */
     --secondary-foreground: 0 0% 98%;
-    
+
     /* Color de acento más suave */
     --accent: 39 100% 85%; /* #FFE0A8 */
     --accent-foreground: 212 100% 5%;
-    
+
     /* Color muted con mejor contraste */
     --muted: 212 100% 20%;
     --muted-foreground: 215 20% 85%;
-    
+
     /* Colores de estado y feedback */
     --destructive: 0 84% 65%;
     --destructive-foreground: 0 0% 98%;
-    
+
     --border: 212 27% 25%;
     --input: 212 27% 25%;
     --ring: 219 35% 75%;
@@ -194,7 +194,36 @@
   }
 }
 
+/* 
+  ---break--- 
+*/
 
+@theme inline {
+  --animate-meteor: meteor 5s linear infinite;
+  @keyframes meteor {
+  0% {
+    transform: rotate(var(--angle)) translateX(0);
+    opacity: 1;
+    }
+  70% {
+    opacity: 1;
+    }
+  100% {
+    transform: rotate(var(--angle)) translateX(-500px);
+    opacity: 0;
+    }
+  }
+}
 
+/* 
+  ---break--- 
+*/
 
-
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
