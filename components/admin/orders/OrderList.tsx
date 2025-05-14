@@ -1,0 +1,109 @@
+'use client';
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSearch, faEye } from "@fortawesome/free-solid-svg-icons";
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { OrderStatusComponent } from './OrderStatus';
+
+interface OrderListProps {
+  onSelectOrder: (orderId: string) => void;
+}
+
+export function OrderList({ onSelectOrder }: OrderListProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ['orders'],
+    queryFn: async () => {
+      const { data, error } = await supabaseAdmin
+        .from('orders')
+        .select(`
+          *,
+          profiles:user_id (full_name, email)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const filteredOrders = orders.filter(order => 
+    order.whatsapp_number.includes(searchTerm) ||
+    order.profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="relative mb-4">
+          <Input
+            placeholder="Buscar por nombre o número de WhatsApp..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+          <FontAwesomeIcon 
+            icon={faSearch} 
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+        </div>
+
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Número de Orden</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>WhatsApp</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>{order.id}</TableCell>
+                  <TableCell>{order.profiles.full_name}</TableCell>
+                  <TableCell>{order.whatsapp_number}</TableCell>
+                  <TableCell>
+                    <OrderStatusComponent order={order} />
+                  </TableCell>
+                  <TableCell>${order.total_amount}</TableCell>
+                  <TableCell>
+                    {new Date(order.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onSelectOrder(order.id)}
+                    >
+                      <FontAwesomeIcon icon={faEye} className="mr-2" />
+                      Ver Detalles
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

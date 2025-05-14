@@ -1,3 +1,22 @@
+export interface Order{
+  id: string;
+  user_id: string;
+  status: OrderStatus;
+  total_amount: number;
+  shipping_address: string;
+  payment_method: PaymentMethod;
+  items: OrderItem[];
+}
+export type OrderStatus = 'created' | 'pending' | 'completed' | 'canceled';
+export type PaymentMethod = 'zelle' | 'paypal' | 'Binance' | 'pago_movil';
+export interface OrderItem{
+  id: string;
+  order_id: string;
+  product_id: string;
+  variant_id: string;
+  quantity: number;
+  price: number;
+}
 export interface Category {
   id: string;
   name: string;

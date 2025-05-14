@@ -1,7 +1,7 @@
 /**
  * Tipos de estado de orden
  */
-export type OrderStatus = 'created' | 'pending' | 'completed';
+export type OrderStatus = 'created' | 'pending' | 'completed' | 'canceled';
 
 /**
  * Datos estáticos para las órdenes
