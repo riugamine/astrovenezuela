@@ -73,6 +73,7 @@ export function UserForm({ onClose }: UserFormProps) {
               <FormControl>
                 <Input {...field} 
                 onChange={(e) => field.onChange(e.target.value)}
+                value={ field.value || ""}
                 />
               </FormControl>
               <FormMessage />
@@ -87,7 +88,10 @@ export function UserForm({ onClose }: UserFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" {...field} />
+                <Input type="email" {...field} 
+                onChange={(e) => field.onChange(e.target.value)}
+                value={ field.value || ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -101,7 +105,10 @@ export function UserForm({ onClose }: UserFormProps) {
             <FormItem>
               <FormLabel>Contraseña</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <Input type="password" {...field} 
+                onChange={(e) => field.onChange(e.target.value)}
+                value={ field.value || ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
