@@ -21,12 +21,30 @@ import { faListUl } from "@fortawesome/free-solid-svg-icons";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch"
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 const AdminSidebar: FC = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuthStore();
+
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut();
+      toast.success('Sesión cerrada exitosamente');
+      router.push('/auth');
+    } catch (error) {
+      toast.error('Error al cerrar sesión');
+      console.error('Sign out error:', error);
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   const navigationItems = [
     { href: "/admin", icon: faHome, label: "Dashboard" },
@@ -109,14 +127,22 @@ const AdminSidebar: FC = () => {
 
         <Button
           variant="ghost"
-          onClick={() => signOut()}
+          onClick={handleSignOut}
+          disabled={isSigningOut}
           className={cn(
             "w-full hover:bg-primary-foreground/10",
             isCollapsed && "justify-center"
           )}
         >
-          <FontAwesomeIcon icon={faSignOut} className={cn("h-5 w-5", !isCollapsed && "mr-2")} />
-          {!isCollapsed && <span>Cerrar Sesión</span>}
+          <FontAwesomeIcon 
+            icon={faSignOut} 
+            className={cn(
+              "h-5 w-5", 
+              !isCollapsed && "mr-2",
+              isSigningOut && "animate-spin"
+            )} 
+          />
+          {!isCollapsed && <span>{isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}</span>}
         </Button>
       </div>
     </aside>

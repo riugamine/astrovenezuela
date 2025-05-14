@@ -1,13 +1,30 @@
 import ShopLayout from '@/components/layout/shop/ShopLayout';
 import { Button } from '@/components/ui/button';
-import { products } from "@/lib/data/products";
 import { Card, CardContent } from "@/components/ui/card";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import Image from "next/image";
 import Link from "next/link";
+import { supabaseClient } from '@/lib/supabase/client';
 
-// Componente para las categorías principales
+// Types for our data
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  image_url: string;
+};
+
+type Product = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  main_image_url: string;
+  created_at: string;
+};
+
+// Component for category cards
 const CategoryCard = ({ title, image, href }: { title: string; image: string; href: string }) => (
   <Link href={href} className="group relative overflow-hidden rounded-lg">
     <div className="relative aspect-[4/5] w-full overflow-hidden">
@@ -25,11 +42,28 @@ const CategoryCard = ({ title, image, href }: { title: string; image: string; hr
   </Link>
 );
 
-export default function Home() {
-  // Obtener los últimos 4 productos
-  const latestProducts = products
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 4);
+// Fetch data server-side
+async function getData() {
+  const { data: categories } = await supabaseClient
+    .from('categories')
+    .select('*')
+    .eq('parent_id', null)
+    .limit(4);
+
+  const { data: latestProducts } = await supabaseClient
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(4);
+
+  return {
+    categories: categories as Category[] || [],
+    latestProducts: latestProducts as Product[] || []
+  };
+}
+
+export default async function Home() {
+  const { categories, latestProducts } = await getData();
 
   return (
     <ShopLayout>
@@ -64,71 +98,14 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <h2 className="font-exo text-3xl font-bold text-center mb-12">Categorías</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <CategoryCard
-              title="Hombre"
-              image="/categories/men.jpg"
-              href="/categories/hombre"
-            />
-            <CategoryCard
-              title="Mujer"
-              image="/categories/women.jpg"
-              href="/categories/mujer"
-            />
-            <CategoryCard
-              title="Accesorios"
-              image="/categories/accessories.jpg"
-              href="/categories/accesorios"
-            />
-            <CategoryCard
-              title="Implementos"
-              image="/categories/equipment.jpg"
-              href="/categories/implementos"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Sección de Conjuntos Destacados */}
-      <section className="py-16 bg-secondary/5">
-        <div className="container mx-auto px-4">
-          <h2 className="font-exo text-3xl font-bold text-center mb-12">Conjuntos Destacados</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="relative aspect-[3/4] rounded-lg overflow-hidden group">
-              <Image
-                src="/sets/set-1.jpg"
-                alt="Conjunto Training"
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.id}
+                title={category.name}
+                image={category.image_url}
+                href={`/categories/${category.slug}`}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              <div className="absolute bottom-0 w-full p-6">
-                <h3 className="font-exo text-2xl font-bold text-white mb-2">Training Set</h3>
-                <Link href="/products/training-set">
-                  <Button variant="secondary" className="group">
-                    Ver Detalles
-                    <FontAwesomeIcon icon={faArrowRight} className="ml-2 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="relative aspect-[3/4] rounded-lg overflow-hidden group">
-              <Image
-                src="/sets/set-2.jpg"
-                alt="Conjunto Performance"
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              <div className="absolute bottom-0 w-full p-6">
-                <h3 className="font-exo text-2xl font-bold text-white mb-2">Performance Set</h3>
-                <Link href="/products/performance-set">
-                  <Button variant="secondary" className="group">
-                    Ver Detalles
-                    <FontAwesomeIcon icon={faArrowRight} className="ml-2 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
