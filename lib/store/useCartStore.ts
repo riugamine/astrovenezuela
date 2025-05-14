@@ -11,6 +11,7 @@ interface CartItem {
   image_url: string;
   variant_id: string;
   max_stock: number;
+  slug: string; // Añadimos el slug para la navegación
 }
 
 interface CartStore {

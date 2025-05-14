@@ -8,7 +8,28 @@ export interface Order{
   items: OrderItem[];
 }
 export type OrderStatus = 'created' | 'pending' | 'completed' | 'canceled';
-export type PaymentMethod = 'zelle' | 'paypal' | 'Binance' | 'pago_movil';
+export interface ShippingMethod {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface CustomerInfo {
+  name: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  address: string;
+  dni: string; // Cédula de identidad
+  agencyAddress?: string; // Dirección de la agencia
+}
 export interface OrderItem{
   id: string;
   order_id: string;

@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/lib/store/useCartStore";
@@ -9,7 +8,6 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -21,28 +19,8 @@ import Image from "next/image";
 import { useCustomerStore } from "@/lib/store/useCustomerStore";
 import { PlacesAutocomplete } from "@/components/ui/places-autocomplete";
 import { createOrder } from '@/lib/data/orders';
-interface ShippingMethod {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-}
+import { Order, PaymentMethod, ShippingMethod, CustomerInfo} from "@/lib/types/database.types";
 
-interface PaymentMethod {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface CustomerInfo {
-  name: string;
-  lastName: string;
-  phone: string;
-  email: string;
-  address: string;
-  dni: string; // Cédula de identidad
-  agencyAddress?: string; // Dirección de la agencia
-}
 
 const shippingMethods: ShippingMethod[] = [
   {

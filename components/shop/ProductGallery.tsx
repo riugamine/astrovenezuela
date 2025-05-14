@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import { cn } from '@/lib/utils';
-import { Product, ProductDetailImage } from '@/lib/types/database.types';
+import { useState } from "react";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { Product, ProductDetailImage } from "@/lib/types/database.types";
 
 interface ProductGalleryProps {
   product: Product & {
@@ -17,12 +17,12 @@ export function ProductGallery({ product }: ProductGalleryProps) {
   const images = [
     {
       url: product.main_image_url,
-      alt: `${product.name} - Principal`
+      alt: `${product.name} - Principal`,
     },
-    ...product.product_images.map(img => ({
+    ...product.product_images.map((img) => ({
       url: img.image_url,
-      alt: `${product.name} - Detalle ${img.order_index}`
-    }))
+      alt: `${product.name} - Detalle ${img.order_index}`,
+    })),
   ];
 
   return (
@@ -41,9 +41,10 @@ export function ProductGallery({ product }: ProductGalleryProps) {
               src={image.url}
               alt={image.alt}
               fill
-              className="object-cover"
+              className="object-cover hover:scale-105 transition-transform"
               priority
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              sizes="80px"
+              quality={60}
             />
           </button>
         ))}
@@ -56,7 +57,9 @@ export function ProductGallery({ product }: ProductGalleryProps) {
           fill
           className="object-cover rounded-lg"
           priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+          quality={85}
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, (max-width: 1024px) 60vw, 50vw"
+          loading="eager"
         />
       </div>
     </div>

@@ -8,7 +8,7 @@ import { faTrash, faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import  Link  from "next/link";
+import Link from "next/link";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalItems } = useCartStore();
@@ -32,17 +32,25 @@ export default function CartPage() {
           {/* Lista de productos */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
-                <div className="relative w-24 h-24">
+              <div key={`${item.id}-${item.size}`} className="flex gap-4 p-4 border rounded-lg">
+                <Link 
+                  href={`/products/${item.slug}`} 
+                  className="relative w-24 h-24 transition-opacity hover:opacity-80"
+                >
                   <Image
                     src={item.image_url}
                     alt={item.name}
                     fill
                     className="object-cover rounded-md"
                   />
-                </div>
+                </Link>
                 <div className="flex-1">
-                  <h3 className="font-semibold">{item.name}</h3>
+                  <Link 
+                    href={`/products/${item.slug}`}
+                    className="hover:underline"
+                  >
+                    <h3 className="font-semibold">{item.name}</h3>
+                  </Link>
                   <p className="text-muted-foreground">
                     {item.size && `Talla: ${item.size}`}
                   </p>
@@ -54,7 +62,7 @@ export default function CartPage() {
                       variant="outline"
                       size="icon"
                       onClick={() =>
-                        updateQuantity(item.id, Math.max(1, item.quantity - 1))
+                        updateQuantity(item.id, item.size, Math.max(1, item.quantity - 1))
                       }
                     >
                       <FontAwesomeIcon icon={faMinus} className="h-4 w-4" />
@@ -63,15 +71,19 @@ export default function CartPage() {
                       type="number"
                       value={item.quantity}
                       onChange={(e) =>
-                        updateQuantity(item.id, parseInt(e.target.value) || 1)
+                        updateQuantity(item.id, item.size, parseInt(e.target.value) || 1)
                       }
                       className="w-20 text-center"
                       min={1}
+                      max={item.max_stock}
                     />
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => 
+                        updateQuantity(item.id, item.size, Math.min(item.quantity + 1, item.max_stock))
+                      }
+                      disabled={item.quantity >= item.max_stock}
                     >
                       <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
                     </Button>
@@ -79,11 +91,16 @@ export default function CartPage() {
                       variant="ghost"
                       size="icon"
                       className="ml-auto text-destructive"
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.id, item.size)}
                     >
                       <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
                     </Button>
                   </div>
+                  {item.quantity >= item.max_stock && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Stock máximo disponible: {item.max_stock}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

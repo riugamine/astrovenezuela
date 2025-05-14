@@ -53,6 +53,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       variant_id: variant.id,
       image_url: product.main_image_url,
       max_stock: variant.stock,
+      slug: product.slug, // Añadimos el slug para la navegación
     });
 
     toast.success("Producto agregado al carrito");
@@ -76,7 +77,12 @@ export function ProductInfo({ product }: ProductInfoProps) {
               <div key={size} className="relative">
                 <Button
                   variant={selectedSize === size ? "default" : "outline"}
-                  onClick={() => !isOutOfStock && setSelectedSize(size)}
+                  onClick={() => {
+                    if (!isOutOfStock) {
+                      setSelectedSize(size);
+                      setQuantity(1);
+                    }
+                  }}
                   disabled={isOutOfStock}
                   className="w-12 h-12 relative"
                 >
