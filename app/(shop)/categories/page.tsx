@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import Image from 'next/image';
 import { supabaseClient } from '@/lib/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
 
 async function getCategories() {
   const { data, error } = await supabaseClient
