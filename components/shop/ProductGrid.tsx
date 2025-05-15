@@ -1,54 +1,41 @@
-'use client';
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Product, ProductDetailImage } from "@/lib/types/database.types";
-import Image from "next/image";
-import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye } from "@fortawesome/free-solid-svg-icons";
-import { Button } from "@/components/ui/button";
+
+import { Product, ProductDetailImage, ProductVariant } from "@/lib/types/database.types";
+import { ProductCard } from "./ProductCard";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductGridProps {
   initialProducts: (Product & {
     product_images: ProductDetailImage[];
+    variants: ProductVariant[];
   })[];
 }
 
 export function ProductGrid({ initialProducts }: ProductGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       {initialProducts.map((product) => (
-        <Card key={product.id} className="group relative">
-          <CardContent className="p-0">
-            <div className="relative aspect-square overflow-hidden">
-              <Image
-                src={product.main_image_url}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform group-hover:scale-105"
-                priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
-                <Button variant="secondary" size="sm">
-                  <FontAwesomeIcon icon={faEye} className="mr-2" />
-                  Vista rápida
-                </Button>
-              </div>
+        <div key={product.id} className="group relative flex flex-col">
+          <ProductCard product={product} />
+          
+          {/* Tallas disponibles */}
+          {product.variants && product.variants.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {product.variants
+                .filter(variant => variant.stock > 0)
+                .map(variant => (
+                  <Badge 
+                    key={variant.id} 
+                    variant="outline"
+                    className="text-xs"
+                  >
+                    {variant.size}
+                  </Badge>
+                ))
+              }
             </div>
-            
-            <div className="p-4">
-              <Link href={`/products/${product.slug.toLowerCase().replace(/ /g, '-')}`}  className="block">
-                <h3 className="font-medium hover:text-primary transition-colors">
-                  {product.name}
-                </h3>
-                <p className="font-semibold mt-2">
-                  ${product.price.toLocaleString('en-US')}
-                </p>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       ))}
     </div>
   );
