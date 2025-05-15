@@ -1,6 +1,5 @@
 import ShopLayout from "@/components/layout/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
@@ -8,13 +7,10 @@ import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase/client";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
-import { Category, Product, ProductDetailImage } from "@/lib/types/database.types";
+import { Category } from "@/lib/types/database.types";
 import { Marquee } from "@/components/magicui/marquee";
-import { ProductCard } from "@/components/shop/ProductCard";
+import { ProductGrid } from "@/components/shop/ProductGrid";
 
-type ProductWithImages = Product & {
-  product_images: ProductDetailImage[];
-};
 // Component for category cards
 const CategoryCard = ({
   title,
@@ -41,52 +37,30 @@ const CategoryCard = ({
   </Link>
 );
 
-// Fetch data server-side
-async function getData() {
+// Fetch categories server-side
+async function getCategories() {
   const { data: categoriesData, error: categoriesError } = await supabaseClient
     .from("categories")
     .select("*")
     .eq("is_active", true)
     .limit(20);
 
-  const { data: productsData, error: productsError } = await supabaseClient
-    .from("products")
-    .select(`
-      *,
-      product_images (id, product_id, image_url, order_index)
-    `)
-    .order("created_at", { ascending: false })
-    .limit(4);
-
   if (categoriesError) {
     console.error('Error fetching categories:', categoriesError);
+    return [];
   }
 
-  if (productsError) {
-    console.error('Error fetching products:', productsError);
-  }
-
-  return {
-    categories: (categoriesData || []) as Category[],
-    latestProducts: (productsData || []) as ProductWithImages[],
-  };
+  return categoriesData as Category[];
 }
 
 export default async function Home() {
-  const { categories, latestProducts } = await getData();
+  const categories = await getCategories();
 
   return (
     <ShopLayout>
-      {/* Hero Section - Minimalista y Enfocado */}
+      {/* Hero Section */}
       <section className="relative h-[85vh] overflow-hidden">
         <div className="absolute inset-0">
-          {/* <Image
-            src="/hero-image.jpg"
-            alt="Hero"
-            fill
-            className="object-cover"
-            priority
-          /> */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
           <Meteors className="opacity-70" />
         </div>
@@ -112,7 +86,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Categorías Principales */}
+      {/* Categories Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="font-exo text-3xl font-bold text-center mb-12">
@@ -131,17 +105,13 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Últimos Productos */}
+      {/* Latest Products Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="font-exo text-3xl font-bold text-center mb-12">
             Nuevos Ingresos
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {latestProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductGrid />
           <div className="text-center mt-12">
             <Link href="/products">
               <Button variant="outline" size="lg" className="group">

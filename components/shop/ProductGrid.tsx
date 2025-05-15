@@ -2,21 +2,11 @@
 
 'use client';
 
-import { Database } from "@/lib/types/database.types";
 import { ProductCard } from "./ProductCard";
-import { useFilteredProducts } from "@/lib/hooks/useFilteredProducts";
+import { useProducts } from "@/lib/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { memo } from 'react';
-
-type Tables = Database['public']['Tables'];
-type ProductRow = Tables['products']['Row'];
-type ProductImageRow = Tables['product_detail_images']['Row'];
-type ProductVariantRow = Tables['product_variants']['Row'];
-
-type ProductWithDetails = ProductRow & {
-  product_images: ProductImageRow[];
-  variants?: ProductVariantRow[];
-};
+import { ProductWithDetails } from '@/lib/data/products';
 
 interface ProductGridProps {
   products?: ProductWithDetails[];
@@ -38,9 +28,9 @@ const ProductGridSkeleton = memo(function ProductGridSkeleton() {
 });
 
 const ProductGrid = memo(function ProductGrid({ products: initialProducts }: ProductGridProps) {
-  const { data: filteredProducts, isLoading, error } = useFilteredProducts();
+  const { data, isLoading, error } = useProducts(initialProducts);
   
-  const products = initialProducts || filteredProducts;
+  const products = data?.pages[0]?.products || [];
 
   if (error) {
     return (
@@ -70,7 +60,6 @@ const ProductGrid = memo(function ProductGrid({ products: initialProducts }: Pro
     </div>
   );
 });
-
 
 // Export the component
 export { ProductGrid, ProductGridSkeleton };

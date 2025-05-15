@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabaseClient } from '@/lib/supabase/client';
 import { ProductWithDetails } from '@/lib/data/products';
 import { useFilterStore } from '@/lib/store/useFilterStore';
@@ -13,116 +13,85 @@ interface FetchProductsOptions {
 
 async function fetchProductsPage(page: number, options: FetchProductsOptions) {
   const { categories, priceRange, sortBy } = options;
-  
-  // Primero, obtener todas las subcategorías si hay categorías seleccionadas
-  let allCategories = [...categories];
-  
-  if (categories.length > 0) {
-    const { data: subcategories } = await supabaseClient
-      .from('categories')
-      .select('id')
-      .eq('is_active', true)
-      .in('parent_id', categories);
-
-    if (subcategories) {
-      allCategories = [...allCategories, ...subcategories.map(cat => cat.id)];
-    }
-  }
-
-  // Construir la query base para el conteo
-  let countQuery = supabaseClient
-    .from("products")
-    .select("*", { count: "exact", head: true })
-    .eq("is_active", true)
-    .gte("price", priceRange[0])
-    .lte("price", priceRange[1]);
-
-  // Aplicar filtro de categorías al conteo si hay categorías seleccionadas
-  if (allCategories.length > 0) {
-    countQuery = countQuery.in("category_id", allCategories);
-  }
-
-  // Obtener el conteo total
-  const { count } = await countQuery;
-
-  if (!count || count === 0) {
-    return { products: [], hasMore: false };
-  }
-
-  // Calcular el rango para la paginación
   const from = (page - 1) * PRODUCTS_PER_PAGE;
-  const to = Math.min(from + PRODUCTS_PER_PAGE - 1, count - 1);
+  
+  // First, get the count with the same filters
+  const countQuery = supabaseClient
+    .from('products')
+    .select('id', { count: 'exact' })
+    .eq('is_active', true)
+    .gte('price', priceRange[0])
+    .lte('price', priceRange[1]);
 
-  // Si el rango no es válido, retornar array vacío
-  if (from >= count) {
-    return { products: [], hasMore: false };
+  // Apply category filter to count query
+  if (categories.length > 0) {
+    countQuery.or(
+      `category_id.in.(${categories.join(',')}),category.parent_id.in.(${categories.join(',')})`
+    );
   }
 
-  // Construir la query principal
+  // Build the main query
   let mainQuery = supabaseClient
-    .from("products")
-    .select(
-      `
+    .from('products')
+    .select(`
       *,
       product_images (*),
       variants:product_variants (*),
-      category:category_id (*)
-    `
-    )
-    .eq("is_active", true)
-    .gte("price", priceRange[0])
-    .lte("price", priceRange[1])
-    .range(from, to);
+      category:categories!inner (*)
+    `)
+    .eq('is_active', true)
+    .gte('price', priceRange[0])
+    .lte('price', priceRange[1])
+    .range(from, from + PRODUCTS_PER_PAGE - 1);
 
-  // Aplicar filtro de categorías a la query principal
-  if (allCategories.length > 0) {
-    mainQuery = mainQuery.in("category_id", allCategories);
+  // Apply category filter to main query
+  if (categories.length > 0) {
+    mainQuery = mainQuery.or(
+      `category_id.in.(${categories.join(',')}),category.parent_id.in.(${categories.join(',')})`
+    );
   }
 
-  // Aplicar ordenamiento
+  // Apply sorting
   switch (sortBy) {
-    case "price-asc":
-      mainQuery = mainQuery.order("price", { ascending: true });
+    case 'price-asc':
+      mainQuery = mainQuery.order('price', { ascending: true });
       break;
-    case "price-desc":
-      mainQuery = mainQuery.order("price", { ascending: false });
+    case 'price-desc':
+      mainQuery = mainQuery.order('price', { ascending: false });
       break;
-    case "name-asc":
-      mainQuery = mainQuery.order("name", { ascending: true });
+    case 'name-asc':
+      mainQuery = mainQuery.order('name', { ascending: true });
       break;
-    case "name-desc":
-      mainQuery = mainQuery.order("name", { ascending: false });
+    case 'name-desc':
+      mainQuery = mainQuery.order('name', { ascending: false });
       break;
     default:
-      mainQuery = mainQuery.order("created_at", { ascending: false });
+      mainQuery = mainQuery.order('created_at', { ascending: false });
   }
 
-  const { data, error } = await mainQuery;
+  const [{ count }, { data, error }] = await Promise.all([
+    countQuery.single(),
+    mainQuery
+  ]);
 
   if (error) throw error;
 
+  const total = count || 0;
+
   return {
     products: data as ProductWithDetails[],
-    hasMore: to + 1 < count,
+    hasMore: from + PRODUCTS_PER_PAGE < total
   };
 }
 
 export function useProducts(initialData?: ProductWithDetails[]) {
-  const queryClient = useQueryClient();
   const { selectedCategories, priceRange, sortBy } = useFilterStore();
 
-  // Crear una key única para la query que incluya todos los filtros aplicados
-  const queryKey = ['products', { 
-    categories: selectedCategories, 
-    priceRange,  // Ahora usamos el rango de precios aplicado
-    sortBy 
-  }];
-
   return useInfiniteQuery({
-    queryKey,
+    queryKey: ['products', { selectedCategories, priceRange, sortBy }],
     queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam, {
       categories: selectedCategories,
-      priceRange,  // Usamos el rango de precios aplicado
+      priceRange,
       sortBy
     }),
     initialPageParam: 1,
@@ -136,7 +105,7 @@ export function useProducts(initialData?: ProductWithDetails[]) {
           pageParams: [1],
         }
       : undefined,
-    staleTime: 0, // Hacer que la query se considere obsoleta inmediatamente
+    staleTime: 0,
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }

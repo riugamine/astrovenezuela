@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFilterStore } from "@/lib/store/useFilterStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -8,13 +9,17 @@ import { faSort } from "@fortawesome/free-solid-svg-icons";
 export function SortFilter() {
   const { sortBy, setSortBy } = useFilterStore();
 
+  const handleSortChange = useCallback((value: string) => {
+    setSortBy(value as any);
+  }, [setSortBy]);
+
   return (
     <div className="space-y-4 bg-card rounded-lg p-4 border shadow-sm">
       <div className="flex items-center gap-2">
         <FontAwesomeIcon icon={faSort} className="text-muted-foreground" />
         <h3 className="font-semibold text-lg">Ordenar por</h3>
       </div>
-      <Select value={sortBy || undefined} onValueChange={setSortBy}>
+      <Select value={sortBy || undefined} onValueChange={handleSortChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Seleccionar orden" />
         </SelectTrigger>

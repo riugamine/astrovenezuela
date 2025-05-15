@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Category } from "@/lib/types/database.types";
@@ -42,11 +43,20 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
     priceRange 
   } = useFilterStore();
   
-  const { mainCategories, subcategoriesMap } = organizeCategories(categories);
+  const { mainCategories, subcategoriesMap } = useMemo(
+    () => organizeCategories(categories),
+    [categories]
+  );
 
-  const priceRangeChanged = 
-    tempPriceRange[0] !== priceRange[0] || 
-    tempPriceRange[1] !== priceRange[1];
+  const priceRangeChanged = useMemo(
+    () => tempPriceRange[0] !== priceRange[0] || tempPriceRange[1] !== priceRange[1],
+    [tempPriceRange, priceRange]
+  );
+
+  const showResetButton = useMemo(
+    () => selectedCategories.length > 0 || priceRange[0] !== 0 || priceRange[1] !== 200,
+    [selectedCategories, priceRange]
+  );
 
   return (
     <div className="space-y-6 bg-card rounded-lg p-4 border shadow-sm">

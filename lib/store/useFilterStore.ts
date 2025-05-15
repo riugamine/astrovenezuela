@@ -15,12 +15,12 @@ interface FilterState {
   resetFilters: () => void;
 }
 
-export const useFilterStore = create<FilterState>((set) => ({
+export const useFilterStore = create<FilterState>()((set, get) => ({
   selectedCategories: [],
   sortBy: null,
   priceRange: [0, 200],
   tempPriceRange: [0, 200],
-  setSelectedCategories: (categories) => set({ selectedCategories: categories }),
+  setSelectedCategories: (categories) => set({ selectedCategories: [...categories] }),
   toggleCategory: (categoryId) =>
     set((state) => ({
       selectedCategories: state.selectedCategories.includes(categoryId)
@@ -28,8 +28,8 @@ export const useFilterStore = create<FilterState>((set) => ({
         : [...state.selectedCategories, categoryId],
     })),
   setSortBy: (option) => set({ sortBy: option }),
-  setTempPriceRange: (range) => set({ tempPriceRange: range }),
-  applyPriceRange: () => set((state) => ({ priceRange: state.tempPriceRange })),
+  setTempPriceRange: (range) => set({ tempPriceRange: [...range] as [number, number] }),
+  applyPriceRange: () => set((state) => ({ priceRange: [...state.tempPriceRange] as [number, number] })),
   resetFilters: () => set({ 
     selectedCategories: [], 
     sortBy: null, 
