@@ -6,10 +6,12 @@ interface FilterState {
   selectedCategories: string[];
   sortBy: SortOption | null;
   priceRange: [number, number];
+  tempPriceRange: [number, number];
   setSelectedCategories: (categories: string[]) => void;
   toggleCategory: (categoryId: string) => void;
   setSortBy: (option: SortOption) => void;
-  setPriceRange: (range: [number, number]) => void;
+  setTempPriceRange: (range: [number, number]) => void;
+  applyPriceRange: () => void;
   resetFilters: () => void;
 }
 
@@ -17,6 +19,7 @@ export const useFilterStore = create<FilterState>((set) => ({
   selectedCategories: [],
   sortBy: null,
   priceRange: [0, 200],
+  tempPriceRange: [0, 200],
   setSelectedCategories: (categories) => set({ selectedCategories: categories }),
   toggleCategory: (categoryId) =>
     set((state) => ({
@@ -25,6 +28,12 @@ export const useFilterStore = create<FilterState>((set) => ({
         : [...state.selectedCategories, categoryId],
     })),
   setSortBy: (option) => set({ sortBy: option }),
-  setPriceRange: (range) => set({ priceRange: range }),
-  resetFilters: () => set({ selectedCategories: [], sortBy: null, priceRange: [0, 200] }),
+  setTempPriceRange: (range) => set({ tempPriceRange: range }),
+  applyPriceRange: () => set((state) => ({ priceRange: state.tempPriceRange })),
+  resetFilters: () => set({ 
+    selectedCategories: [], 
+    sortBy: null, 
+    priceRange: [0, 200],
+    tempPriceRange: [0, 200]
+  }),
 }));

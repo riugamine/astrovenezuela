@@ -111,10 +111,10 @@ export function useProducts(initialData?: ProductWithDetails[]) {
   const queryClient = useQueryClient();
   const { selectedCategories, priceRange, sortBy } = useFilterStore();
 
-  // Crear una key única para la query que incluya todos los filtros
+  // Crear una key única para la query que incluya todos los filtros aplicados
   const queryKey = ['products', { 
     categories: selectedCategories, 
-    priceRange, 
+    priceRange,  // Ahora usamos el rango de precios aplicado
     sortBy 
   }];
 
@@ -122,7 +122,7 @@ export function useProducts(initialData?: ProductWithDetails[]) {
     queryKey,
     queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam, {
       categories: selectedCategories,
-      priceRange,
+      priceRange,  // Usamos el rango de precios aplicado
       sortBy
     }),
     initialPageParam: 1,

@@ -32,8 +32,21 @@ function organizeCategories(categories: Category[]) {
 }
 
 export function CategoryFilter({ categories }: CategoryFilterProps) {
-  const { selectedCategories, toggleCategory, resetFilters, priceRange, setPriceRange } = useFilterStore();
+  const { 
+    selectedCategories, 
+    toggleCategory, 
+    resetFilters, 
+    tempPriceRange, 
+    setTempPriceRange,
+    applyPriceRange,
+    priceRange 
+  } = useFilterStore();
+  
   const { mainCategories, subcategoriesMap } = organizeCategories(categories);
+
+  const priceRangeChanged = 
+    tempPriceRange[0] !== priceRange[0] || 
+    tempPriceRange[1] !== priceRange[1];
 
   return (
     <div className="space-y-6 bg-card rounded-lg p-4 border shadow-sm">
@@ -59,16 +72,26 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
       <div className="space-y-4">
         <h4 className="text-sm font-medium">Rango de Precio</h4>
         <Slider
-          defaultValue={priceRange}
+          defaultValue={tempPriceRange}
           max={200}
           step={10}
-          value={priceRange}
-          onValueChange={(value) => setPriceRange(value as [number, number])}
+          value={tempPriceRange}
+          onValueChange={(value) => setTempPriceRange(value as [number, number])}
           className="w-full"
         />
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>${priceRange[0]}</span>
-          <span>${priceRange[1]}</span>
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            <span>${tempPriceRange[0]}</span> - <span>${tempPriceRange[1]}</span>
+          </div>
+          {priceRangeChanged && (
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={applyPriceRange}
+            >
+              Aplicar
+            </Button>
+          )}
         </div>
       </div>
 
