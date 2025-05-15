@@ -81,8 +81,16 @@ const compressImage = async (file: File): Promise<File> => {
  * @returns URL pública de la imagen
  */
 const uploadImageToSupabase = async (file: File, path: string): Promise<string> => {
+  // Validate file size
   if (file.size > 10 * 1024 * 1024) {
-    throw new Error('La imagen no debe superar los 10MB');
+    toast.error('La imagen no debe superar los 10MB');
+    return Promise.reject('File too large');
+  }
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    toast.error('El archivo debe ser una imagen (JPG, PNG, etc)');
+    return Promise.reject('Invalid file type');
   }
 
   try {
@@ -107,8 +115,8 @@ const uploadImageToSupabase = async (file: File, path: string): Promise<string> 
 
     return publicUrl;
   } catch (error) {
-    console.error('Error en la compresión/subida:', error);
-    throw error;
+    toast.error('Error al procesar la imagen');
+    return Promise.reject(error);
   }
 };
 

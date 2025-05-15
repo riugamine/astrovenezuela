@@ -1,101 +1,146 @@
 'use client'
-import { Product, ProductDetailImage, ProductVariant } from "@/lib/types/database.types";
+
+import { Database } from "@/lib/types/database.types";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye } from "@fortawesome/free-solid-svg-icons";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
-import { ElementType } from "react";
+import { useState, memo } from "react";
+import { cn } from "@/lib/utils";
+
+type Tables = Database['public']['Tables'];
+type ProductRow = Tables['products']['Row'];
+type ProductImageRow = Tables['product_detail_images']['Row'];
+type ProductVariantRow = Tables['product_variants']['Row'];
+
+type ProductWithDetails = ProductRow & {
+  product_images?: ProductImageRow[];
+  variants?: ProductVariantRow[];
+};
 
 interface ProductCardProps {
-  product: Product & {
-    product_images?: ProductDetailImage[];
-    variants?: ProductVariant[];
-  };
+  product: ProductWithDetails;
 }
 
-type CardWrapperProps = {
-  children: React.ReactNode;
-  className?: string;
-} & ({
-  href: string;
-} | {
-  href?: never;
-});
-
-export function ProductCard({ product }: ProductCardProps) {
+const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Get the display image based on hover state
   const displayImage = isHovered && product.product_images?.[0]
     ? product.product_images[0].image_url
-    : product.main_image_url || "/placeholder-product.jpg";
+    : product.main_image_url;
 
-  // Calculate if product has stock
-  const hasStock = product.variants?.some(variant => variant.stock > 0) ?? true;
-
-  // Get available sizes
   const availableSizes = product.variants
     ?.filter(variant => variant.stock > 0)
-    ?.map(variant => variant.size) || [];
+    .map(variant => variant.size) ?? [];
 
-  const CardWrapper = hasStock ? Link : 'div' as ElementType;
-  const cardProps = hasStock ? { href: `/products/${product.slug}` } : {} as CardWrapperProps;
+  const hasStock = availableSizes.length > 0;
+
+  if (!hasStock) {
+    return (
+      <div className="opacity-70 cursor-not-allowed">
+        <ProductCardContent
+          product={product}
+          displayImage={displayImage}
+          availableSizes={availableSizes}
+          hasStock={hasStock}
+          onHover={setIsHovered}
+        />
+      </div>
+    );
+  }
 
   return (
-    <CardWrapper {...cardProps} className={`group block h-full ${!hasStock ? 'cursor-not-allowed opacity-70' : ''}`}>
-      <Card className="overflow-hidden border-none shadow-sm hover:shadow-md transition-shadow duration-300 h-full">
-        <CardContent className="p-0">
-          <div 
-            className="relative aspect-square"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <Image
-              src={displayImage}
-              alt={product.name}
-              fill
-              className={`object-cover transition-transform duration-300 ${hasStock ? 'group-hover:scale-105' : ''}`}
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            />
+    <Link 
+      href={`/products/${product.slug}`}
+      className="block group transition-opacity duration-200 hover:opacity-95"
+    >
+      <ProductCardContent
+        product={product}
+        displayImage={displayImage}
+        availableSizes={availableSizes}
+        hasStock={hasStock}
+        onHover={setIsHovered}
+      />
+    </Link>
+  );
+});
 
-            {!hasStock && (
-              <div className="absolute top-2 right-2">
-                <Badge variant="destructive" className="text-xs">
-                  Agotado
-                </Badge>
-              </div>
+interface ProductCardContentProps {
+  product: ProductWithDetails;
+  displayImage: string;
+  availableSizes: string[];
+  hasStock: boolean;
+  onHover: (isHovered: boolean) => void;
+}
+
+const ProductCardContent = memo(function ProductCardContent({
+  product,
+  displayImage,
+  availableSizes,
+  hasStock,
+  onHover
+}: ProductCardContentProps) {
+  return (
+    <Card className="overflow-hidden border-none h-full transition-all duration-300 hover:shadow-lg">
+      <CardContent className="p-0">
+        <div 
+          className="relative aspect-square bg-muted"
+          onMouseEnter={() => onHover(true)}
+          onMouseLeave={() => onHover(false)}
+        >
+          <Image
+            src={displayImage}
+            alt={product.name}
+            fill
+            className={cn(
+              'object-cover transition-transform duration-500',
+              hasStock && 'group-hover:scale-105'
             )}
-          </div>
-          
-          <div className="p-3 sm:p-4">
-            <h3 className={`font-medium text-sm sm:text-base ${hasStock ? 'hover:text-primary' : ''} transition-colors line-clamp-2`}>
-              {product.name}
-            </h3>
-            <p className="font-semibold mt-1 sm:mt-2 text-base sm:text-lg text-primary">
-              ${product.price.toLocaleString('es-VE')}
-            </p>
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            priority={false}
+          />
 
-            {/* Available sizes */}
-            {availableSizes.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
+          {!hasStock && (
+            <div className="absolute top-2 right-2">
+              <Badge variant="destructive" className="text-xs font-medium">
+                Agotado
+              </Badge>
+            </div>
+          )}
+
+          {hasStock && availableSizes.length > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/40 backdrop-blur-sm 
+                          transform translate-y-full transition-transform duration-300
+                          group-hover:translate-y-0">
+              <div className="flex flex-wrap gap-1 justify-center">
                 {availableSizes.map(size => (
                   <Badge 
                     key={size} 
-                    variant="outline"
-                    className="text-xs"
+                    variant="secondary"
+                    className="text-xs bg-white/90 text-black"
                   >
                     {size}
                   </Badge>
                 ))}
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </CardWrapper>
+            </div>
+          )}
+        </div>
+        
+        <div className="p-3 space-y-2">
+          <h3 className={cn(
+            'font-medium line-clamp-2 text-sm sm:text-base transition-colors',
+            hasStock && 'group-hover:text-primary'
+          )}>
+            {product.name}
+          </h3>
+          <p className="font-semibold text-primary text-base sm:text-lg">
+            ${product.price.toLocaleString('es-VE')}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
-}
+});
+
+export { ProductCard };

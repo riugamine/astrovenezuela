@@ -1,50 +1,44 @@
+import { supabaseClient } from "@/lib/supabase/client";
+import { Database } from "@/lib/types/database.types";
+
+type Tables = Database['public']['Tables'];
+type ProductRow = Tables['products']['Row'];
+type ProductImageRow = Tables['product_detail_images']['Row'];
+type ProductVariantRow = Tables['product_variants']['Row'];
+
+export type ProductWithDetails = ProductRow & {
+  product_images: ProductImageRow[];
+  variants: ProductVariantRow[];
+};
+
+export const PRODUCTS_PER_PAGE = 12;
+
 /**
- * Datos estáticos para los productos
+ * Fetches paginated products with their details
+ * @param page Current page number (starts from 1)
+ * @returns Promise with products and hasMore flag
  */
-export const products = [
-  {
-    id: '1',
-    name: 'Camiseta Sport Pro',
-    slug: 'camiseta-sport-pro',
-    description: 'Camiseta deportiva de alto rendimiento con tecnología de secado rápido',
-    price: 29.99,
-    reference_number: 'SP-001',
-    category_id: '1',
-    main_image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/camiseta-sport-pro.jpg',
-    detail_images: [
-      {
-        id: '1-1',
-        image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/camiseta-sport-pro-detail-1.jpg',
-        order_index: 1
-      },
-      {
-        id: '1-2',
-        image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/camiseta-sport-pro-detail-2.jpg',
-        order_index: 2
-      }
-    ],
-    created_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: 'Shorts Training Elite',
-    slug: 'shorts-training-elite',
-    description: 'Shorts deportivos con tejido transpirable y bolsillos laterales',
-    price: 34.99,
-    reference_number: 'SP-002',
-    category_id: '1',
-    image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/shorts-training-elite.jpg',
-    created_at: new Date().toISOString()
-  },
-  {
-    id: '3',
-    name: 'Medias Deportivas Pro',
-    slug: 'medias-deportivas-pro',
-    description: 'Medias deportivas con soporte de arco y tecnología anti-ampollas',
-    price: 12.99,
-    reference_number: 'SP-003',
-    category_id: '2',
-    image_url: 'https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/products/medias-deportivas-pro.jpg',
-    created_at: new Date().toISOString()
-  }
-];
+export async function fetchProducts(page: number) {
+  const from = (page - 1) * PRODUCTS_PER_PAGE;
+  const to = from + PRODUCTS_PER_PAGE - 1;
+
+  const { data, error, count } = await supabaseClient
+    .from("products")
+    .select(
+      `
+      *,
+      product_images (*),
+      variants:product_variants (*)
+    `,
+      { count: "exact" }
+    )
+    .range(from, to)
+    .eq("is_active", true);
+
+  if (error) throw error;
+
+  return {
+    products: data as ProductWithDetails[],
+    hasMore: count ? from + PRODUCTS_PER_PAGE < count : false,
+  };
+}

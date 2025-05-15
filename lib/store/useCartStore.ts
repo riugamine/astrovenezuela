@@ -16,9 +16,11 @@ interface CartItem {
 interface CartStore {
   items: CartItem[];
   totalItems: number;
+  orderNotes: string;
   addItem: (item: CartItem) => void;
   removeItem: (variant_id: string) => void;
   updateQuantity: (variant_id: string, quantity: number) => void;
+  setOrderNotes: (notes: string) => void;
   clearCart: () => void;
 }
 
@@ -27,6 +29,7 @@ export const useCartStore = create<CartStore>()(
     (set) => ({
       items: [],
       totalItems: 0,
+      orderNotes: '',
       addItem: (item) =>
         set((state) => {
           const existingItem = state.items.find(
@@ -40,6 +43,7 @@ export const useCartStore = create<CartStore>()(
             );
 
             return {
+              ...state,
               items: state.items.map((i) =>
                 i.variant_id === item.variant_id
                   ? { ...i, quantity: newQuantity }
@@ -51,12 +55,14 @@ export const useCartStore = create<CartStore>()(
           }
 
           return {
+            ...state,
             items: [...state.items, item],
             totalItems: state.totalItems + item.quantity,
           };
         }),
       removeItem: (variant_id) =>
         set((state) => ({
+          ...state,
           items: state.items.filter((i) => i.variant_id !== variant_id),
           totalItems:
             state.totalItems -
@@ -70,6 +76,7 @@ export const useCartStore = create<CartStore>()(
           const newQuantity = Math.min(Math.max(1, quantity), item.max_stock);
 
           return {
+            ...state,
             items: state.items.map((i) =>
               i.variant_id === variant_id
                 ? { ...i, quantity: newQuantity }
@@ -79,7 +86,8 @@ export const useCartStore = create<CartStore>()(
               state.totalItems - item.quantity + newQuantity,
           };
         }),
-      clearCart: () => set({ items: [], totalItems: 0 }),
+      setOrderNotes: (notes) => set((state) => ({ ...state, orderNotes: notes })),
+      clearCart: () => set({ items: [], totalItems: 0, orderNotes: '' }),
     }),
     {
       name: 'cart-storage',

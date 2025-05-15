@@ -25,7 +25,9 @@ import {
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { toast } from "sonner";
-interface PaymentMethod {
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { redirect } from "next/navigation";
+interface PaymentMethodUI {
   id: string;
   name: string;
   description: string;
@@ -57,7 +59,7 @@ const shippingMethods: ShippingMethod[] = [
   },
 ];
 
-const paymentMethods: PaymentMethod[] = [
+const paymentMethods: PaymentMethodUI[] = [
   {
     id: "pago_movil",
     name: "Pago Móvil",
@@ -70,6 +72,8 @@ const paymentMethods: PaymentMethod[] = [
 ];
 
 export default function CheckoutPage() {
+  const { user }= useAuthStore();
+  const { orderNotes } = useCartStore();
   const { items, totalItems, clearCart } = useCartStore();
   const [shippingMethod, setShippingMethod] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<string>("");
@@ -115,17 +119,19 @@ export default function CheckoutPage() {
       }
 
       // Create order with proper error handling
+      // Update the order creation part in handleSubmit function
       const order = await createOrder({
+        user_id: user?.id || "",
         total_amount: total,
-        shipping_address: customerInfo.address || customerInfo.agencyAddress || "",
+        shipping_address: customerInfo.address || customerInfo.agencyAddress || "retiro en tienda",
         payment_method: paymentMethod,
         whatsapp_number: customerInfo.phone,
         items: items.map((item) => ({
           product_id: item.id,
           variant_id: item.variant_id,
           quantity: item.quantity,
-          price: item.price,
-        })),
+          price: item.price
+        }))
       });
 
       // Format WhatsApp message
@@ -145,6 +151,8 @@ export default function CheckoutPage() {
       const phoneNumber = "584243091410";
       
       // Create a more structured message
+      // In the handleSubmit function, update the message formatting:
+
       const message = [
         "🛍️ NUEVO PEDIDO",
         "",
@@ -158,9 +166,12 @@ export default function CheckoutPage() {
         "📦 PRODUCTOS",
         formattedItems,
         "",
+        "💭 NOTAS ESPECIALES",
+        orderNotes ? orderNotes : "Sin notas especiales",
+        "",
         "💰 RESUMEN",
         `Subtotal: $${subtotal.toFixed(2)}`,
-        shipping > 0 ? `Envío: $${shipping.toFixed(2)}` : "",
+        shipping > 0 ? `Envío: $${shipping.toFixed(2)}` : "Envío: A calcular según zona",
         `Total: $${total.toFixed(2)}`,
         "",
         "📋 DETALLES DE ENVÍO Y PAGO",
@@ -175,7 +186,7 @@ export default function CheckoutPage() {
 
       // Show success message
       toast.success("Pedido creado exitosamente");
-
+      redirect(`/cart/success?order_id=${order.id}`);
       // Handle long messages
       const encodedMessage = encodeURIComponent(message);
       if (encodedMessage.length > 4000) {
@@ -418,7 +429,7 @@ export default function CheckoutPage() {
                     fill
                     className="object-cover"
                   />
-                  <span className="absolute -top-2 -right-2 bg-gray-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                  <span className="absolute top-1 right-1 bg-gray-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
                     {item.quantity}
                   </span>
                 </div>

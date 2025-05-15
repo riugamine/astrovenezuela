@@ -6,13 +6,12 @@ import { useCartStore } from "@/lib/store/useCartStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
-import { useState } from "react";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, totalItems } = useCartStore();
-  const [instructions, setInstructions] = useState("");
+  const { items, removeItem, updateQuantity, totalItems, orderNotes, setOrderNotes } = useCartStore();
 
   const total = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -47,53 +46,59 @@ export default function CartPage() {
                     className="object-cover rounded-md"
                   />
                 </Link>
-                {/* ... rest of the item display ... */}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    updateQuantity(
-                      item.variant_id,
-                      Math.max(1, item.quantity - 1)
-                    )
-                  }
-                >
-                  <FontAwesomeIcon icon={faMinus} className="h-4 w-4" />
-                </Button>
-                <Input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    updateQuantity(
-                      item.variant_id,
-                      parseInt(e.target.value) || 1
-                    )
-                  }
-                  className="w-20 text-center"
-                  min={1}
-                  max={item.max_stock}
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    updateQuantity(
-                      item.variant_id,
-                      Math.min(item.quantity + 1, item.max_stock)
-                    )
-                  }
-                  disabled={item.quantity >= item.max_stock}
-                >
-                  <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-auto text-destructive"
-                  onClick={() => removeItem(item.variant_id)}
-                >
-                  <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                </Button>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-base truncate">{item.name}</h3>
+                  <p className="text-sm text-muted-foreground">Talla: {item.size}</p>
+                  <p className="font-semibold mt-1">${item.price.toLocaleString('es-VE')}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      updateQuantity(
+                        item.variant_id,
+                        Math.max(1, item.quantity - 1)
+                      )
+                    }
+                  >
+                    <FontAwesomeIcon icon={faMinus} className="h-4 w-4" />
+                  </Button>
+                  <Input
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      updateQuantity(
+                        item.variant_id,
+                        parseInt(e.target.value) || 1
+                      )
+                    }
+                    className="w-20 text-center"
+                    min={1}
+                    max={item.max_stock}
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      updateQuantity(
+                        item.variant_id,
+                        Math.min(item.quantity + 1, item.max_stock)
+                      )
+                    }
+                    disabled={item.quantity >= item.max_stock}
+                  >
+                    <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto text-destructive"
+                    onClick={() => removeItem(item.variant_id)}
+                  >
+                    <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -105,7 +110,7 @@ export default function CartPage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Envío</span>
-                  <span>Gratis</span>
+                  <span className="text-muted-foreground">Costos según zona</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total Estimado</span>
@@ -114,11 +119,13 @@ export default function CartPage() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium">Agregar nota de pedido</p>
+                <Label htmlFor="orderNotes">Nota especial para el pedido</Label>
                 <Textarea
-                  placeholder="Ordene instrucciones especiales"
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
+                  id="orderNotes"
+                  placeholder="Instrucciones especiales para tu pedido"
+                  value={orderNotes}
+                  onChange={(e) => setOrderNotes(e.target.value)}
+                  className="resize-none"
                 />
               </div>
 
@@ -127,7 +134,7 @@ export default function CartPage() {
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
-                Impuesto incluido. Envío calculado la página de pago.
+                Impuesto incluido. Envío calculado en la página de pago.
               </p>
             </div>
           </div>

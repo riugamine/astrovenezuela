@@ -35,7 +35,7 @@ export function OrderList({ onSelectOrder }: OrderListProps) {
           profiles:user_id (full_name, email)
         `)
         .order('created_at', { ascending: false });
-
+          console.log(data);
       if (error) throw error;
       return data;
     },

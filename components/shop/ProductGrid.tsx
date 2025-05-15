@@ -2,21 +2,28 @@
 
 'use client';
 
-import { Product, ProductDetailImage, ProductVariant } from "@/lib/types/database.types";
+import { Database } from "@/lib/types/database.types";
 import { ProductCard } from "./ProductCard";
-import { Badge } from "@/components/ui/badge";
 import { useFilteredProducts } from "@/lib/hooks/useFilteredProducts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { memo } from 'react';
+
+type Tables = Database['public']['Tables'];
+type ProductRow = Tables['products']['Row'];
+type ProductImageRow = Tables['product_detail_images']['Row'];
+type ProductVariantRow = Tables['product_variants']['Row'];
+
+type ProductWithDetails = ProductRow & {
+  product_images: ProductImageRow[];
+  variants?: ProductVariantRow[];
+};
 
 interface ProductGridProps {
-  products?: (Product & {
-    product_images: ProductDetailImage[];
-    variants?: ProductVariant[];
-  })[];
+  products?: ProductWithDetails[];
 }
 
 // Skeleton component for loading state
-export function ProductGridSkeleton() {
+const ProductGridSkeleton = memo(function ProductGridSkeleton() {
   return (
     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       {Array.from({ length: 8 }).map((_, i) => (
@@ -28,12 +35,11 @@ export function ProductGridSkeleton() {
       ))}
     </div>
   );
-}
+});
 
-export function ProductGrid({ products: initialProducts }: ProductGridProps) {
+const ProductGrid = memo(function ProductGrid({ products: initialProducts }: ProductGridProps) {
   const { data: filteredProducts, isLoading, error } = useFilteredProducts();
   
-  // Use provided products or filtered products
   const products = initialProducts || filteredProducts;
 
   if (error) {
@@ -59,33 +65,12 @@ export function ProductGrid({ products: initialProducts }: ProductGridProps) {
   return (
     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
-        <div key={product.id} className="group relative flex flex-col">
-          <ProductCard product={product} />
-          
-          {/* Tallas disponibles */}
-          {product.variants && product.variants.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {product.variants
-                .filter(variant => variant.stock > 0)
-                .map(variant => (
-                  <Badge 
-                    key={variant.id} 
-                    variant="outline"
-                    className="text-xs"
-                  >
-                    {variant.size}
-                  </Badge>
-                ))}
-            </div>
-          )}
-        </div>
+        <ProductCard key={product.id} product={product} />
       ))}
     </div>
   );
-}
+});
 
-// Create a compound component
-ProductGrid.Skeleton = ProductGridSkeleton;
 
-// Export the component with its Skeleton
-export { ProductGrid as default };
+// Export the component
+export { ProductGrid, ProductGridSkeleton };
