@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, memo } from 'react';
+import { useEffect, memo, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { ProductWithDetails } from '@/lib/data/products';
 import { ProductCard } from './ProductCard';
 import { ProductGridSkeleton } from './ProductGrid';
 import { useProducts } from '@/lib/hooks/useProducts';
+import { useFilterStore } from '@/lib/store/useFilterStore';
 
 interface InfiniteProductsGridProps {
   initialProducts?: ProductWithDetails[];
@@ -28,22 +29,32 @@ export function InfiniteProductsGrid({ initialProducts }: InfiniteProductsGridPr
     rootMargin: '100px',
   });
 
+  const { selectedCategories, priceRange, sortBy } = useFilterStore();
+
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     status,
-    error
+    error,
+    isLoading,
+    isFetching,
   } = useProducts(initialProducts);
 
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
+  const handleFetchNextPage = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  if (!data) {
+  useEffect(() => {
+    if (inView) {
+      handleFetchNextPage();
+    }
+  }, [inView, handleFetchNextPage]);
+
+  if (isLoading) {
     return <ProductGridSkeleton />;
   }
 
@@ -55,18 +66,24 @@ export function InfiniteProductsGrid({ initialProducts }: InfiniteProductsGridPr
     );
   }
 
-  const products = data.pages.flatMap((page) => page.products);
+  const products = data?.pages.flatMap((page) => page.products) || [];
 
   if (!products.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No hay productos disponibles
+        No hay productos disponibles con los filtros seleccionados
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {isFetching && !isFetchingNextPage && (
+        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
+          <ProductGridSkeleton />
+        </div>
+      )}
+      
       <ProductList products={products} />
       
       <div ref={ref} className="w-full py-8">

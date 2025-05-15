@@ -1,51 +1,114 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { supabaseClient } from '@/lib/supabase/client';
 import { ProductWithDetails } from '@/lib/data/products';
+import { useFilterStore } from '@/lib/store/useFilterStore';
 
 export const PRODUCTS_PER_PAGE = 12;
 
-async function fetchProductsPage(page: number) {
-  // First, get the total count of products
-  const { count } = await supabaseClient
+interface FetchProductsOptions {
+  categories: string[];
+  priceRange: [number, number];
+  sortBy: string | null;
+}
+
+async function fetchProductsPage(page: number, options: FetchProductsOptions) {
+  const { categories, priceRange, sortBy } = options;
+  
+  // Construir la query base
+  let query = supabaseClient
     .from("products")
     .select("*", { count: "exact", head: true })
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .gte("price", priceRange[0])
+    .lte("price", priceRange[1]);
 
-  if (!count) return { products: [], hasMore: false };
-
-  const from = (page - 1) * PRODUCTS_PER_PAGE;
-  // Ensure 'to' doesn't exceed the total count
-  const to = Math.min(from + PRODUCTS_PER_PAGE - 1, count - 1);
-
-  // Only fetch if we have a valid range
-  if (from <= to) {
-    const { data, error } = await supabaseClient
-      .from("products")
-      .select(
-        `
-        *,
-        product_images (*),
-        variants:product_variants (*)
-      `
-      )
-      .range(from, to)
-      .eq("is_active", true);
-
-    if (error) throw error;
-
-    return {
-      products: data as ProductWithDetails[],
-      hasMore: to + 1 < count,
-    };
+  // Aplicar filtro de categorías solo si hay categorías seleccionadas
+  if (categories.length > 0) {
+    query = query.in("category_id", categories);
   }
 
-  return { products: [], hasMore: false };
+  // Obtener el conteo total
+  const { count } = await query;
+
+  if (!count || count === 0) {
+    return { products: [], hasMore: false };
+  }
+
+  // Calcular el rango para la paginación
+  const from = (page - 1) * PRODUCTS_PER_PAGE;
+  const to = Math.min(from + PRODUCTS_PER_PAGE - 1, count - 1);
+
+  // Si el rango no es válido, retornar array vacío
+  if (from >= count) {
+    return { products: [], hasMore: false };
+  }
+
+  // Construir la query principal
+  let mainQuery = supabaseClient
+    .from("products")
+    .select(
+      `
+      *,
+      product_images (*),
+      variants:product_variants (*)
+    `
+    )
+    .eq("is_active", true)
+    .gte("price", priceRange[0])
+    .lte("price", priceRange[1])
+    .range(from, to);
+
+  // Aplicar filtro de categorías solo si hay categorías seleccionadas
+  if (categories.length > 0) {
+    mainQuery = mainQuery.in("category_id", categories);
+  }
+
+  // Aplicar ordenamiento
+  switch (sortBy) {
+    case "price-asc":
+      mainQuery = mainQuery.order("price", { ascending: true });
+      break;
+    case "price-desc":
+      mainQuery = mainQuery.order("price", { ascending: false });
+      break;
+    case "name-asc":
+      mainQuery = mainQuery.order("name", { ascending: true });
+      break;
+    case "name-desc":
+      mainQuery = mainQuery.order("name", { ascending: false });
+      break;
+    default:
+      mainQuery = mainQuery.order("created_at", { ascending: false });
+  }
+
+  const { data, error } = await mainQuery;
+
+  if (error) throw error;
+
+  return {
+    products: data as ProductWithDetails[],
+    hasMore: to + 1 < count,
+  };
 }
 
 export function useProducts(initialData?: ProductWithDetails[]) {
+  const queryClient = useQueryClient();
+  const { selectedCategories, priceRange, sortBy } = useFilterStore();
+
+  // Crear una key única para la query que incluya todos los filtros
+  const queryKey = ['products', { 
+    categories: selectedCategories, 
+    priceRange, 
+    sortBy 
+  }];
+
   return useInfiniteQuery({
-    queryKey: ['products'],
-    queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam),
+    queryKey,
+    queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam, {
+      categories: selectedCategories,
+      priceRange,
+      sortBy
+    }),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage.hasMore) return undefined;
@@ -57,7 +120,7 @@ export function useProducts(initialData?: ProductWithDetails[]) {
           pageParams: [1],
         }
       : undefined,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // Hacer que la query se considere obsoleta inmediatamente
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }
