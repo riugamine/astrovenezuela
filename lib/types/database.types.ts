@@ -4,7 +4,7 @@ export interface Order{
   status: OrderStatus;
   total_amount: number;
   shipping_address: string;
-  payment_method: PaymentMethod;
+  payment_method: string;
   items: OrderItem[];
 }
 export type OrderStatus = 'created' | 'pending' | 'completed' | 'canceled';
@@ -15,11 +15,6 @@ export interface ShippingMethod {
   price: number;
 }
 
-export interface PaymentMethod {
-  id: string;
-  name: string;
-  description: string;
-}
 
 export interface CustomerInfo {
   name: string;
@@ -117,6 +112,16 @@ export type Database = {
         Row: Profile;
         Insert: Omit<Profile, 'created_at'>;
         Update: Partial<Omit<Profile, 'created_at'>>;
+      };
+      orders: {
+        Row: Order;
+        Insert: Omit<Order, 'id' | 'items'>;
+        Update: Partial<Omit<Order, 'id' | 'items'>>;
+      };
+      order_items: {
+        Row: OrderItem;
+        Insert: Omit<OrderItem, 'id'>;
+        Update: Partial<Omit<OrderItem, 'id'>>;
       };
     };
   };

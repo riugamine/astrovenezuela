@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,18 @@ import {
 import Image from "next/image";
 import { useCustomerStore } from "@/lib/store/useCustomerStore";
 import { PlacesAutocomplete } from "@/components/ui/places-autocomplete";
-import { createOrder } from '@/lib/data/orders';
-import { Order, PaymentMethod, ShippingMethod, CustomerInfo} from "@/lib/types/database.types";
-
-
+import { createOrder } from "@/lib/data/orders";
+import {
+  ShippingMethod,
+} from "@/lib/types/database.types";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { isValidPhoneNumber } from "react-phone-number-input";
+import { toast } from "sonner";
+interface PaymentMethod {
+  id: string;
+  name: string;
+  description: string;
+}
 const shippingMethods: ShippingMethod[] = [
   {
     id: "pickup",
@@ -62,18 +70,10 @@ const paymentMethods: PaymentMethod[] = [
 ];
 
 export default function CheckoutPage() {
-  const { items, totalItems } = useCartStore();
+  const { items, totalItems, clearCart } = useCartStore();
   const [shippingMethod, setShippingMethod] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<string>("");
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    name: "",
-    lastName: "",
-    phone: "",
-    email: "",
-    address: "",
-    dni: "",
-    agencyAddress: "",
-  });
+  const { customerInfo, setCustomerInfo } = useCustomerStore();
 
   const subtotal = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -83,56 +83,132 @@ export default function CheckoutPage() {
     shippingMethods.find((m) => m.id === shippingMethod)?.price || 0;
   const total = subtotal + shipping;
 
-  const handleSubmit = () => {
-    // Formatear el mensaje para WhatsApp
-    const formattedItems = items
-      .map(
-        (item) =>
-          `(${item.quantity}) ${item.name}\n` +
-          `Talla: ${item.size}\n` +
-          `Precio: $${item.price.toLocaleString("es-VE")}`
-      )
-      .join("\n\n");
+  const handleSubmit = async () => {
+    try {
+      // Validate required fields
+      if (!customerInfo.email || !customerInfo.name || !customerInfo.phone || !customerInfo.lastName) {
+        toast.error("Por favor complete todos los campos requeridos");
+        return;
+      }
 
-    const selectedPayment = paymentMethods.find(
-      (m) => m.id === paymentMethod
-    )?.name;
-    const selectedShipping = shippingMethods.find(
-      (m) => m.id === shippingMethod
-    )?.name;
-    // Número de WhatsApp de la tienda
-    const phoneNumber = "584243091410";
-    // Formato más compacto del mensaje
-    const message = `PEDIDO\n${customerInfo.name} - ${customerInfo.phone}\n${
-      customerInfo.email
-    }\n${
-      customerInfo.agencyAddress ? `Agencia: ${customerInfo.agencyAddress}` : ""
-    }\n\nITEMS:\n${formattedItems}\n\nTotal: $${total.toLocaleString(
-      "es-VE"
-    )}\n${selectedShipping} - ${selectedPayment}`;
+      // Validate phone number
+      if (!isValidPhoneNumber(customerInfo.phone)) {
+        toast.error("Por favor ingrese un número de teléfono válido");
+        return;
+      }
 
-    const encodedMessage = encodeURIComponent(message);
+      // Validate shipping method and payment method
+      if (!shippingMethod || !paymentMethod) {
+        toast.error("Por favor seleccione un método de envío y pago");
+        return;
+      }
 
-    if (encodedMessage.length > 4000) {
-      // Mensaje demasiado largo, enviar resumen
-      const summaryMessage = `PEDIDO\n${
-        customerInfo.name
-      }\n${totalItems} productos\nTotal: $${total.toLocaleString(
-        "es-VE"
-      )}\n\nPor favor, contáctenos para ver los detalles completos.`;
-      window.open(
-        `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-          summaryMessage
-        )}`,
-        "_blank"
-      );
-    } else {
-      window.open(
-        `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
-        "_blank"
-      );
+      // Validate shipping address based on shipping method
+      if (shippingMethod === "delivery_maracay" && !customerInfo.address) {
+        toast.error("Por favor ingrese una dirección de entrega");
+        return;
+      }
+
+      if ((shippingMethod === "mrw" || shippingMethod === "zoom") && !customerInfo.agencyAddress) {
+        toast.error("Por favor ingrese la dirección de la agencia");
+        return;
+      }
+
+      // Create order with proper error handling
+      const order = await createOrder({
+        total_amount: total,
+        shipping_address: customerInfo.address || customerInfo.agencyAddress || "",
+        payment_method: paymentMethod,
+        whatsapp_number: customerInfo.phone,
+        items: items.map((item) => ({
+          product_id: item.id,
+          variant_id: item.variant_id,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      });
+
+      // Format WhatsApp message
+      const formattedItems = items
+        .map(
+          (item) =>
+            `• ${item.quantity}x ${item.name}\n` +
+            `  Talla: ${item.size}\n` +
+            `  Precio: $${item.price.toFixed(2)}`
+        )
+        .join("\n\n");
+
+      const selectedPayment = paymentMethods.find((m) => m.id === paymentMethod)?.name;
+      const selectedShipping = shippingMethods.find((m) => m.id === shippingMethod)?.name;
+      
+      // Store phone number in environment variable or configuration
+      const phoneNumber = "584243091410";
+      
+      // Create a more structured message
+      const message = [
+        "🛍️ NUEVO PEDIDO",
+        "",
+        "👤 INFORMACIÓN DEL CLIENTE",
+        `Nombre: ${customerInfo.name} ${customerInfo.lastName}`,
+        `Teléfono: ${customerInfo.phone}`,
+        `Email: ${customerInfo.email}`,
+        customerInfo.agencyAddress ? `Agencia: ${customerInfo.agencyAddress}` : "",
+        customerInfo.address ? `Dirección: ${customerInfo.address}` : "",
+        "",
+        "📦 PRODUCTOS",
+        formattedItems,
+        "",
+        "💰 RESUMEN",
+        `Subtotal: $${subtotal.toFixed(2)}`,
+        shipping > 0 ? `Envío: $${shipping.toFixed(2)}` : "",
+        `Total: $${total.toFixed(2)}`,
+        "",
+        "📋 DETALLES DE ENVÍO Y PAGO",
+        `Envío: ${selectedShipping}`,
+        `Pago: ${selectedPayment}`,
+        "",
+        `ID de Orden: ${order.id}`
+      ].filter(Boolean).join("\n");
+
+      // Clear cart after successful order creation
+      clearCart();
+
+      // Show success message
+      toast.success("Pedido creado exitosamente");
+
+      // Handle long messages
+      const encodedMessage = encodeURIComponent(message);
+      if (encodedMessage.length > 4000) {
+        const summaryMessage = [
+          "🛍️ RESUMEN DE PEDIDO",
+          `Cliente: ${customerInfo.name} ${customerInfo.lastName}`,
+          `Productos: ${totalItems}`,
+          `Total: $${total.toFixed(2)}`,
+          "",
+          "Por favor, contáctenos para ver los detalles completos.",
+          `ID de Orden: ${order.id}`
+        ].join("\n");
+
+        window.open(
+          `https://wa.me/${phoneNumber}?text=${encodeURIComponent(summaryMessage)}`,
+          "_blank"
+        );
+      } else {
+        window.open(
+          `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
+          "_blank"
+        );
+      }
+    } catch (error) {
+      console.error("Error creating order:", error);
+      toast.error("Error al crear el pedido. Por favor intente nuevamente.");
     }
   };
+  useEffect(() => {
+    if (customerInfo.email) {
+      setCustomerInfo(customerInfo);
+    }
+  }, []);
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -193,14 +269,25 @@ export default function CheckoutPage() {
               }
               required
             />
-            <Input
+            <PhoneInput
               placeholder="Número de celular"
-              value={customerInfo.phone}
-              onChange={(e) =>
-                setCustomerInfo({ ...customerInfo, phone: e.target.value })
+              value={customerInfo.phone || "+58"}
+              onChange={(value) =>
+                setCustomerInfo({
+                  ...customerInfo,
+                  phone: value?.startsWith("+58") ? value : "+58" + (value?.replace(/^\+58/, "") || "")
+                })
               }
+              defaultCountry="VE"
               required
+              international={false}
+              countrySelectProps={{ disabled: true }}
             />
+            {customerInfo.phone && !isValidPhoneNumber(customerInfo.phone) && (
+              <p className="text-sm text-destructive">
+                Número de teléfono inválido
+              </p>
+            )}
             <Separator />
             {/* Métodos de pago */}
             <div className="space-y-4">
@@ -323,7 +410,7 @@ export default function CheckoutPage() {
         <div className="bg-gray-50 p-6 rounded-lg space-y-6 text-secondary">
           <div className="space-y-4">
             {items.map((item) => (
-              <div key={item.id} className="flex gap-4">
+              <div key={item.variant_id} className="flex gap-4">
                 <div className="relative w-20 h-20 bg-white rounded-lg overflow-hidden">
                   <Image
                     src={item.image_url}

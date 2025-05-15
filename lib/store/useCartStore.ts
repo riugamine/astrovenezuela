@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { OrderStatus, PaymentMethod } from '../types/database.types';
 
 interface CartItem {
   id: string;
@@ -11,15 +10,15 @@ interface CartItem {
   image_url: string;
   variant_id: string;
   max_stock: number;
-  slug: string; // Añadimos el slug para la navegación
+  slug: string;
 }
 
 interface CartStore {
   items: CartItem[];
   totalItems: number;
   addItem: (item: CartItem) => void;
-  removeItem: (id: string, size: string) => void;
-  updateQuantity: (id: string, size: string, quantity: number) => void;
+  removeItem: (variant_id: string) => void;
+  updateQuantity: (variant_id: string, quantity: number) => void;
   clearCart: () => void;
 }
 
@@ -31,7 +30,7 @@ export const useCartStore = create<CartStore>()(
       addItem: (item) =>
         set((state) => {
           const existingItem = state.items.find(
-            (i) => i.id === item.id && i.size === item.size
+            (i) => i.variant_id === item.variant_id
           );
 
           if (existingItem) {
@@ -42,7 +41,7 @@ export const useCartStore = create<CartStore>()(
 
             return {
               items: state.items.map((i) =>
-                i.id === item.id && i.size === item.size
+                i.variant_id === item.variant_id
                   ? { ...i, quantity: newQuantity }
                   : i
               ),
@@ -56,28 +55,23 @@ export const useCartStore = create<CartStore>()(
             totalItems: state.totalItems + item.quantity,
           };
         }),
-      removeItem: (id, size) =>
+      removeItem: (variant_id) =>
         set((state) => ({
-          items: state.items.filter(
-            (i) => !(i.id === id && i.size === size)
-          ),
+          items: state.items.filter((i) => i.variant_id !== variant_id),
           totalItems:
             state.totalItems -
-            (state.items.find((i) => i.id === id && i.size === size)?.quantity ||
-              0),
+            (state.items.find((i) => i.variant_id === variant_id)?.quantity || 0),
         })),
-      updateQuantity: (id, size, quantity) =>
+      updateQuantity: (variant_id, quantity) =>
         set((state) => {
-          const item = state.items.find(
-            (i) => i.id === id && i.size === size
-          );
+          const item = state.items.find((i) => i.variant_id === variant_id);
           if (!item) return state;
 
           const newQuantity = Math.min(Math.max(1, quantity), item.max_stock);
 
           return {
             items: state.items.map((i) =>
-              i.id === id && i.size === size
+              i.variant_id === variant_id
                 ? { ...i, quantity: newQuantity }
                 : i
             ),

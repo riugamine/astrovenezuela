@@ -26,8 +26,7 @@ import {
   SheetDescription
 } from "@/components/ui/sheet";
 import Link from "next/link";
-import { useState } from "react";
-import { categories } from "@/lib/data/categories";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useCartStore } from "@/lib/store/useCartStore";
 import {
@@ -41,6 +40,8 @@ import {
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
+import { useCategoriesStore } from '@/lib/store/useCategoriesStore';
+
 // Interfaz para los elementos del menú de navegación
 interface NavigationItem {
   title: string;
@@ -49,17 +50,40 @@ interface NavigationItem {
 }
 
 // Componente para renderizar un item del menú de navegación
+// Updated NavigationItem interface to match project structure
+interface NavigationItem {
+  title: string;
+  href: string;
+  description: string;
+}
+
+// Predefined navigation items based on project structure
+const mainNavigationItems: NavigationItem[] = [
+  {
+    title: "Productos",
+    href: "/products",
+    description: "Explora todos nuestros productos"
+  },
+  {
+    title: "Categorías",
+    href: "/categories",
+    description: "Navega por categorías"
+  }
+];
+
+// Updated NavigationItemCard component
 const NavigationItemCard = ({ item }: { item: NavigationItem }) => (
   <NavigationMenuLink asChild>
-    <Link href={item.href} className="group">
-      <div className="p-4 hover:bg-secondary/10 rounded-lg transition-colors">
-        <h3 className="font-exo text-lg mb-1 text-primary font-bold">
-          {item.title}
-        </h3>
-        <p className="font-gabarito text-sm text-muted-foreground">
-          {item.description}
-        </p>
-      </div>
+    <Link 
+      href={item.href} 
+      className="block p-4 hover:bg-secondary/10 rounded-lg transition-colors"
+    >
+      <h3 className="font-exo text-lg mb-1 text-primary font-bold">
+        {item.title}
+      </h3>
+      <p className="font-gabarito text-sm text-muted-foreground">
+        {item.description}
+      </p>
     </Link>
   </NavigationMenuLink>
 );
@@ -69,6 +93,16 @@ const Header = () => {
   const { theme, setTheme } = useTheme();
   const totalItems = useCartStore((state) => state.totalItems);
   const { user, signOut } = useAuthStore();
+  
+  // Get categories from store
+  const { categories, fetchCategories, isLoading } = useCategoriesStore();
+
+  // Fetch categories on mount if not already loaded
+  useEffect(() => {
+    if (categories.length === 0) {
+      fetchCategories();
+    }
+  }, []);
 
   // Transformar las categorías en items de navegación
   const navigationItems: NavigationItem[] = categories.map((category) => ({
