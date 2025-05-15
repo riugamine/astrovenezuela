@@ -4,9 +4,10 @@ import { useEffect, memo, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { ProductWithDetails } from '@/lib/data/products';
 import { ProductCard } from './ProductCard';
-import { ProductGridSkeleton } from './ProductGrid';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useProducts } from '@/lib/hooks/useProducts';
 import { useFilterStore } from '@/lib/store/useFilterStore';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface InfiniteProductsGridProps {
   initialProducts?: ProductWithDetails[];
@@ -17,6 +18,29 @@ const ProductList = memo(function ProductList({ products }: { products: ProductW
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  );
+});
+
+const ProductGridSkeleton = memo(function ProductGridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Card key={i} className="overflow-hidden border-none h-full">
+          <CardContent className="p-0">
+            <Skeleton className="aspect-square bg-muted" />
+            <div className="p-3 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-5 w-1/3" />
+              <div className="flex gap-1">
+                <Skeleton className="h-4 w-8" />
+                <Skeleton className="h-4 w-8" />
+                <Skeleton className="h-4 w-8" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
@@ -78,13 +102,9 @@ export function InfiniteProductsGrid({ initialProducts }: InfiniteProductsGridPr
 
   return (
     <div className="space-y-8 relative">
-      {isFetching && !isFetchingNextPage && (
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
-          <ProductGridSkeleton />
-        </div>
-      )}
+      {isFetching && !isFetchingNextPage && <ProductGridSkeleton />}
       
-      <ProductList products={products} />
+      {!isFetching && <ProductList products={products} />}
       
       <div ref={ref} className="w-full py-8">
         {isFetchingNextPage && <ProductGridSkeleton />}

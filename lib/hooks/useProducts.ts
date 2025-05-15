@@ -14,21 +14,36 @@ interface FetchProductsOptions {
 async function fetchProductsPage(page: number, options: FetchProductsOptions) {
   const { categories, priceRange, sortBy } = options;
   
-  // Construir la query base
-  let query = supabaseClient
+  // Primero, obtener todas las subcategorías si hay categorías seleccionadas
+  let allCategories = [...categories];
+  
+  if (categories.length > 0) {
+    const { data: subcategories } = await supabaseClient
+      .from('categories')
+      .select('id')
+      .eq('is_active', true)
+      .in('parent_id', categories);
+
+    if (subcategories) {
+      allCategories = [...allCategories, ...subcategories.map(cat => cat.id)];
+    }
+  }
+
+  // Construir la query base para el conteo
+  let countQuery = supabaseClient
     .from("products")
     .select("*", { count: "exact", head: true })
     .eq("is_active", true)
     .gte("price", priceRange[0])
     .lte("price", priceRange[1]);
 
-  // Aplicar filtro de categorías solo si hay categorías seleccionadas
-  if (categories.length > 0) {
-    query = query.in("category_id", categories);
+  // Aplicar filtro de categorías al conteo si hay categorías seleccionadas
+  if (allCategories.length > 0) {
+    countQuery = countQuery.in("category_id", allCategories);
   }
 
   // Obtener el conteo total
-  const { count } = await query;
+  const { count } = await countQuery;
 
   if (!count || count === 0) {
     return { products: [], hasMore: false };
@@ -50,7 +65,8 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
       `
       *,
       product_images (*),
-      variants:product_variants (*)
+      variants:product_variants (*),
+      category:category_id (*)
     `
     )
     .eq("is_active", true)
@@ -58,9 +74,9 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
     .lte("price", priceRange[1])
     .range(from, to);
 
-  // Aplicar filtro de categorías solo si hay categorías seleccionadas
-  if (categories.length > 0) {
-    mainQuery = mainQuery.in("category_id", categories);
+  // Aplicar filtro de categorías a la query principal
+  if (allCategories.length > 0) {
+    mainQuery = mainQuery.in("category_id", allCategories);
   }
 
   // Aplicar ordenamiento

@@ -107,24 +107,6 @@ const ProductCardContent = memo(function ProductCardContent({
               </Badge>
             </div>
           )}
-
-          {hasStock && availableSizes.length > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/40 backdrop-blur-sm 
-                          transform translate-y-full transition-transform duration-300
-                          group-hover:translate-y-0">
-              <div className="flex flex-wrap gap-1 justify-center">
-                {availableSizes.map(size => (
-                  <Badge 
-                    key={size} 
-                    variant="secondary"
-                    className="text-xs bg-white/90 text-black"
-                  >
-                    {size}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
         
         <div className="p-3 space-y-2">
@@ -137,6 +119,19 @@ const ProductCardContent = memo(function ProductCardContent({
           <p className="font-semibold text-primary text-base sm:text-lg">
             ${product.price.toLocaleString('es-VE')}
           </p>
+          {hasStock && availableSizes.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {availableSizes.map(size => (
+                <Badge 
+                  key={size} 
+                  variant="outline"
+                  className="text-xs"
+                >
+                  {size}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
