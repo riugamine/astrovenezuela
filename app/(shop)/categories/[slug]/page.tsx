@@ -95,7 +95,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       )}
 
       {/* Grid de productos */}
-      <ProductGrid initialProducts={products} />
+      <ProductGrid products={products} />
     </div>
   );
 }

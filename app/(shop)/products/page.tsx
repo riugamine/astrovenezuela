@@ -2,32 +2,22 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { CategoryFilter } from "@/components/shop/CategoryFilter";
 import { SortFilter } from "@/components/shop/SortFilter";
 import { supabaseClient } from "@/lib/supabase/client";
-import {  Category } from "@/lib/types/database.types";
+import { Category } from "@/lib/types/database.types";
+import { Suspense } from "react";
 
-// Fetch data server-side
-async function getData() {
-  const { data: categories } = await supabaseClient
+// Fetch categories server-side
+async function getCategories() {
+  const { data, error } = await supabaseClient
     .from("categories")
     .select("*")
     .eq("is_active", true);
 
-  const { data: products } = await supabaseClient
-    .from("products")
-    .select(`
-      *,
-      product_images (id, product_id, image_url, order_index),
-      category:category_id (id, name, slug)
-    `)
-    .eq('is_active', true)
-    .order("created_at", { ascending: false });
-  return {
-    categories: (categories as Category[]) || [],
-    products: products || [],
-  };
+  if (error) throw error;
+  return data as Category[];
 }
 
 export default async function ProductsPage() {
-  const { categories, products } = await getData();
+  const categories = await getCategories();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -40,7 +30,9 @@ export default async function ProductsPage() {
 
         {/* Grid de productos */}
         <main className="flex-1">
-          <ProductGrid initialProducts={products} />
+          <Suspense fallback={<ProductGrid.Skeleton />}>
+            <ProductGrid />
+          </Suspense>
         </main>
       </div>
     </div>
