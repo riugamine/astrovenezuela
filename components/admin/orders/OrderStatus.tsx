@@ -20,8 +20,8 @@ const STATUS_COLORS = {
   cancelled: "destructive",
   delivered: "default"
 } as const;
-
-const STATUS_LABELS = {
+const STATUS_LABELS: 
+Record<OrderWithProfile['status'], string> = {
   pending: "Pendiente",
   confirmed: "Confirmado",
   cancelled: "Cancelado",
@@ -51,7 +51,7 @@ export function OrderStatusComponent({ order }: { order: Order }) {
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {Object.entries(STATUS_LABELS).map(([status, label]) => (
+        {(Object.entries(STATUS_LABELS) as [OrderWithProfile['status'], string][]).map(([status, label]) => (
           <DropdownMenuItem
             key={status}
             onClick={() => updateStatus.mutate(status)}
