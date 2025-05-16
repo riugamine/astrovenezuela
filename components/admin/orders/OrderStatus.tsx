@@ -9,7 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { updateOrderStatus } from '@/lib/data/admin/actions/orders';
+import { type OrderWithProfile } from '@/lib/data/admin/actions/orders/types';
 import { toast } from 'sonner';
 import { Order } from '@/lib/types/database.types';
 
@@ -30,22 +31,16 @@ const STATUS_LABELS = {
 export function OrderStatusComponent({ order }: { order: Order }) {
   const queryClient = useQueryClient();
 
-  const updateStatus = useMutation({
-    mutationFn: async (newStatus: string) => {
-      const { error } = await supabaseAdmin
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', order.id);
-
-      if (error) throw error;
-    },
+  const updateStatus =useMutation({
+    mutationFn: (status: OrderWithProfile['status']) => 
+      updateOrderStatus(order.id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      toast.success('Estado de la orden actualizado');
+      toast.success('Estado actualizado exitosamente');
     },
     onError: () => {
       toast.error('Error al actualizar el estado');
-    },
+    }
   });
 
   return (

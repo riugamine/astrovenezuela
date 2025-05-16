@@ -16,7 +16,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { Badge } from "@/components/ui/badge";
 import { UserActions } from "./UserActions";
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getUsers } from '@/lib/data/admin/actions/users';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -88,32 +88,7 @@ export function UserList() {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
-    queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabaseAdmin
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (profilesError) throw profilesError;
-
-      // Obtener datos de autenticación
-      const { data: authUsers, error: authError } = await supabaseAdmin
-        .auth.admin.listUsers();
-
-      if (authError) throw authError;
-
-      // Combinar los datos
-      const combinedUsers = profiles.map(profile => {
-        const authUser = authUsers.users.find(u => u.id === profile.id);
-        return {
-          ...profile,
-          email: authUser?.email || '',
-          last_sign_in_at: authUser?.last_sign_in_at || null,
-        };
-      });
-
-      return combinedUsers as User[];
-    },
+    queryFn: getUsers,
   });
 
   const table = useReactTable({

@@ -2,10 +2,9 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Control } from 'react-hook-form';
-
+import { getSubcategories } from '@/lib/data/admin/actions/categories';
 interface Category {
   id: string;
   name: string;
@@ -23,17 +22,8 @@ export function SubcategorySelect({ control, name, parentCategoryId }: Subcatego
     queryKey: ['subcategories', parentCategoryId],
     queryFn: async () => {
       if (!parentCategoryId) return [];
-      
-      const { data, error } = await supabaseAdmin
-        .from('categories')
-        .select('*')
-        .eq('parent_id', parentCategoryId)
-        .order('name');
-
-      if (error) throw error;
-      return data as Category[];
+      return getSubcategories(parentCategoryId);
     },
-    enabled: !!parentCategoryId
   });
 
   if (!parentCategoryId) {

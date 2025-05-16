@@ -1,21 +1,23 @@
-"use client";
+'use client';
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShoppingCart,
   faUser,
   faBars,
-  faTimes,
   faSun,
   faMoon,
+  faTshirt,
+  faHome,
 } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
+  NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import {
   Sheet,
@@ -23,8 +25,15 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetDescription
+  SheetDescription,
+  SheetFooter,
 } from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -38,54 +47,67 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useCategoriesStore } from '@/lib/store/useCategoriesStore';
-
-// Interfaz para los elementos del menú de navegación
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { getBrandLogo } from "@/lib/utils";
+import Image from 'next/image';
+// Interface for navigation items
 interface NavigationItem {
   title: string;
   href: string;
   description: string;
+  parent_id?: string | null;
+  icon?: any;
 }
 
-// Componente para renderizar un item del menú de navegación
-// Updated NavigationItem interface to match project structure
-interface NavigationItem {
-  title: string;
-  href: string;
-  description: string;
-}
-
-// Predefined navigation items based on project structure
-const mainNavigationItems: NavigationItem[] = [
-  {
-    title: "Productos",
-    href: "/products",
-    description: "Explora todos nuestros productos"
-  },
-  {
-    title: "Categorías",
-    href: "/categories",
-    description: "Navega por categorías"
-  }
-];
-
-// Updated NavigationItemCard component
+// Component for desktop navigation item
 const NavigationItemCard = ({ item }: { item: NavigationItem }) => (
   <NavigationMenuLink asChild>
     <Link 
       href={item.href} 
       className="block p-4 hover:bg-secondary/10 rounded-lg transition-colors"
     >
-      <h3 className="font-exo text-lg mb-1 text-primary font-bold">
-        {item.title}
-      </h3>
-      <p className="font-gabarito text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 mb-1">
+        {item.icon && <FontAwesomeIcon icon={item.icon} className="h-4 w-4 text-primary" />}
+        <h3 className="font-exo text-lg text-primary font-bold">{item.title}</h3>
+      </div>
+      <p className="font-gabarito text-sm text-muted-foreground pl-6">
         {item.description}
       </p>
     </Link>
   </NavigationMenuLink>
+);
+
+// Component for mobile navigation item
+const MobileNavigationItem = ({ item, children }: { item: NavigationItem; children?: React.ReactNode }) => (
+  <AccordionItem value={item.title} className="border-none">
+    <AccordionTrigger className="hover:bg-secondary/10 px-4 py-2 rounded-lg">
+      <div className="flex items-center gap-2">
+        {item.icon && <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />}
+        <span>{item.title}</span>
+      </div>
+    </AccordionTrigger>
+    <AccordionContent className="pl-8">
+      {children || (
+        <Link href={item.href} className="block py-2 hover:text-primary transition-colors">
+          {item.description}
+        </Link>
+      )}
+    </AccordionContent>
+  </AccordionItem>
+);
+
+// Component for desktop navigation item when no subcategories exist
+const NavigationLink = ({ item }: { item: NavigationItem }) => (
+  <Link 
+    href={item.href} 
+    className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:bg-secondary/10 rounded-md transition-colors"
+  >
+    {item.icon && <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />}
+    <span>{item.title}</span>
+  </Link>
 );
 
 const Header = () => {
@@ -93,217 +115,230 @@ const Header = () => {
   const { theme, setTheme } = useTheme();
   const totalItems = useCartStore((state) => state.totalItems);
   const { user, signOut } = useAuthStore();
-  
-  // Get categories from store
   const { categories, fetchCategories, isLoading } = useCategoriesStore();
 
-  // Fetch categories on mount if not already loaded
   useEffect(() => {
     if (categories.length === 0) {
       fetchCategories();
     }
-  }, []);
+  }, [categories.length, fetchCategories]);
 
-  // Transformar las categorías en items de navegación
-  const navigationItems: NavigationItem[] = categories.map((category) => ({
-    title: category.name,
-    href: `/categories/${category.slug.toLowerCase().replace(/ /g, '-')}`,
-    description: category.description || `Explora nuestra colección de ${category.name.toLowerCase()}`
-  }));
-
-  // Función para obtener las iniciales del nombre
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  // Organize categories into a hierarchy
+  const mainCategories = categories.filter(cat => !cat.parent_id);
+  const getSubcategories = (parentId: string) => 
+    categories.filter(cat => cat.parent_id === parentId);
+  const hasSubcategories = (categoryId: string) => 
+    categories.some(cat => cat.parent_id === categoryId);
 
   return (
-    <header className="bg-secondary/80 backdrop-blur-sm sticky top-0 z-50">
-      <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <img
-            src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/sign/brand-assets/brand-logo/Logotipo_Blanco-03.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzA5NTExMDNjLTY3ZjgtNDYwNS1hZDc3LTE5YmEwYTM0NjdiMiJ9.eyJ1cmwiOiJicmFuZC1hc3NldHMvYnJhbmQtbG9nby9Mb2dvdGlwb19CbGFuY28tMDMucG5nIiwiaWF0IjoxNzQ2MzY5ODAzLCJleHAiOjE5MDQwNDk4MDN9.IuYZ0hot_g4vlIVOQASw_1O1PlZGT2I5HmI_QM4BNpE"
-            alt="Astro"
-            className="h-8"
-          />
-        </Link>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="container mx-auto">
+        <div className="flex h-16 items-center justify-between gap-4">
+          {/* Mobile Menu */}
+          <div className="flex items-center gap-2">
+            <Sheet>
+              <SheetTrigger asChild className="lg:hidden">
+                <Button variant="ghost" size="icon">
+                  <FontAwesomeIcon icon={faBars} className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle>Menú</SheetTitle>
+                  <SheetDescription>
+                    Navega por nuestra colección de productos
+                  </SheetDescription>
+                </SheetHeader>
+                
+                <ScrollArea className="h-[calc(100vh-180px)]">
+                  <Accordion type="single" collapsible className="p-4">
+                    {/* Home */}
+                    <AccordionItem value="home" className="border-none">
+                      <Link href="/" className="flex items-center gap-2 py-2 hover:text-primary transition-colors">
+                        <FontAwesomeIcon icon={faHome} className="h-4 w-4" />
+                        <span>Inicio</span>
+                      </Link>
+                    </AccordionItem>
 
-        {/* Menú Desktop con NavigationMenu */}
-        <div className="hidden md:flex items-center space-x-6">
-          <NavigationMenu>
-            <NavigationMenuList className="gap-2">
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="font-exo text-white bg-transparent hover:bg-secondary/80">
-                  Productos
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="grid gap-3 p-6 w-[400px] bg-white rounded-lg shadow-sm">
-                    <div className="grid grid-cols-2 gap-4">
-                      {navigationItems.map((item, index) => (
-                        <NavigationItemCard key={index} item={item} />
-                      ))}
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-secondary/20">
-                      <NavigationItemCard
-                        item={{
-                          title: "Ver todo",
-                          href: "/products",
-                          description:
-                            "Explora toda nuestra colección de productos",
-                        }}
+                    {/* Categories */}
+                    {mainCategories.map(category => (
+                      hasSubcategories(category.id) ? (
+                        <MobileNavigationItem
+                          key={category.id}
+                          item={{
+                            title: category.name,
+                            href: `/categories/${category.slug}`,
+                            description: category.description,
+                            icon: faTshirt
+                          }}
+                        >
+                          <div className="space-y-2">
+                            {getSubcategories(category.id).map(subcat => (
+                              <Link
+                                key={subcat.id}
+                                href={`/categories/${subcat.slug}`}
+                                className="block py-2 hover:text-primary transition-colors"
+                              >
+                                {subcat.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </MobileNavigationItem>
+                      ) : (
+                        <AccordionItem key={category.id} value={category.id} className="border-none">
+                          <Link 
+                            href={`/categories/${category.slug}`}
+                            className="flex items-center gap-2 py-2 hover:text-primary transition-colors"
+                          >
+                            <FontAwesomeIcon icon={faTshirt} className="h-4 w-4" />
+                            <span>{category.name}</span>
+                          </Link>
+                        </AccordionItem>
+                      )
+                    ))}
+                  </Accordion>
+                </ScrollArea>
+
+                <SheetFooter className="border-t p-4 mt-auto">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={theme === 'dark'}
+                        onCheckedChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                       />
+                      <span>Modo {theme === 'dark' ? 'Oscuro' : 'Claro'}</span>
                     </div>
+                    {user && (
+                      <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-sm font-medium">
+                        {user.email?.[0].toUpperCase()}
+                      </div>
+                    )}
                   </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link
-                    href="/about"
-                    className="font-exo px-4 py-2 hover:bg-secondary/80 rounded-md transition-colors text-white"
-                  >
-                    Acerca de
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
-        </div>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
 
-        {/* Iconos y Menú Móvil */}
-        <div className="flex items-center space-x-4">
-          {/* Theme Toggle Button */}
-          <div className="hidden md:flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-secondary/20 transition-all">
-            <FontAwesomeIcon
-              icon={theme === "dark" ? faMoon : faSun}
-              className={`h-5 w-5 transition-colors ${
-                theme === "dark" ? "text-blue-400" : "text-yellow-400"
-              }`}
-            />
-            <Switch
-              checked={theme === "dark"}
-              onCheckedChange={() =>
-                setTheme(theme === "dark" ? "light" : "dark")
-              }
-              className="data-[state=checked]:bg-blue-400 data-[state=unchecked]:bg-yellow-400"
-            />
+            {/* Logo */}
+            <Link href="/" className="flex items-center justify-center">
+              <Image 
+                src={getBrandLogo(theme === 'dark' ? 'blanco' : 'azul-bebe')} 
+                alt="Astro" 
+                width={120}
+                height={40}
+                className="object-contain"
+                priority
+              />
+            </Link>
+
           </div>
 
-          <Link href="/cart">
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex flex-1 justify-center">
+            <NavigationMenu>
+              <NavigationMenuList className="gap-2">
+                {mainCategories.map(category => (
+                  hasSubcategories(category.id) ? (
+                    <NavigationMenuItem key={category.id}>
+                      <NavigationMenuTrigger className="gap-2">
+                        <FontAwesomeIcon icon={faTshirt} className="h-4 w-4" />
+                        {category.name}
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <div className="grid gap-3 p-6 w-[400px]">
+                          <NavigationItemCard
+                            item={{
+                              title: category.name,
+                              href: `/categories/${category.slug}`,
+                              description: category.description,
+                              icon: faTshirt
+                            }}
+                          />
+                          <div className="grid grid-cols-2 gap-3 pt-4 border-t">
+                            {getSubcategories(category.id).map(subcat => (
+                              <Link
+                                key={subcat.id}
+                                href={`/categories/${subcat.slug}`}
+                                className="p-3 hover:bg-secondary/10 rounded-lg transition-colors"
+                              >
+                                {subcat.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  ) : (
+                    <NavigationMenuItem key={category.id}>
+                      <NavigationLink
+                        item={{
+                          title: category.name,
+                          href: `/categories/${category.slug}`,
+                          description: category.description,
+                          icon: faTshirt
+                        }}
+                      />
+                    </NavigationMenuItem>
+                  )
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
+
+          {/* Right Side Actions */}
+          <div className="flex items-center gap-2">
+            <Link href="/cart">
+              <Button variant="ghost" size="icon" className="relative">
+                <FontAwesomeIcon icon={faShoppingCart} className="h-5 w-5" />
+                {totalItems > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
+                    {totalItems}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
             <Button
               variant="ghost"
               size="icon"
-              className="hover:bg-secondary/80 relative"
+              className="hidden lg:flex"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
-              <FontAwesomeIcon icon={faShoppingCart} className="h-5 w-5" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
+              <FontAwesomeIcon
+                icon={theme === 'dark' ? faSun : faMoon}
+                className="h-5 w-5"
+              />
             </Button>
-          </Link>
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Avatar className="h-8 w-8 cursor-pointer">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {getInitials(user.user_metadata.full_name || "Usuario")}
-                  </AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>{user.email}</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => signOut()}>
-                  Cerrar sesión
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link href="/auth">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-secondary/80"
-              >
-                <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
-              </Button>
-            </Link>
-          )}
 
-          {/* Menú Móvil */}
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-secondary/80"
-              >
-                <FontAwesomeIcon
-                  icon={isOpen ? faTimes : faBars}
-                  className="h-5 w-5"
-                />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <SheetHeader>
-                <SheetTitle className="font-exo text-left">Menú</SheetTitle>
-                <SheetDescription className="text-sm text-muted-foreground">
-                  Navega por nuestra colección de productos
-                </SheetDescription>
-              </SheetHeader>
-              <div className="flex flex-col space-y-4 mt-8">
-                {/* Theme Toggle en Menú Móvil */}
-
-
-                {navigationItems.map((item, index) => (
-                  <Link
-                    key={index}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className="font-gabarito text-lg py-2 hover:bg-slate-100 rounded-md px-4 transition-colors"
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-                <Link
-                  href="/about"
-                  onClick={() => setIsOpen(false)}
-                  className="font-gabarito text-lg py-2 hover:bg-slate-100 rounded-md px-4 transition-colors"
-                >
-                  Acerca de
-                </Link>
-                <div className="flex items-center justify-between w-full px-4 py-3 hover:bg-secondary/10 rounded-lg transition-all">
-                  <div className="flex items-center gap-3">
-                    <FontAwesomeIcon
-                      icon={theme === "dark" ? faMoon : faSun}
-                      className={`h-5 w-5 transition-colors ${
-                        theme === "dark" ? "text-blue-400" : "text-yellow-400"
-                      }`}
-                    />
-                    <span className="font-gabarito text-lg">
-                      {theme === "dark" ? "Modo Oscuro" : "Modo Claro"}
-                    </span>
-                  </div>
-                  <Switch
-                    checked={theme === "dark"}
-                    onCheckedChange={() => {
-                      setTheme(theme === "dark" ? "light" : "dark");
-                      setIsOpen(false);
-                    }}
-                    className="data-[state=checked]:bg-blue-400 data-[state=unchecked]:bg-yellow-400"
-                  />
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-sm font-medium">
+                      {user.email?.[0].toUpperCase()}
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Perfil</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/orders">Pedidos</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut()}>Cerrar Sesión</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/auth">
+                <Button variant="ghost" size="icon">
+                  <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
     </header>

@@ -2,9 +2,9 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Control } from 'react-hook-form';
+import { getCategories } from '@/lib/data/admin/actions/categories';
 
 interface Category {
   id: string;
@@ -21,15 +21,7 @@ interface CategorySelectProps {
 export function CategorySelect({ control, name, onCategoryChange }: CategorySelectProps) {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: async () => {
-      const { data, error } = await supabaseAdmin
-        .from('categories')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      return data as Category[];
-    }
+    queryFn: getCategories,
   });
 
   const mainCategories = categories.filter(cat => !cat.parent_id);

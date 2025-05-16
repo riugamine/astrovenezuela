@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/table";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
-import { supabaseAdmin } from '@/lib/supabase/admin';
-
+import { getOrderById } from '@/lib/data/admin-actions';
 interface OrderDetailsProps {
   orderId: string;
   onClose: () => void;
@@ -23,30 +22,7 @@ interface OrderDetailsProps {
 export function OrderDetails({ orderId, onClose }: OrderDetailsProps) {
   const { data: orderDetails, isLoading } = useQuery({
     queryKey: ['order', orderId],
-    queryFn: async () => {
-      const { data: order, error: orderError } = await supabaseAdmin
-        .from('orders')
-        .select(`
-          *,
-          profiles:user_id (full_name, email)
-        `)
-        .eq('id', orderId)
-        .single();
-
-      if (orderError) throw orderError;
-
-      const { data: items, error: itemsError } = await supabaseAdmin
-        .from('order_items')
-        .select(`
-          *,
-          products (name, price)
-        `)
-        .eq('order_id', orderId);
-
-      if (itemsError) throw itemsError;
-
-      return { order, items };
-    },
+    queryFn: () => getOrderById(orderId),
   });
 
   if (isLoading) return <div>Cargando...</div>;

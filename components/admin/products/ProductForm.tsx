@@ -23,9 +23,11 @@ import { CategorySelect } from "./CategorySelect";
 import { SubcategorySelect } from "./SubcategorySelect";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { createProduct, updateProduct, getCategoryDetails, getProductCategoryDetails } from '@/lib/data/admin/actions/products';
+import { type ProductData } from '@/lib/data/admin/actions/products/types'
 
 const productSchema = z.object({
+  id: z.string(),
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
   price: z.number().positive("El precio debe ser mayor a 0"),
@@ -56,7 +58,7 @@ type ProductFormData = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
   onClose: () => void;
-  initialData?: any; // Cambiamos el tipo para aceptar los datos del producto
+  initialData?: ProductData;
 }
 
 export function ProductForm({ onClose, initialData }: ProductFormProps) {
@@ -71,136 +73,15 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
   });
 
   const createOrUpdateProduct = useMutation({
-    mutationFn: async (data: ProductFormData) => {
-      if (data.isEditing) {
-        // Actualizar producto principal
-        const { data: product, error: productError } = await supabaseAdmin
-          .from("products")
-          .update({
-            name: data.name,
-            description: data.description,
-            price: data.price,
-            reference_number: data.reference_number,
-            category_id: data.subcategory_id || data.category_id,
-            main_image_url: data.main_image_url,
-            slug: data.name.toLowerCase().replace(/\s+/g, "-"),
-            stock: data.variants.reduce((sum, variant) => sum + variant.stock, 0),
-            is_active: true
-          })
-          .eq('id', initialData.id)
-          .select()
-          .single();
-
-        if (productError) throw productError;
-
-        // Actualizar imágenes de detalle
-        const { error: deleteImagesError } = await supabaseAdmin
-          .from("product_images")
-          .delete()
-          .eq('product_id', initialData.id);
-
-        if (deleteImagesError) throw deleteImagesError;
-
-        if (data.product_images.length > 0) {
-          const { error: imagesError } = await supabaseAdmin
-            .from("product_images")
-            .insert(
-              data.product_images.map((image, index) => ({
-                image_url: image.image_url,
-                order_index: index + 1,
-                product_id: initialData.id
-              }))
-            );
-
-          if (imagesError) throw imagesError;
-        }
-
-        // Actualizar variantes
-        if (data.variants.length > 0) {
-          await supabaseAdmin
-            .from("product_variants")
-            .delete()
-            .eq('product_id', initialData.id);
-
-          const { error: variantsError } = await supabaseAdmin
-            .from("product_variants")
-            .insert(
-              data.variants.map((variant) => ({
-                size: variant.size,
-                stock: variant.stock,
-                product_id: initialData.id,
-              }))
-            );
-
-          if (variantsError) throw variantsError;
-        }
-
-        return product;
-      } else {
-        // Crear nuevo producto
-        const { data: product, error: productError } = await supabaseAdmin
-          .from("products")
-          .insert([
-            {
-              name: data.name,
-              description: data.description,
-              price: data.price,
-              reference_number: data.reference_number,
-              category_id: data.subcategory_id || data.category_id,
-              main_image_url: data.main_image_url,
-              slug: data.name.toLowerCase().replace(/\s+/g, "-"),
-              stock: data.variants.reduce((sum, variant) => sum + variant.stock, 0),
-              is_active: true
-            },
-          ])
-          .select()
-          .single();
-
-        if (productError) throw productError;
-
-        // Insertar imágenes de detalle
-        if (data.product_images.length > 0) {
-          const { error: imagesError } = await supabaseAdmin
-            .from("product_images")
-            .insert(
-              data.product_images.map((image, index) => ({
-                image_url: image.image_url,
-                order_index: index + 1,
-                product_id: product.id
-              }))
-            );
-
-          if (imagesError) throw imagesError;
-        }
-
-        // Insertar variantes
-        if (data.variants.length > 0) {
-          const { error: variantsError } = await supabaseAdmin
-            .from("product_variants")
-            .insert(
-              data.variants.map((variant) => ({
-                size: variant.size,
-                stock: variant.stock,
-                product_id: product.id,
-              }))
-            );
-
-          if (variantsError) throw variantsError;
-        }
-
-        return product;
-      }
-    },
+    mutationFn: (data: ProductData) => 
+      initialData ? updateProduct(initialData.id, data) : createProduct(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(initialData ? "Producto actualizado exitosamente" : "Producto creado exitosamente");
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Producto guardado exitosamente');
       onClose();
-    },
-    onError: (error) => {
-      console.error(initialData ? "Error al actualizar el producto:" : "Error al crear el producto:", error);
-      toast.error(initialData ? "Error al actualizar el producto" : "Error al crear el producto");
-    },
+    }
   });
+
 
   const onSubmit = async (data: ProductFormData) => {
     createOrUpdateProduct.mutate({
@@ -208,22 +89,23 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
       isEditing: !!initialData
     });
   };
-  const handleCategoryChange = async (categoryId: string) => {
-    // Verificar si la categoría seleccionada es una categoría principal
-    const { data: selectedCategory } = await supabaseAdmin
-      .from('categories')
-      .select('parent_id')
-      .eq('id', categoryId)
-      .single();
 
-    if (selectedCategory?.parent_id) {
-      // Si tiene parent_id, es una subcategoría
-      form.setValue('subcategory_id', categoryId);
-      form.setValue('category_id', selectedCategory.parent_id);
-    } else {
-      // Si no tiene parent_id, es una categoría principal
-      form.setValue('category_id', categoryId);
-      form.setValue('subcategory_id', '');
+  const handleCategoryChange = async (categoryId: string) => {
+    try {
+      const categoryDetails = await getCategoryDetails(categoryId);
+
+      if (categoryDetails.parent_id) {
+        // Si tiene parent_id, es una subcategoría
+        form.setValue('subcategory_id', categoryId);
+        form.setValue('category_id', categoryDetails.parent_id);
+      } else {
+        // Si no tiene parent_id, es una categoría principal
+        form.setValue('category_id', categoryId);
+        form.setValue('subcategory_id', '');
+      }
+    } catch (error) {
+      console.error('Error al obtener detalles de la categoría:', error);
+      toast.error('Error al cambiar la categoría');
     }
   };
 
@@ -231,20 +113,20 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
   useEffect(() => {
     if (initialData) {
       const loadCategoryData = async () => {
-        // Verificar si la categoría del producto es una subcategoría
-        const { data: productCategory } = await supabaseAdmin
-          .from('categories')
-          .select('parent_id')
-          .eq('id', initialData.category_id)
-          .single();
+        try {
+          const categoryDetails = await getProductCategoryDetails(initialData.id);
 
-        if (productCategory?.parent_id) {
-          // Si es una subcategoría
-          form.setValue('category_id', productCategory.parent_id);
-          form.setValue('subcategory_id', initialData.category_id);
-        } else {
-          // Si es una categoría principal
-          form.setValue('category_id', initialData.category_id);
+          if (categoryDetails.parent_id) {
+            // Si es una subcategoría
+            form.setValue('category_id', categoryDetails.parent_id);
+            form.setValue('subcategory_id', categoryDetails.category_id);
+          } else {
+            // Si es una categoría principal
+            form.setValue('category_id', categoryDetails.category_id);
+          }
+        } catch (error) {
+          console.error('Error al cargar datos de la categoría:', error);
+          toast.error('Error al cargar datos de la categoría');
         }
       };
 

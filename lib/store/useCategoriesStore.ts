@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Category } from '@/lib/types/category';
+import { Category } from '@/lib/types/database.types';
 import { getCategories } from '@/lib/data/categories';
 
 interface CategoriesState {

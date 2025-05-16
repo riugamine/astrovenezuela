@@ -7,7 +7,7 @@ export interface Order{
   payment_method: string;
   items: OrderItem[];
 }
-export type OrderStatus = 'created' | 'pending' | 'completed' | 'canceled';
+export type OrderStatus = 'pending' | 'confirmed' | 'cancelled' | 'delivered';
 export interface ShippingMethod {
   id: string;
   name: string;

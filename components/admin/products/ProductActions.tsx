@@ -11,11 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ProductViewDialog } from './ProductViewDialog';
-import { ProductDeleteDialog } from './ProductDeleteDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { Product } from '@/lib/types/database.types';
 import { ProductEditDialog } from './ProductEditDialog';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { toggleProductStatus, deleteProduct } from '@/lib/data/admin/actions/products';
 import { toast } from 'sonner';
 
 interface ProductActionsProps {
@@ -24,7 +23,6 @@ interface ProductActionsProps {
 
 export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -40,20 +38,10 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
     setIsDropdownOpen(false);
   };
 
-  const handleDeleteClick = () => {
-    setIsDeleteOpen(true);
-    setIsDropdownOpen(false);
-  };
 
   const handleToggleActive = async () => {
     try {
-      const { error } = await supabaseAdmin
-        .from('products')
-        .update({ is_active: !product.is_active })
-        .eq('id', product.id);
-
-      if (error) throw error;
-
+      await toggleProductStatus(product.id, !product.is_active);
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(`Producto ${product.is_active ? 'desactivado' : 'activado'} exitosamente`);
       setIsDropdownOpen(false);
@@ -74,10 +62,6 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
     queryClient.invalidateQueries({ queryKey: ['products'] });
   };
 
-  const handleDeleteClose = () => {
-    setIsDeleteOpen(false);
-    queryClient.invalidateQueries({ queryKey: ['products'] });
-  };
 
   return (
     <>
@@ -127,12 +111,6 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
         onClose={handleEditClose}
       />
 
-      <ProductDeleteDialog
-        productId={product.id}
-        productName={product.name}
-        isOpen={isDeleteOpen}
-        onClose={handleDeleteClose}
-      />
     </>
   );
 };

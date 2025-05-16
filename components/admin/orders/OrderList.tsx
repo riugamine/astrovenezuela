@@ -15,9 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch, faEye } from "@fortawesome/free-solid-svg-icons";
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { OrderStatusComponent } from './OrderStatus';
-
+import { getOrders } from '@/lib/data/admin-actions';
 interface OrderListProps {
   onSelectOrder: (orderId: string) => void;
 }
@@ -25,23 +24,12 @@ interface OrderListProps {
 export function OrderList({ onSelectOrder }: OrderListProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: orders = [], isLoading } = useQuery({
+  const { data: orders = [], isLoading, error } = useQuery({
     queryKey: ['orders'],
-    queryFn: async () => {
-      const { data, error } = await supabaseAdmin
-        .from('orders')
-        .select(`
-          *,
-          profiles:user_id (full_name, email)
-        `)
-        .order('created_at', { ascending: false });
-          console.log(data);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: getOrders,
   });
 
-  const filteredOrders = orders.filter(order => 
+  const filteredOrders = orders.filter((order: any) =>
     order.whatsapp_number.includes(searchTerm) ||
     order.profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -76,7 +64,7 @@ export function OrderList({ onSelectOrder }: OrderListProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.map((order) => (
+              {filteredOrders.map((order:any) => (
                 <TableRow key={order.id}>
                   <TableCell>{order.id}</TableCell>
                   <TableCell>{order.profiles.full_name}</TableCell>

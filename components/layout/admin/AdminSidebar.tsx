@@ -17,11 +17,12 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { faListUl } from "@fortawesome/free-solid-svg-icons";
 import { useTheme } from "next-themes";
-import { Switch } from "@/components/ui/switch"
+import { Switch } from "@/components/ui/switch";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { getBrandLogo } from "@/lib/utils";
+import Image from "next/image";
 const AdminSidebar: FC = () => {
   const pathname = usePathname();
   const router = useRouter();
@@ -34,11 +35,11 @@ const AdminSidebar: FC = () => {
     try {
       setIsSigningOut(true);
       await signOut();
-      toast.success('Sesión cerrada exitosamente');
-      router.push('/auth');
+      toast.success("Sesión cerrada exitosamente");
+      router.push("/auth");
     } catch (error) {
-      toast.error('Error al cerrar sesión');
-      console.error('Sign out error:', error);
+      toast.error("Error al cerrar sesión");
+      console.error("Sign out error:", error);
     } finally {
       setIsSigningOut(false);
     }
@@ -61,10 +62,13 @@ const AdminSidebar: FC = () => {
     >
       <div className="flex items-center justify-between mb-8">
         {!isCollapsed && (
-          <img
-            src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/sign/brand-assets/brand-logo/Logotipo_Blanco-03.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzA5NTExMDNjLTY3ZjgtNDYwNS1hZDc3LTE5YmEwYTM0NjdiMiJ9.eyJ1cmwiOiJicmFuZC1hc3NldHMvYnJhbmQtbG9nby9Mb2dvdGlwb19CbGFuY28tMDMucG5nIiwiaWF0IjoxNzQ2MzY5ODAzLCJleHAiOjE5MDQwNDk4MDN9.IuYZ0hot_g4vlIVOQASw_1O1PlZGT2I5HmI_QM4BNpE"
-            alt="Astro Admin"
-            className="h-8"
+          <Image
+            src={getBrandLogo(theme === "dark" ? "blanco" : "azul-marino")}
+            alt="Astro"
+            width={120}
+            height={40}
+            className="object-contain"
+            priority
           />
         )}
         <div className="flex items-center gap-2">
@@ -82,7 +86,7 @@ const AdminSidebar: FC = () => {
       {/* Nombre del administrador */}
       {!isCollapsed && (
         <div className="mb-6 text-sm text-primary-foreground/80">
-          Administrador: {user?.user_metadata?.full_name || 'Admin'}
+          Administrador: {user?.user_metadata?.full_name || "Admin"}
         </div>
       )}
 
@@ -108,18 +112,24 @@ const AdminSidebar: FC = () => {
       </nav>
 
       {/* Footer con Switch de tema y botón de logout */}
-      <div className={cn(
-        "mt-auto pt-4 border-t border-primary-foreground/20",
-        isCollapsed ? "items-center" : "space-y-4"
-      )}>
-        <div className={cn(
-          "flex items-center",
-          isCollapsed ? "justify-center" : "justify-between"
-        )}>
+      <div
+        className={cn(
+          "mt-auto pt-4 border-t border-primary-foreground/20",
+          isCollapsed ? "items-center" : "space-y-4"
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center",
+            isCollapsed ? "justify-center" : "justify-between"
+          )}
+        >
           {!isCollapsed && <span className="text-sm">Tema Oscuro</span>}
           <Switch
             checked={theme === "dark"}
-            onCheckedChange={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onCheckedChange={() =>
+              setTheme(theme === "dark" ? "light" : "dark")
+            }
           />
         </div>
 
@@ -132,15 +142,17 @@ const AdminSidebar: FC = () => {
             isCollapsed && "justify-center"
           )}
         >
-          <FontAwesomeIcon 
-            icon={faSignOut} 
+          <FontAwesomeIcon
+            icon={faSignOut}
             className={cn(
-              "h-5 w-5", 
+              "h-5 w-5",
               !isCollapsed && "mr-2",
               isSigningOut && "animate-spin"
-            )} 
+            )}
           />
-          {!isCollapsed && <span>{isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}</span>}
+          {!isCollapsed && (
+            <span>{isSigningOut ? "Cerrando sesión..." : "Cerrar Sesión"}</span>
+          )}
         </Button>
       </div>
     </aside>

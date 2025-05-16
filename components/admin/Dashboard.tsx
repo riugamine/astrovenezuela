@@ -16,7 +16,7 @@ import {
   faTruck
 } from '@fortawesome/free-solid-svg-icons';
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getDashboardStats } from '@/lib/data/admin/actions/dashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -70,132 +70,7 @@ const AdminDashboard: FC = () => {
   };
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
-    queryFn: async () => {
-      // Obtener datos básicos
-      const { count: productsCount } = await supabaseAdmin
-        .from('products')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: usersCount } = await supabaseAdmin
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Calcular fechas relevantes
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const lastMonth = new Date();
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-
-      // Obtener órdenes y calcular métricas
-      const { data: currentMonthOrders } = await supabaseAdmin
-        .from('orders')
-        .select('*')
-        .gte('created_at', startOfMonth.toISOString());
-
-      const { data: lastMonthOrders } = await supabaseAdmin
-        .from('orders')
-        .select('*')
-        .gte('created_at', lastMonth.toISOString())
-        .lt('created_at', startOfMonth.toISOString());
-
-      // Calcular crecimiento de ventas
-      const currentRevenue = currentMonthOrders?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
-      const lastRevenue = lastMonthOrders?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
-      const salesGrowth = lastRevenue ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
-
-      // Obtener productos con bajo stock
-      const { count: lowStock } = await supabaseAdmin
-        .from('products')
-        .select('*', { count: 'exact' })
-        .lt('stock', 10)
-        .gt('stock', 0);
-
-      const { count: outOfStock } = await supabaseAdmin
-        .from('products')
-        .select('*', { count: 'exact' })
-        .eq('stock', 0);
-
-      // Calcular tasa de conversión (órdenes / usuarios totales)
-      const conversionRate = (currentMonthOrders?.length || 0) / (usersCount || 1) * 100;
-
-      // Calcular datos temporales para gráficos
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data: salesData } = await supabaseAdmin
-        .from('orders')
-        .select('created_at, total_amount')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-        .order('created_at', { ascending: true });
-
-      // Procesar datos para gráficos
-      const salesOverTime = salesData?.reduce((acc: Array<{date: string, amount: number}>, order) => {
-        const date = new Date(order.created_at).toLocaleDateString();
-        const existingDate = acc.find(item => item.date === date);
-        if (existingDate) {
-          existingDate.amount += order.total_amount;
-        } else {
-          acc.push({ date, amount: order.total_amount });
-        }
-        return acc;
-      }, []) || [];
-
-      // Calcular productos más vendidos
-      const { data: topProducts } = await supabaseAdmin
-        .from('order_items')
-        .select(`
-          quantity,
-          products_id,
-          products!inner (name)
-        `)
-        .order('quantity', { ascending: false })
-        .limit(5) as {data: OrderItemWithProduct[] | null };
-
-      const topSellingProducts = topProducts?.map(item => ({
-        name: item.products.name,
-        quantity: item.quantity
-      })) || [];
-
-      // Calcular nuevos usuarios del mes
-      const { count: newUsers } = await supabaseAdmin
-        .from('profiles')
-        .select('*', { count: 'exact' })
-        .gte('created_at', startOfMonth.toISOString());
-
-      // Calcular tasa de retención (usuarios que han hecho más de una orden)
-      const { data: returningUsers } = await supabaseAdmin
-        .from('orders')
-        .select('user_id')
-        .gte('created_at', lastMonth.toISOString());
-
-      const uniqueReturningUsers = new Set(returningUsers?.map(order => order.user_id));
-      const userRetentionRate = (uniqueReturningUsers.size / (usersCount || 1)) * 100;
-
-      return {
-        totalProducts: productsCount || 0,
-        totalUsers: usersCount || 0,
-        monthlyOrders: currentMonthOrders?.length || 0,
-        totalRevenue: currentRevenue,
-        averageOrderValue: currentMonthOrders?.length 
-          ? currentRevenue / currentMonthOrders.length 
-          : 0,
-        salesGrowth,
-        conversionRate,
-        lowStockProducts: lowStock || 0,
-        outOfStockProducts: outOfStock || 0,
-        // Nuevas propiedades requeridas
-        topSellingProducts,
-        newUsersThisMonth: newUsers || 0,
-        userRetentionRate,
-        salesOverTime,
-        ordersOverTime: salesOverTime.map(item => ({
-          date: item.date,
-          count: 1
-        }))
-      };
-    },
+    queryFn: getDashboardStats,
     refetchInterval: 300000,
 });
 
