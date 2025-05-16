@@ -81,10 +81,10 @@ const ProductCardContent = memo(function ProductCardContent({
   onHover
 }: ProductCardContentProps) {
   return (
-    <Card className="overflow-hidden border-none h-full transition-all duration-300 hover:shadow-lg">
+    <Card className="overflow-hidden border-0 h-full transition-all duration-300 hover:shadow-sm bg-white dark:bg-gray-900">
       <CardContent className="p-0">
         <div 
-          className="relative aspect-square bg-muted"
+          className="relative aspect-square bg-muted overflow-hidden"
           onMouseEnter={() => onHover(true)}
           onMouseLeave={() => onHover(false)}
         >
@@ -93,7 +93,7 @@ const ProductCardContent = memo(function ProductCardContent({
             alt={product.name}
             fill
             className={cn(
-              'object-cover transition-transform duration-500',
+              'object-cover transition-all duration-700 ease-in-out',
               hasStock && 'group-hover:scale-105'
             )}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -101,8 +101,11 @@ const ProductCardContent = memo(function ProductCardContent({
           />
 
           {!hasStock && (
-            <div className="absolute top-2 right-2">
-              <Badge variant="destructive" className="text-xs font-medium">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+              <Badge 
+                variant="destructive" 
+                className="text-xs font-medium px-3 py-1 bg-red-500/80 hover:bg-red-500/90 transition-colors"
+              >
                 Agotado
               </Badge>
             </div>
@@ -111,12 +114,12 @@ const ProductCardContent = memo(function ProductCardContent({
         
         <div className="p-3 space-y-2">
           <h3 className={cn(
-            'font-medium line-clamp-2 text-sm sm:text-base transition-colors',
+            'font-medium line-clamp-2 text-sm transition-colors',
             hasStock && 'group-hover:text-primary'
           )}>
             {product.name}
           </h3>
-          <p className="font-semibold text-primary text-base sm:text-lg">
+          <p className="font-semibold text-primary text-base">
             ${product.price.toLocaleString('es-VE')}
           </p>
           {hasStock && availableSizes.length > 0 && (
@@ -124,8 +127,8 @@ const ProductCardContent = memo(function ProductCardContent({
               {availableSizes.map(size => (
                 <Badge 
                   key={size} 
-                  variant="outline"
-                  className="text-xs"
+                  variant="secondary"
+                  className="text-xs px-1.5 py-0.5 transition-colors"
                 >
                   {size}
                 </Badge>

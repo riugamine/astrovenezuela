@@ -7,33 +7,56 @@ interface FilterState {
   sortBy: SortOption | null;
   priceRange: [number, number];
   tempPriceRange: [number, number];
+  tempSelectedCategories: string[];
+  isDirty: boolean;
   setSelectedCategories: (categories: string[]) => void;
   toggleCategory: (categoryId: string) => void;
   setSortBy: (option: SortOption) => void;
   setTempPriceRange: (range: [number, number]) => void;
-  applyPriceRange: () => void;
+  applyFilters: () => void;
   resetFilters: () => void;
+  cancelChanges: () => void;
 }
 
 export const useFilterStore = create<FilterState>()((set, get) => ({
   selectedCategories: [],
+  tempSelectedCategories: [],
   sortBy: null,
   priceRange: [0, 200],
   tempPriceRange: [0, 200],
-  setSelectedCategories: (categories) => set({ selectedCategories: [...categories] }),
+  isDirty: false,
+  setSelectedCategories: (categories) => set({ 
+    tempSelectedCategories: [...categories],
+    isDirty: true
+  }),
   toggleCategory: (categoryId) =>
     set((state) => ({
-      selectedCategories: state.selectedCategories.includes(categoryId)
-        ? state.selectedCategories.filter((id) => id !== categoryId)
-        : [...state.selectedCategories, categoryId],
+      tempSelectedCategories: state.tempSelectedCategories.includes(categoryId)
+        ? state.tempSelectedCategories.filter((id) => id !== categoryId)
+        : [...state.tempSelectedCategories, categoryId],
+      isDirty: true
     })),
   setSortBy: (option) => set({ sortBy: option }),
-  setTempPriceRange: (range) => set({ tempPriceRange: [...range] as [number, number] }),
-  applyPriceRange: () => set((state) => ({ priceRange: [...state.tempPriceRange] as [number, number] })),
+  setTempPriceRange: (range) => set({ 
+    tempPriceRange: [...range] as [number, number],
+    isDirty: true
+  }),
+  applyFilters: () => set((state) => ({ 
+    priceRange: [...state.tempPriceRange] as [number, number],
+    selectedCategories: [...state.tempSelectedCategories],
+    isDirty: false
+  })),
+  cancelChanges: () => set((state) => ({
+    tempPriceRange: [...state.priceRange] as [number, number],
+    tempSelectedCategories: [...state.selectedCategories],
+    isDirty: false
+  })),
   resetFilters: () => set({ 
     selectedCategories: [], 
+    tempSelectedCategories: [],
     sortBy: null, 
     priceRange: [0, 200],
-    tempPriceRange: [0, 200]
+    tempPriceRange: [0, 200],
+    isDirty: false
   }),
 }));

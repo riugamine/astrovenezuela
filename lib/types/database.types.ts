@@ -82,7 +82,11 @@ export interface Profile {
   role: 'admin' | 'customer';
   created_at: string;
 }
-
+export interface ProductRow extends Product {
+  detail_images: ProductDetailImage[];
+  variants: ProductVariant[];
+  category: Category;
+}
 
 // Definición del tipo Database que engloba todas las tablas
 export type Database = {

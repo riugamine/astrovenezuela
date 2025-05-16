@@ -8,35 +8,15 @@ import { supabaseClient } from "@/lib/supabase/client";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
 import { Category } from "@/lib/types/database.types";
-import { Marquee } from "@/components/magicui/marquee";
 import { ProductGrid } from "@/components/shop/ProductGrid";
-
-// Component for category cards
-const CategoryCard = ({
-  title,
-  image,
-  href,
-}: {
-  title: string;
-  image: string;
-  href: string;
-}) => (
-  <Link href={href} className="group relative overflow-hidden rounded-lg mx-4">
-    <div className="relative aspect-[4/5] w-72 overflow-hidden">
-      <Image
-        src={image || "https://placehold.co/600x400.jpg?text=Categoría"}
-        alt={title}
-        fill
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-black/30 transition-opacity group-hover:bg-black/40" />
-      <div className="absolute bottom-0 w-full p-6">
-        <h3 className="font-exo text-2xl font-bold text-white">{title}</h3>
-      </div>
-    </div>
-  </Link>
-);
-
+import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
+import {
+  faGem,
+  faPalette,
+  faHandHoldingHeart,
+  faShieldHalved,
+} from "@fortawesome/free-solid-svg-icons";
+import { Card } from "@/components/ui/card";
 // Fetch categories server-side
 async function getCategories() {
   const { data: categoriesData, error: categoriesError } = await supabaseClient
@@ -46,7 +26,7 @@ async function getCategories() {
     .limit(20);
 
   if (categoriesError) {
-    console.error('Error fetching categories:', categoriesError);
+    console.error("Error fetching categories:", categoriesError);
     return [];
   }
 
@@ -59,66 +39,137 @@ export default async function Home() {
   return (
     <ShopLayout>
       {/* Hero Section */}
-      <section className="relative h-[85vh] overflow-hidden">
+      <section className="relative h-[80vh] sm:h-[85vh] overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
-          <Meteors className="opacity-70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+          <Meteors className="opacity-60" />
         </div>
         <div className="container relative mx-auto px-4 h-full flex items-center">
           <div className="max-w-2xl text-white">
-            <h1 className="font-exo text-5xl font-bold mb-6">
+            <h1 className="font-exo text-4xl sm:text-5xl font-bold mb-6">
               <HyperText>Supera tus límites</HyperText>
             </h1>
-            <p className="font-gabarito text-xl mb-8">
+            <p className="font-gabarito text-lg sm:text-xl mb-8 text-gray-100">
               Equipamiento deportivo de alta calidad para atletas que buscan la
               excelencia
             </p>
             <Link href="/products">
-              <Button size="lg" variant="secondary" className="group">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="group hover:opacity-90 transition-opacity"
+              >
                 Explorar Colección
                 <FontAwesomeIcon
                   icon={faArrowRight}
-                  className="ml-2 transition-transform group-hover:translate-x-1"
+                  className="ml-2 transition-transform duration-300 group-hover:translate-x-1"
                 />
               </Button>
             </Link>
           </div>
         </div>
       </section>
-
-      {/* Categories Section */}
-      <section className="py-16">
+      {/* Features Section */}
+      <section className="py-12 sm:py-16">
         <div className="container mx-auto px-4">
-          <h2 className="font-exo text-3xl font-bold text-center mb-12">
-            Categorías
-          </h2>
-          <Marquee className="py-4" pauseOnHover>
-            {categories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                title={category.name}
-                image={category.banner_url}
-                href={`/categories/${category.slug}`}
-              />
-            ))}
-          </Marquee>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-6 hover:shadow-md transition-shadow">
+              <div className="space-y-4 text-center">
+                <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary/10">
+                  <FontAwesomeIcon
+                    icon={faGem}
+                    className="text-primary text-xl"
+                  />
+                </div>
+                <h3 className="font-exo text-base font-semibold">
+                  Calidad Premium
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Materiales de alta resistencia para un rendimiento óptimo
+                </p>
+              </div>
+            </Card>
+
+            <Card className="p-6 hover:shadow-md transition-shadow">
+              <div className="space-y-4 text-center">
+                <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary/10">
+                  <FontAwesomeIcon
+                    icon={faPalette}
+                    className="text-primary text-xl"
+                  />
+                </div>
+                <h3 className="font-exo text-base font-semibold">
+                  Diseño Únicos
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Colecciones exclusivas enfocadas en deportistas de alto
+                  rendimiento
+                </p>
+              </div>
+            </Card>
+
+            <Card className="p-6 hover:shadow-md transition-shadow">
+              <div className="space-y-4 text-center">
+                <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary/10">
+                  <FontAwesomeIcon
+                    icon={faHandHoldingHeart}
+                    className="text-primary text-xl"
+                  />
+                </div>
+                <h3 className="font-exo text-base font-semibold">
+                  Responsabilidad Social
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  La industria textil dedicada al hogar teniendo como meta
+                  mejorar su calidad de vida
+                </p>
+              </div>
+            </Card>
+
+            <Card className="p-6 hover:shadow-md transition-shadow">
+              <div className="space-y-4 text-center">
+                <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary/10">
+                  <FontAwesomeIcon
+                    icon={faShieldHalved}
+                    className="text-primary text-xl"
+                  />
+                </div>
+                <h3 className="font-exo text-base font-semibold">
+                  Garantía Total
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  30 días para cambios y devoluciones
+                </p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+      {/* Categories Section */}
+      <section className="py-12 sm:py-16 bg-gray-50 dark:bg-gray-900/30">
+        <div className="container mx-auto px-4">
+          <CategoriesCarousel categories={categories} />
         </div>
       </section>
 
       {/* Latest Products Section */}
-      <section className="py-16">
+      <section className="py-12 sm:py-16">
         <div className="container mx-auto px-4">
-          <h2 className="font-exo text-3xl font-bold text-center mb-12">
+          <h2 className="font-exo text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12">
             Nuevos Ingresos
           </h2>
           <ProductGrid />
-          <div className="text-center mt-12">
+          <div className="text-center mt-8 sm:mt-12">
             <Link href="/products">
-              <Button variant="outline" size="lg" className="group">
+              <Button
+                variant="outline"
+                size="lg"
+                className="group hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
                 Ver Catálogo Completo
                 <FontAwesomeIcon
                   icon={faArrowRight}
-                  className="ml-2 transition-transform group-hover:translate-x-1"
+                  className="ml-2 transition-transform duration-300 group-hover:translate-x-1"
                 />
               </Button>
             </Link>

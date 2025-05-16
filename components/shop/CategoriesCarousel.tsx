@@ -1,0 +1,59 @@
+'use client'
+
+import * as React from "react"
+import Autoplay from "embla-carousel-autoplay"
+import { Card } from "@/components/ui/card"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel"
+import { Category } from "@/lib/types/database.types"
+import Image from "next/image"
+import Link from "next/link"
+
+interface CategoriesCarouselProps {
+  categories: Category[]
+}
+
+export function CategoriesCarousel({ categories }: CategoriesCarouselProps) {
+  const plugin = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  )
+
+  return (
+    <Carousel
+      plugins={[plugin.current]}
+      className="w-full"
+      opts={{
+        align: "start",
+        loop: true,
+      }}
+    >
+      <CarouselContent className="-ml-1 md:-ml-2">
+        {categories.map((category) => (
+          <CarouselItem key={category.id} className="pl-1 md:pl-2 basis-full md:basis-1/2 lg:basis-1/3">
+            <Link href={`/categories/${category.slug}`}>
+              <Card className="overflow-hidden group relative border-0">
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <Image
+                    src={category.banner_url || "https://placehold.co/600x400.jpg?text=Categoría"}
+                    alt={category.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
+                  <div className="absolute bottom-0 w-full p-4">
+                    <h3 className="font-exo text-lg md:text-xl font-bold text-white group-hover:translate-y-[-2px] transition-transform">
+                      {category.name}
+                    </h3>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+    </Carousel>
+  )
+}
