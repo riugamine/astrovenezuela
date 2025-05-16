@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ProductDetailImage } from '@/lib/types/database.types';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { ProductDetailImage } from '@/lib/data/admin/actions/products/types';
 import { toast } from 'sonner';
+import { uploadProductImage, deleteProductImage } from '@/lib/data/admin/actions/products';
 
 interface ImageUploaderProps {
   mainImage: string;
@@ -16,124 +16,6 @@ interface ImageUploaderProps {
   onMainImageChange: (url: string) => void;
   onDetailImagesChange: (images: ProductDetailImage[]) => void;
 }
-
-/**
- * Comprime una imagen antes de subirla
- * @param file - Archivo a comprimir
- * @returns Archivo comprimido
- */
-const compressImage = async (file: File): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new window.Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1920;
-        const MAX_HEIGHT = 1080;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const newFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              });
-              resolve(newFile);
-            } else {
-              reject(new Error('Error al comprimir la imagen'));
-            }
-          },
-          'image/jpeg',
-          0.7
-        );
-      };
-    };
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-/**
- * Sube una imagen a Supabase Storage
- * @param file - Archivo a subir
- * @param path - Ruta en el bucket
- * @returns URL pública de la imagen
- */
-const uploadImageToSupabase = async (file: File, path: string): Promise<string> => {
-  // Validate file size
-  if (file.size > 10 * 1024 * 1024) {
-    toast.error('La imagen no debe superar los 10MB');
-    return Promise.reject('File too large');
-  }
-
-  // Validate file type
-  if (!file.type.startsWith('image/')) {
-    toast.error('El archivo debe ser una imagen (JPG, PNG, etc)');
-    return Promise.reject('Invalid file type');
-  }
-
-  try {
-    const compressedFile = await compressImage(file);
-    
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `${path}/${fileName}`;
-
-    const { data, error } = await supabaseAdmin.storage
-      .from('products')
-      .upload(filePath, compressedFile, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('products')
-      .getPublicUrl(data.path);
-
-    return publicUrl;
-  } catch (error) {
-    toast.error('Error al procesar la imagen');
-    return Promise.reject(error);
-  }
-};
-
-/**
- * Elimina una imagen de Supabase Storage
- * @param url - URL pública de la imagen
- */
-const deleteImageFromSupabase = async (url: string) => {
-  const path = url.split('/').pop();
-  if (!path) return;
-
-  const { error } = await supabaseAdmin.storage
-    .from('products')
-    .remove([path]);
-
-  if (error) throw error;
-};
 
 export function ImageUploader({
   mainImage,
@@ -152,7 +34,11 @@ export function ImageUploader({
     setUploadingMainImage(true);
 
     try {
-      const imageUrl = await uploadImageToSupabase(file, 'main-images');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('path', 'main-images');
+
+      const imageUrl = await uploadProductImage(formData);
       onMainImageChange(imageUrl);
       toast.success('Imagen subida exitosamente');
     } catch (error) {
@@ -176,19 +62,20 @@ export function ImageUploader({
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
         try {
-          const imageUrl = await uploadImageToSupabase(file, 'detail-images');
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('path', 'detail-images');
+
+          const imageUrl = await uploadProductImage(formData);
           uploadedCount++;
           setUploadProgress((uploadedCount / totalFiles) * 100);
           
-          // Creamos un objeto que coincida exactamente con ProductDetailImage
-          const newImage: ProductDetailImage = {
+          return {
             id: crypto.randomUUID(),
             image_url: imageUrl,
             order_index: detailImages.length + uploadedCount,
-            product_id: '' // Asignamos un string vacío temporalmente
-          };
-          
-          return newImage;
+            product_id: '' // Set a default empty string for new images
+          } as ProductDetailImage; // Use type assertion instead of type predicate
         } catch (error) {
           console.error('Error uploading image:', error);
           return null;
@@ -196,7 +83,7 @@ export function ImageUploader({
       });
 
       const newImages = (await Promise.all(uploadPromises))
-        .filter((img): img is ProductDetailImage => img !== null);
+        .filter((img): img is NonNullable<typeof img> => img !== null); // Fix type predicate
       
       if (newImages.length > 0) {
         onDetailImagesChange([...detailImages, ...newImages]);
@@ -219,7 +106,7 @@ export function ImageUploader({
   const removeDetailImage = async (index: number) => {
     try {
       const imageToRemove = detailImages[index];
-      await deleteImageFromSupabase(imageToRemove.image_url);
+      await deleteProductImage(imageToRemove.image_url);
       const newImages = detailImages.filter((_, i) => i !== index);
       const updatedImages = newImages.map((img, idx) => ({
         ...img,

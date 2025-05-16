@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ProductData, ProductWithRelations } from './types';
+import sharp from 'sharp';
 
 export async function getProducts(): Promise<ProductWithRelations[]> {
   const { data, error } = await supabaseAdmin
@@ -171,6 +172,98 @@ export async function toggleProductStatus(productId: string, isActive: boolean):
     .from('products')
     .update({ is_active: !isActive })
     .eq('id', productId);
+
+  if (error) throw error;
+}
+
+/**
+ * Comprime una imagen antes de subirla
+ * @param buffer - Buffer de la imagen a comprimir
+ * @returns Buffer comprimido
+ */
+async function compressImage(buffer: Buffer): Promise<Buffer> {
+  try {
+    const compressed = await sharp(buffer)
+      .resize(1920, 1080, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .jpeg({
+        quality: 70,
+        progressive: true
+      })
+      .toBuffer();
+
+    return compressed;
+  } catch (error) {
+    console.error('Error compressing image:', error);
+    return buffer; // Retorna el buffer original si hay error
+  }
+}
+
+/**
+ * Sube una imagen a Supabase Storage
+ * @param formData - FormData con el archivo y la ruta
+ * @returns URL pública de la imagen
+ */
+export async function uploadProductImage(formData: FormData): Promise<string> {
+  const file = formData.get('file') as File;
+  const path = formData.get('path') as string;
+
+  if (!file || !path) {
+    throw new Error('File and path are required');
+  }
+
+  // Validar tamaño del archivo (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('File size exceeds 10MB limit');
+  }
+
+  // Validar tipo de archivo
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Invalid file type. Only images are allowed');
+  }
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const compressedBuffer = await compressImage(buffer);
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `${path}/${fileName}`;
+
+    const { data, error } = await supabaseAdmin.storage
+      .from('products')
+      .upload(filePath, compressedBuffer, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from('products')
+      .getPublicUrl(data.path);
+
+    return publicUrl;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw new Error('Failed to upload image');
+  }
+}
+
+/**
+ * Elimina una imagen de Supabase Storage
+ * @param url - URL pública de la imagen
+ */
+export async function deleteProductImage(url: string): Promise<void> {
+  const path = url.split('/').pop();
+  if (!path) throw new Error('Invalid image URL');
+
+  const { error } = await supabaseAdmin.storage
+    .from('products')
+    .remove([path]);
 
   if (error) throw error;
 }

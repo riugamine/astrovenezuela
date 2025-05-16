@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ProductViewDialog } from './ProductViewDialog';
 import { useQueryClient } from '@tanstack/react-query';
-import { Product } from '@/lib/types/database.types';
+import { ProductWithRelations } from '@/lib/data/admin/actions/products/types';
 import { ProductEditDialog } from './ProductEditDialog';
 import { toggleProductStatus, deleteProduct } from '@/lib/data/admin/actions/products';
 import { toast } from 'sonner';
 
 interface ProductActionsProps {
-  product: Product;
+  product: ProductWithRelations;
 }
 
 export const ProductActions: FC<ProductActionsProps> = ({ product }) => {

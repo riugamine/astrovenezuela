@@ -10,11 +10,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
-import { Product, ProductVariant, ProductDetailImage } from "@/lib/types/database.types";
+import { ProductData, ProductVariant, ProductImage } from "@/lib/data/admin/actions/products/types";
+
 interface ProductViewDialogProps {
-  product: Product & {
+  product: ProductData & {
     variants?: ProductVariant[];
-    product_images?: ProductDetailImage[];
+    product_images?: ProductImage[];
   };
   isOpen: boolean;
   onClose: () => void;
@@ -66,9 +67,9 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Imágenes de Detalle</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {product.product_images.map((image: any, index: number) => (
+                  {product.product_images.map((image, index) => (
                     <div
-                      key={image.id}
+                      key={`${image.image_url}-${index}`}
                       className="relative aspect-square rounded-lg overflow-hidden"
                     >
                       <Image
@@ -88,14 +89,13 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Variantes Disponibles</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {product.variants.map((variant: ProductVariant) => (
+                  {product.variants.map((variant) => (
                     <div
                       key={variant.id}
                       className="p-4 rounded-lg border bg-card"
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="font-medium">{variant.color}</p>
                           <p className="text-sm text-muted-foreground">
                             Talla: {variant.size}
                           </p>

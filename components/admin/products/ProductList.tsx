@@ -23,14 +23,14 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getProducts } from "@/lib/data/admin/actions/products";
 import { ProductActions } from "./ProductActions";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
-import { Product } from "@/lib/types/database.types";
+import { ProductWithRelations } from "@/lib/data/admin/actions/products/types";
 // Definición del tipo para los productos
 
 export function ProductList() {
@@ -38,7 +38,7 @@ export function ProductList() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Definición de columnas
-  const columns: ColumnDef<Product>[] = [
+  const columns: ColumnDef<ProductWithRelations>[] = [
     {
       accessorKey: "name",
       header: "Nombre",
@@ -117,46 +117,7 @@ export function ProductList() {
   // Consulta para obtener productos
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabaseAdmin
-          .from("products")
-          .select(
-            `
-            *,
-            product_images (
-              id,
-              product_id,
-              image_url,
-              order_index
-            ),
-            variants:product_variants (
-              id,
-              product_id,
-              size,
-              stock,
-              image_url,
-              created_at,
-              updated_at
-            )
-          `
-          )
-          .order("created_at", { ascending: false });
-        if (error) {
-          console.error("Error al obtener productos:", error);
-          throw error;
-        }
-
-        if (!data) {
-          console.log("No se encontraron productos");
-          return [];
-        }
-        return data as Product[];
-      } catch (error) {
-        console.error("Error en la consulta:", error);
-        throw error;
-      }
-    },
+    queryFn: getProducts,
     refetchOnWindowFocus: false,
     retry: 1,
   });

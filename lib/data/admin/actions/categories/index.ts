@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { Category, CategoryData } from "./types";
+import { Category, CategoryData, CategoryWithSubcategories } from "./types";
 import { generateSlug } from "@/lib/utils";
 
 // Helper function to generate category slug
@@ -34,19 +34,43 @@ async function isSlugUnique(slug: string, excludeId?: string): Promise<boolean> 
   const { data } = await query;
   return !data?.length;
 }
+function organizeCategories(categories: Category[]): CategoryWithSubcategories[] {
+  const categoryMap = new Map<string, CategoryWithSubcategories>();
+  const result: CategoryWithSubcategories[] = [];
 
-export async function getCategories(): Promise<Category[]> {
+  // First pass: Create category objects with empty subcategories arrays
+  categories.forEach(category => {
+    categoryMap.set(category.id, { ...category, subcategories: [] });
+  });
+
+  // Second pass: Build the hierarchy and create ordered list
+  const processCategory = (categoryId: string | null, level: number = 0) => {
+    const categoriesAtLevel = categories
+      .filter(cat => cat.parent_id === categoryId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    for (const category of categoriesAtLevel) {
+      const categoryWithSubs = categoryMap.get(category.id)!;
+      result.push(categoryWithSubs);
+      processCategory(category.id, level + 1);
+    }
+  };
+
+  // Start with root categories (parent_id is null)
+  processCategory(null);
+
+  return result;
+}
+
+export async function getCategories(): Promise<CategoryWithSubcategories[]> {
   const { data, error } = await supabaseAdmin
     .from("categories")
-    .select(`
-      *,
-      subcategories:categories!parent_id(*)
-    `)
-    .is("parent_id", null)
-    .order("name");
+    .select("*");
 
   if (error) throw error;
-  return data || [];
+  if (!data) return [];
+
+  return organizeCategories(data);
 }
 
 export async function getSubcategories(parentId: string): Promise<Category[]> {
