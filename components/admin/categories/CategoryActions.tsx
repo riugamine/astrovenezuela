@@ -8,7 +8,7 @@ import {
   faToggleOff,
   faPlus 
 } from '@fortawesome/free-solid-svg-icons';
-import type { Category } from '@/lib/types/database.types';
+import type { Category } from '@/lib/data/admin/actions/categories/types';
 import {
   DropdownMenu,
   DropdownMenuContent,

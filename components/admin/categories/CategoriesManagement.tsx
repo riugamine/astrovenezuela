@@ -40,8 +40,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabaseAdmin } from "@/lib/supabase/admin";
-import type { Category } from "@/lib/types/database.types";
+import { getCategories, createCategory, updateCategory, toggleCategoryStatus } from "@/lib/data/admin/actions/categories";
+import { Category, CategoryData, CategoryWithSubcategories } from '@/lib/data/admin/actions/categories/types';
 import CategoryActions from "./CategoryActions";
 import { cn } from "@/lib/utils";
 import { SubcategoryDialog } from "./SubcategoryDialog";
@@ -57,11 +57,15 @@ const categorySchema = z.object({
   description: z
     .string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
-    .optional()
-    .nullable(),
-  banner_url: z.string().url("Debe ser una URL válida").optional().nullable(),
+    .nullable()
+    .optional(),
+  banner_url: z
+    .string()
+    .url("Debe ser una URL válida")
+    .nullable()
+    .optional(),
   is_active: z.boolean(),
-  parent_id: z.string().optional().nullable(),
+  parent_id: z.string().nullable().optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -78,7 +82,7 @@ const CategoriesManagement: FC = () => {
   );
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
 
-  const columns: ColumnDef<Category>[] = [
+  const columns: ColumnDef<CategoryWithSubcategories>[] = [
     {
       accessorKey: "name",
       header: "Nombre",
@@ -162,7 +166,7 @@ const CategoriesManagement: FC = () => {
   ];
   const queryClient = useQueryClient();
 
-  const {
+  const{
     register,
     handleSubmit,
     reset,
@@ -173,9 +177,10 @@ const CategoriesManagement: FC = () => {
     resolver: zodResolver(categorySchema),
     defaultValues: {
       is_active: true,
-      description: "",
-      banner_url: "",
-    },
+      description: null,
+      banner_url: null,
+      parent_id: null
+    }
   });
   useEffect(() => {
     if (selectedCategory && isEditOpen) {
@@ -187,33 +192,11 @@ const CategoriesManagement: FC = () => {
       });
     }
   }, [selectedCategory, isEditOpen, reset]);
+
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const { data, error } = await supabaseAdmin
-        .from("categories")
-        .select("*")
-        .order("parent_id", { ascending: true, nullsFirst: true })
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-
-      // Reorganizar las categorías para que las subcategorías aparezcan después de sus padres
-      const organizedCategories = data.reduce((acc: Category[], category) => {
-        if (!category.parent_id) {
-          // Agregar categoría principal
-          acc.push(category);
-          // Agregar subcategorías inmediatamente después
-          const subcategories = data.filter(
-            (sub) => sub.parent_id === category.id
-          );
-          acc.push(...subcategories);
-        }
-        return acc;
-      }, []);
-
-      return organizedCategories as Category[];
-    },
+    queryFn: getCategories,
+    
   });
 
   // Configuración de la tabla
@@ -239,112 +222,44 @@ const CategoriesManagement: FC = () => {
 
   // Crear categoría
   const createMutation = useMutation({
-    mutationFn: async (newCategory: CategoryFormData) => {
-      const { data, error } = await supabaseAdmin
-        .from("categories")
-        .insert([
-          {
-            ...newCategory,
-            slug: newCategory.parent_id
-              ? `${
-                  categories.find((cat) => cat.id === newCategory.parent_id)
-                    ?.slug
-                }/${newCategory.name.toLowerCase().replace(/\s+/g, "-")}`
-              : newCategory.name.toLowerCase().replace(/\s+/g, "-"),
-            is_active: newCategory.is_active,
-            banner_url: newCategory.banner_url || null,
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (_, variables) => {
+    mutationFn: (data: CategoryFormData) => createCategory(data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      const message = variables.parent_id
-        ? "Subcategoría creada exitosamente"
-        : "Categoría creada exitosamente";
-      toast.success(message);
+      toast.success("Categoría creada exitosamente");
       setIsCreateOpen(false);
       setIsSubcategoryOpen(false);
       reset();
     },
-    onError: (error) => {
-      toast.error("Error al crear la categoría");
-      console.error(error);
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al crear la categoría");
     },
   });
 
   // Actualizar categoría
   const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: CategoryFormData;
-    }) => {
-      const category = categories.find((cat) => cat.id === id);
-      const parentCategory = category?.parent_id
-        ? categories.find((cat) => cat.id === category.parent_id)
-        : null;
-
-      const { error } = await supabaseAdmin
-        .from("categories")
-        .update({
-          ...data,
-          slug: category?.parent_id
-            ? `${parentCategory?.slug}/${data.name
-                .toLowerCase()
-                .replace(/\s+/g, "-")}`
-            : data.name.toLowerCase().replace(/\s+/g, "-"),
-          updated_at: new Date().toISOString(),
-          banner_url: data.banner_url || null,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-    },
+    mutationFn: ({ id, data }: { id: string; data: Partial<CategoryData> }) =>
+      updateCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Categoría actualizada exitosamente");
       setIsEditOpen(false);
       setSelectedCategory(null);
     },
-    onError: (error) => {
-      toast.error("Error al actualizar la categoría");
-      console.error(error);
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al actualizar la categoría");
     },
   });
   // Desactivar categoría
-  const toggleActiveMutation = useMutation({
-    mutationFn: async ({
-      id,
-      is_active,
-    }: {
-      id: string;
-      is_active: boolean;
-    }) => {
-      const { error } = await supabaseAdmin
-        .from("categories")
-        .update({ is_active: !is_active })
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
+  const toggleStatusMutation = useMutation({
+    mutationFn: (categoryId: string) => toggleCategoryStatus(categoryId),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success(
-        `Categoría ${
-          variables.is_active ? "desactivada" : "activada"
-        } exitosamente`
-      );
+      toast.success("Estado de la categoría actualizado exitosamente");
+      setIsDeleteOpen(false);
+      setSelectedCategory(null);
     },
-    onError: (error) => {
-      toast.error("Error al cambiar el estado de la categoría");
-      console.error(error);
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al cambiar el estado de la categoría");
     },
   });
 
@@ -557,7 +472,7 @@ const CategoriesManagement: FC = () => {
                 <Label htmlFor="edit-description">Descripción</Label>
                 <Textarea
                   id="edit-description"
-                  defaultValue={selectedCategory?.description}
+                  defaultValue={selectedCategory?.description || ""}
                   {...register("description")}
                 />
               </div>
@@ -618,15 +533,12 @@ const CategoriesManagement: FC = () => {
               variant="destructive"
               onClick={() => {
                 if (selectedCategory) {
-                  toggleActiveMutation.mutate({
-                    id: selectedCategory.id,
-                    is_active: selectedCategory.is_active,
-                  });
+                  toggleStatusMutation.mutate(selectedCategory.id);
                 }
               }}
-              disabled={toggleActiveMutation.isPending}
+              disabled={toggleStatusMutation.isPending}
             >
-              {toggleActiveMutation.isPending ? "Eliminando..." : "Eliminar"}
+              {toggleStatusMutation.isPending ? "Eliminando..." : "Eliminar"}
             </Button>
           </DialogFooter>
         </DialogContent>

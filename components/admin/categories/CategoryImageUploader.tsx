@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { uploadCategoryImage } from '@/lib/data/admin/actions/categories';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -10,35 +10,7 @@ interface CategoryImageUploaderProps {
   onBannerChange: (url: string) => void;
 }
 
-const uploadImageToSupabase = async (file: File): Promise<string> => {
-  if (file.size > 10 * 1024 * 1024) {
-    throw new Error('La imagen no debe superar los 10MB');
-  }
 
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `banners/${fileName}`;
-
-    const { data, error } = await supabaseAdmin.storage
-      .from('categories')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('categories')
-      .getPublicUrl(data.path);
-
-    return publicUrl;
-  } catch (error) {
-    console.error('Error en la subida:', error);
-    throw error;
-  }
-};
 
 export function CategoryImageUploader({
   bannerUrl,
@@ -52,12 +24,12 @@ export function CategoryImageUploader({
     setUploading(true);
 
     try {
-      const imageUrl = await uploadImageToSupabase(file);
+      const imageUrl = await uploadCategoryImage(file);
       onBannerChange(imageUrl);
-      toast.success('Banner subido exitosamente');
+      toast.success('Banner uploaded successfully');
     } catch (error) {
       console.error('Error uploading banner:', error);
-      toast.error('Error al subir el banner');
+      toast.error('Error uploading banner');
     } finally {
       setUploading(false);
     }

@@ -37,3 +37,12 @@ export const getBrandLogo = (variant: LogoVariant = 'blanco') => {
   return `https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/public/brand-assets/brand-logo/${variantMap[variant]}.png`;
 
 };
+
+export const generateSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
