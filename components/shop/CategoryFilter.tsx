@@ -11,10 +11,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilter } from "@fortawesome/free-solid-svg-icons";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CategoryFilterProps {
   categories: Category[];
 }
+
+// Available sizes for filtering
+const SIZES = ['Única', 'XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+type Size = typeof SIZES[number];
 
 // Helper function to organize categories by parent
 function organizeCategories(categories: Category[]) {
@@ -34,12 +39,15 @@ function organizeCategories(categories: Category[]) {
 
 export function CategoryFilter({ categories }: CategoryFilterProps) {
   const { 
-    selectedCategories, 
-    toggleCategory, 
+    tempSelectedCategories,
+    tempSelectedSizes, 
+    toggleCategory,
+    toggleSize, 
     resetFilters, 
     tempPriceRange, 
     setTempPriceRange,
-    priceRange 
+    priceRange,
+    isDirty
   } = useFilterStore();
   
   const { mainCategories, subcategoriesMap } = useMemo(
@@ -48,89 +56,119 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
   );
 
   const showResetButton = useMemo(
-    () => selectedCategories.length > 0 || priceRange[0] !== 0 || priceRange[1] !== 200,
-    [selectedCategories, priceRange]
+    () => isDirty,
+    [isDirty]
   );
 
   return (
-    <div className="space-y-6 py-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Filtros</h3>
         {showResetButton && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetFilters}
-            className="text-xs text-muted-foreground hover:text-primary"
-          >
-            Limpiar todo
+          <Button variant="ghost" size="sm" onClick={resetFilters}>
+            Limpiar
           </Button>
         )}
       </div>
 
-      {/* Price Range Filter */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium">Rango de Precio</h3>
-        <Slider
-          defaultValue={tempPriceRange}
-          max={200}
-          step={10}
-          value={tempPriceRange}
-          onValueChange={(value) => setTempPriceRange(value as [number, number])}
-          className="w-full"
-        />
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            <span>${tempPriceRange[0]}</span> - <span>${tempPriceRange[1]}</span>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Categories */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium">Categorías</h3>
-        <div className="space-y-2">
-          {mainCategories.map((category) => (
-            <div key={category.id} className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={`category-${category.id}`}
-                  checked={selectedCategories.includes(category.id)}
-                  onCheckedChange={() => toggleCategory(category.id)}
-                />
-                <label
-                  htmlFor={`category-${category.id}`}
-                  className="text-sm leading-none cursor-pointer"
-                >
-                  {category.name}
-                </label>
-              </div>
-              
-              {/* Subcategories */}
-              {subcategoriesMap[category.id] && (
-                <div className="ml-6 space-y-2">
-                  {subcategoriesMap[category.id].map((subcat) => (
-                    <div key={subcat.id} className="flex items-center space-x-2">
+      <ScrollArea className="h-[calc(100vh-200px)] pr-4">
+        <Accordion type="multiple" className="space-y-4" defaultValue={["categories", "sizes", "price"]}>
+          <AccordionItem value="categories">
+            <AccordionTrigger className="text-sm font-medium">
+              Categorías
+              {tempSelectedCategories.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {tempSelectedCategories.length}
+                </Badge>
+              )}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4 pt-2">
+                {mainCategories.map((category) => (
+                  <div key={category.id} className="space-y-2">
+                    <div className="flex items-center space-x-2">
                       <Checkbox
-                        id={`category-${subcat.id}`}
-                        checked={selectedCategories.includes(subcat.id)}
-                        onCheckedChange={() => toggleCategory(subcat.id)}
+                        id={category.id}
+                        checked={tempSelectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
                       />
-                      <label
-                        htmlFor={`category-${subcat.id}`}
-                        className="text-sm leading-none cursor-pointer"
-                      >
-                        {subcat.name}
+                      <label htmlFor={category.id} className="text-sm font-medium cursor-pointer">
+                        {category.name}
                       </label>
                     </div>
-                  ))}
-                </div>
+                    {subcategoriesMap[category.id] && (
+                      <div className="ml-6 space-y-2">
+                        {subcategoriesMap[category.id].map((subcat) => (
+                          <div key={subcat.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={subcat.id}
+                              checked={tempSelectedCategories.includes(subcat.id)}
+                              onCheckedChange={() => toggleCategory(subcat.id)}
+                            />
+                            <label htmlFor={subcat.id} className="text-sm cursor-pointer">
+                              {subcat.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="sizes">
+            <AccordionTrigger className="text-sm font-medium">
+              Tallas
+              {tempSelectedSizes.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {tempSelectedSizes.length}
+                </Badge>
               )}
-            </div>
-          ))}
-        </div>
-      </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                {SIZES.map((size) => (
+                  <Button
+                    key={size}
+                    variant={tempSelectedSizes.includes(size) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleSize(size)}
+                    className="w-full"
+                  >
+                    {size}
+                  </Button>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="price">
+            <AccordionTrigger className="text-sm font-medium">
+              Precio
+              {tempPriceRange.some((v, i) => v !== priceRange[i]) && (
+                <Badge variant="secondary" className="ml-2">1</Badge>
+              )}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4 pt-4 px-2">
+                <Slider
+                  value={tempPriceRange}
+                  min={0}
+                  max={1000}
+                  step={10}
+                  onValueChange={setTempPriceRange}
+                />
+                <div className="flex items-center justify-between text-sm">
+                  <span>${tempPriceRange[0]}</span>
+                  <span>${tempPriceRange[1]}</span>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </ScrollArea>
     </div>
   );
 }

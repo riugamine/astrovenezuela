@@ -7,18 +7,19 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSort } from "@fortawesome/free-solid-svg-icons";
 
 export function SortFilter() {
-  const { sortBy, setSortBy } = useFilterStore();
+  const { tempSortBy, setSortBy } = useFilterStore();
 
   const handleSortChange = useCallback((value: string) => {
-    setSortBy(value as any);
+    setSortBy(value as 'newest' | 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc');
   }, [setSortBy]);
 
   return (
-    <Select value={sortBy || undefined} onValueChange={handleSortChange}>
-      <SelectTrigger className="w-[200px]">
+    <Select value={tempSortBy} onValueChange={handleSortChange}>
+      <SelectTrigger className="w-full sm:w-[200px] flex items-center gap-2">
+        <FontAwesomeIcon icon={faSort} className="h-4 w-4" />
         <SelectValue placeholder="Ordenar por" />
       </SelectTrigger>
-      <SelectContent align="end">
+      <SelectContent align="end" className="min-w-[200px]">
         <SelectItem value="newest" className="cursor-pointer">
           Más recientes
         </SelectItem>

@@ -16,43 +16,59 @@ interface ProductFiltersProps {
 
 export function ProductFilters({ categories }: ProductFiltersProps) {
   const applyFilters = useFilterStore(state => state.applyFilters);
+  const cancelChanges = useFilterStore(state => state.cancelChanges);
   const isDirty = useFilterStore(state => state.isDirty);
 
   const handleApplyFilters = useCallback(() => {
     applyFilters();
   }, [applyFilters]);
 
+  const handleCancelChanges = useCallback(() => {
+    cancelChanges();
+  }, [cancelChanges]);
+
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 mb-6">
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
-            <FontAwesomeIcon icon={faFilter} />
-            Filtros
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2 w-full sm:w-auto"
+          >
+            <FontAwesomeIcon icon={faFilter} className="h-4 w-4" />
+            <span>Filtros</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-full sm:w-[400px] p-0">
-          <SheetHeader className="px-6 py-4 border-b">
+        <SheetContent 
+          side="left" 
+          className="w-[90vw] sm:w-[400px] p-0 flex flex-col h-full"
+        >
+          <SheetHeader className="px-4 sm:px-6 py-4 border-b">
             <SheetTitle>Filtros de Búsqueda</SheetTitle>
             <SheetDescription className="text-sm text-muted-foreground">
               Ajusta los filtros para encontrar exactamente lo que buscas
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-6">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
             <CategoryFilter categories={categories} />
           </div>
 
-          <SheetFooter className="sticky bottom-0 border-t bg-background px-6 py-4">
-            <div className="flex w-full items-center justify-between gap-2">
+          <SheetFooter className="sticky bottom-0 border-t bg-background px-4 sm:px-6 py-4 mt-auto">
+            <div className="flex w-full flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
               <SheetClose asChild>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={handleCancelChanges}
+                >
                   Cancelar
                 </Button>
               </SheetClose>
               <SheetClose asChild>
                 <Button 
-                  className="w-full" 
+                  className="flex-1" 
                   onClick={handleApplyFilters}
                   disabled={!isDirty}
                 >
@@ -63,7 +79,9 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-      <SortFilter />
+      <div className="w-full sm:w-auto">
+        <SortFilter />
+      </div>
     </div>
   );
 }
