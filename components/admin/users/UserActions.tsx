@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+ import { toggleUserStatus } from '@/lib/data/admin/actions/users';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -46,15 +46,8 @@ export function UserActions({ user }: UserActionsProps) {
     setIsDropdownOpen(false);
   };
 
-  const toggleUserStatus = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabaseAdmin
-        .from('profiles')
-        .update({ is_active: !user.is_active })
-        .eq('id', user.id);
-
-      if (error) throw error;
-    },
+  const toggleUserStatusFunct = useMutation({
+    mutationFn: ()=> toggleUserStatus(user.id, user.is_active!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success(user.is_active ? 'Usuario desactivado exitosamente' : 'Usuario activado exitosamente');
@@ -106,16 +99,16 @@ export function UserActions({ user }: UserActionsProps) {
             <Button
               variant="outline"
               onClick={() => setIsActionOpen(false)}
-              disabled={toggleUserStatus.isPending}
+              disabled={toggleUserStatusFunct.isPending}
             >
               Cancelar
             </Button>
             <Button
               variant={user.is_active ? "destructive" : "default"}
-              onClick={() => toggleUserStatus.mutate()}
-              disabled={toggleUserStatus.isPending}
+              onClick={() => toggleUserStatusFunct.mutate()}
+              disabled={toggleUserStatusFunct.isPending}
             >
-              {toggleUserStatus.isPending 
+              {toggleUserStatusFunct.isPending 
                 ? (user.is_active ? 'Desactivando...' : 'Activando...') 
                 : (user.is_active ? 'Desactivar' : 'Activar')}
             </Button>

@@ -139,9 +139,16 @@ export async function getProductCategoryDetails(productId: string): Promise<{ ca
     .single();
 
   if (error) throw error;
+  type RawProductCategory = {
+    category_id: string;
+    categories: {
+      parent_id: string | null;
+    };
+  };
+  const typedData = (data as unknown) as RawProductCategory;
   return {
-    category_id: data.category_id,
-    parent_id: data.categories.parent_id || null 
+    category_id: typedData.category_id,
+    parent_id: typedData.categories.parent_id || null
   };
 }
 export async function deleteProduct(productId: string): Promise<void> {

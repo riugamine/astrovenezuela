@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { createUser } from "@/lib/data/admin/actions/users";
 import { toast } from "sonner";
 
 const userSchema = z.object({
@@ -35,21 +35,8 @@ export function UserForm({ onClose }: UserFormProps) {
     resolver: zodResolver(userSchema),
   });
 
-  const createUser = useMutation({
-    mutationFn: async (data: UserFormData) => {
-      const { data: user, error } = await supabaseAdmin.auth.admin.createUser({
-        email: data.email,
-        password: data.password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: data.full_name,
-          role: 'admin',
-        },
-      });
-
-      if (error) throw error;
-      return user;
-    },
+  const createUserFunct = useMutation({
+    mutationFn: (data: UserFormData) => createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Administrador creado exitosamente');
@@ -63,7 +50,7 @@ export function UserForm({ onClose }: UserFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit((data) => createUser.mutate(data))} className="space-y-4">
+      <form onSubmit={form.handleSubmit((data) => createUserFunct.mutate(data))} className="space-y-4">
         <FormField
           control={form.control}
           name="full_name"
@@ -119,8 +106,8 @@ export function UserForm({ onClose }: UserFormProps) {
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={createUser.isPending}>
-            {createUser.isPending ? 'Creando...' : 'Crear Administrador'}
+          <Button type="submit" disabled={createUserFunct.isPending}>
+            {createUserFunct.isPending ? 'Creando...' : 'Crear Administrador'}
           </Button>
         </div>
       </form>
