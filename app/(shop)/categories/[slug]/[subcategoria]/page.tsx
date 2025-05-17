@@ -6,17 +6,15 @@ import { supabaseClient } from '@/lib/supabase/client';
 const PRODUCTS_PER_PAGE = 12;
 
 async function getSubcategoryWithProducts(categorySlug: string, subcategorySlug: string) {
-  // Primero obtenemos la categoría padre
-  const { data: parentCategory } = await supabaseClient
+  // Intentemos primero encontrar la categoría padre
+  const { data: parentCategory, error: parentError } = await supabaseClient
     .from('categories')
-    .select('id')
+    .select('*')
     .eq('slug', categorySlug)
     .eq('is_active', true)
     .single();
 
-  if (!parentCategory) return null;
-
-  // Luego obtenemos la subcategoría que pertenece a esta categoría padre
+  // Luego busquemos la subcategoría
   const { data: subcategory, error: subcategoryError } = await supabaseClient
     .from('categories')
     .select(`
@@ -28,9 +26,8 @@ async function getSubcategoryWithProducts(categorySlug: string, subcategorySlug:
     .eq('is_active', true)
     .single();
 
-  if (subcategoryError || !subcategory) return null;
 
-  // Obtenemos los productos de la subcategoría
+  // Si llegamos aquí, busquemos los productos
   const { data: products, error: productsError } = await supabaseClient
     .from('products')
     .select(`
@@ -42,7 +39,6 @@ async function getSubcategoryWithProducts(categorySlug: string, subcategorySlug:
     .eq('is_active', true)
     .range(0, PRODUCTS_PER_PAGE - 1);
 
-  if (productsError) return null;
 
   return {
     subcategory,
@@ -57,7 +53,6 @@ export default async function SubcategoryPage({
 }) {
     const resolvedParams = await Promise.resolve(params);
   const data = await getSubcategoryWithProducts(resolvedParams.slug, resolvedParams.subcategoria);
-  
   if (!data) {
     notFound();
   }
@@ -68,9 +63,6 @@ export default async function SubcategoryPage({
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center space-y-4">
-        <div className="text-sm text-muted-foreground">
-          <span>{subcategory.parent?.name}</span> / <span className="text-foreground">{subcategory.name}</span>
-        </div>
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
           {subcategory.name}
         </h1>
