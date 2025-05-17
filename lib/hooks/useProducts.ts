@@ -88,7 +88,7 @@ export function useProducts(initialData?: ProductWithDetails[], queryKey: string
   const { selectedCategories, priceRange, sortBy } = useFilterStore();
 
   return useInfiniteQuery({
-    queryKey: [...queryKey, { selectedCategories, priceRange, sortBy }],
+    queryKey: [...queryKey, { filters: { selectedCategories, priceRange, sortBy } }],
     queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam, {
       categories: selectedCategories,
       priceRange,

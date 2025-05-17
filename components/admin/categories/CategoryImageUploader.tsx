@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
-import { uploadCategoryImage } from '@/lib/data/admin/actions/categories';
+import { uploadCategoryBanner } from '@/lib/data/admin/actions/categories/index';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -24,12 +24,11 @@ export function CategoryImageUploader({
     setUploading(true);
 
     try {
-      const imageUrl = await uploadCategoryImage(file);
+      const imageUrl = await uploadCategoryBanner(file);
       onBannerChange(imageUrl);
-      toast.success('Banner uploaded successfully');
+      toast.success('Imagen subida correctamente');
     } catch (error) {
-      console.error('Error uploading banner:', error);
-      toast.error('Error uploading banner');
+      toast.error('Error al subir la imagen');
     } finally {
       setUploading(false);
     }

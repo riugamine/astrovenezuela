@@ -3,7 +3,26 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Category, CategoryData, CategoryWithSubcategories } from "./types";
 import { generateSlug } from "@/lib/utils";
+import sharp from "sharp";
+async function compressImage(buffer: Buffer): Promise<Buffer> {
+  try {
+    const compressed = await sharp(buffer)
+      .resize(800, 600, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .jpeg({
+        quality: 80,
+        progressive: true
+      })
+      .toBuffer();
 
+    return compressed;
+  } catch (error) {
+    console.error('Error compressing image:', error);
+    throw new Error('Failed to compress image');
+  }
+}
 // Helper function to generate category slug
 async function generateCategorySlug(name: string, parentId?: string | null): Promise<string> {
   const baseSlug = generateSlug(name);
@@ -109,16 +128,52 @@ export async function updateCategory(
   categoryId: string,
   categoryData: Partial<CategoryData>
 ): Promise<Category> {
-  const updates: any = { ...categoryData };
-  
-  if (categoryData.name) {
-    const slug = await generateCategorySlug(categoryData.name, categoryData.parent_id);
+  // 1. Primero verificamos si la categoría existe
+  const { data: existingCategory, error: fetchError } = await supabaseAdmin
+    .from("categories")
+    .select("*")
+    .eq("id", categoryId)
+    .single();
+
+  if (fetchError) throw fetchError;
+  if (!existingCategory) throw new Error("Category not found");
+
+  // 2. Preparamos las actualizaciones
+  const updates: Partial<CategoryData> = {};
+
+  // 3. Solo procesamos el slug si el nombre ha cambiado
+  if (categoryData.name && categoryData.name !== existingCategory.name) {
+    const slug = await generateCategorySlug(categoryData.name, categoryData.parent_id ?? existingCategory.parent_id);
     if (!(await isSlugUnique(slug, categoryId))) {
       throw new Error("A category with this name already exists");
     }
+    updates.name = categoryData.name;
     updates.slug = slug;
   }
 
+  // 4. Procesamos otros campos si están presentes
+  if (categoryData.description !== undefined) {
+    updates.description = categoryData.description;
+  }
+
+  if (categoryData.banner_url !== undefined) {
+    updates.banner_url = categoryData.banner_url;
+  }
+
+  if (categoryData.parent_id !== undefined) {
+    updates.parent_id = categoryData.parent_id;
+  }
+
+  if (categoryData.is_active !== undefined) {
+    updates.is_active = categoryData.is_active;
+  }
+
+  // 5. Si no hay cambios, retornamos la categoría existente
+  if (Object.keys(updates).length === 0) {
+    return existingCategory;
+  }
+
+  // 6. Realizamos la actualización
   const { data, error } = await supabaseAdmin
     .from("categories")
     .update(updates)
@@ -157,28 +212,7 @@ export async function toggleCategoryStatus(categoryId: string): Promise<void> {
   }
 }
 // Helper function to upload category banner
-async function uploadCategoryBanner(file: Buffer, filename: string): Promise<string> {
-  const fileExt = filename.split('.').pop();
-  const fileName = `${crypto.randomUUID()}.${fileExt}`;
-  const filePath = `banners/${fileName}`;
-
-  const { data, error } = await supabaseAdmin.storage
-    .from('categories')
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
-
-  if (error) throw error;
-
-  const { data: { publicUrl } } = supabaseAdmin.storage
-    .from('categories')
-    .getPublicUrl(data.path);
-
-  return publicUrl;
-}
-
-export async function uploadCategoryImage(file: File): Promise<string> {
+export async function uploadCategoryBanner(file: File): Promise<string> {
   if (file.size > 10 * 1024 * 1024) {
     throw new Error('Image must not exceed 10MB');
   }
@@ -186,9 +220,27 @@ export async function uploadCategoryImage(file: File): Promise<string> {
   try {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    return await uploadCategoryBanner(buffer, file.name);
+    const compressedBuffer = await compressImage(buffer);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `banners/${fileName}`;
+
+    const { data, error } = await supabaseAdmin.storage
+      .from('categories')
+      .upload(filePath, compressedBuffer, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from('categories')
+      .getPublicUrl(data.path);
+
+    return publicUrl;
   } catch (error) {
-    console.error('Error uploading banner:', error);
     throw new Error('Failed to upload category banner');
   }
 }

@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProducts } from '@/lib/hooks/useProducts';
 import { useFilterStore } from '@/lib/store/useFilterStore';
 import { Card, CardContent } from '@/components/ui/card';
-
+import { useQueryClient } from '@tanstack/react-query';
 interface InfiniteProductsGridProps {
   initialProducts?: ProductWithDetails[];
   queryKey: string[];
@@ -48,6 +48,7 @@ const ProductGridSkeleton = memo(function ProductGridSkeleton() {
 });
 
 export function InfiniteProductsGrid({ initialProducts, queryKey }: InfiniteProductsGridProps) {
+  const queryClient = useQueryClient();
   const { ref, inView } = useInView({
     threshold: 0,
     triggerOnce: false,
@@ -55,6 +56,9 @@ export function InfiniteProductsGrid({ initialProducts, queryKey }: InfiniteProd
   });
 
   const { selectedCategories, priceRange, sortBy } = useFilterStore();
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey });
+  }, [selectedCategories, priceRange, sortBy, queryClient, queryKey]);
 
   const {
     data,

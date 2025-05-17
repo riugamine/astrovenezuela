@@ -27,6 +27,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { redirect } from "next/navigation";
+import { CustomerInfo } from "@/lib/types/database.types";
 interface PaymentMethodUI {
   id: string;
   name: string;
@@ -70,13 +71,26 @@ const paymentMethods: PaymentMethodUI[] = [
   { id: "efectivo", name: "Efectivo $", description: "Pago en efectivo (USD)" },
   { id: "paypal", name: "PayPal", description: "Pago con PayPal" },
 ];
-
+const initialFormFields = {
+  customerInfo: {
+    name: "",
+    lastName: "",
+    phone: "",
+    address: "",
+    agencyAddress: "",
+    dni: "",
+    email: "" // Mantenemos el email pero lo inicializamos vacío
+  } satisfies CustomerInfo,
+  shippingMethod: "",
+  paymentMethod: "",
+  orderNotes: ""
+};
 export default function CheckoutPage() {
   const { user }= useAuthStore();
-  const { orderNotes } = useCartStore();
+  const { orderNotes, setOrderNotes } = useCartStore();
   const { items, totalItems, clearCart } = useCartStore();
-  const [shippingMethod, setShippingMethod] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [shippingMethod, setShippingMethod] = useState<string>(initialFormFields.shippingMethod);
+  const [paymentMethod, setPaymentMethod] = useState<string>(initialFormFields.paymentMethod);
   const { customerInfo, setCustomerInfo } = useCustomerStore();
 
   const subtotal = items.reduce(
@@ -86,8 +100,23 @@ export default function CheckoutPage() {
   const shipping =
     shippingMethods.find((m) => m.id === shippingMethod)?.price || 0;
   const total = subtotal + shipping;
-
+  const cleanupForm = () => {
+    setCustomerInfo({
+      ...customerInfo,
+      name: "",
+      lastName: "",
+      phone: "",
+      address: "",
+      agencyAddress: "",
+      dni: ""
+      // No limpiamos el email
+    });
+    setShippingMethod(initialFormFields.shippingMethod);
+    setPaymentMethod(initialFormFields.paymentMethod);
+    setOrderNotes(initialFormFields.orderNotes);
+  };
   const handleSubmit = async () => {
+    let createdOrder = null;
     try {
       // Validate required fields
       if (!customerInfo.email || !customerInfo.name || !customerInfo.phone || !customerInfo.lastName) {
@@ -120,7 +149,7 @@ export default function CheckoutPage() {
 
       // Create order with proper error handling
       // Update the order creation part in handleSubmit function
-      const order = await createOrder({
+      createdOrder = await createOrder({
         user_id: user?.id || "",
         total_amount: total,
         shipping_address: customerInfo.address || customerInfo.agencyAddress || "retiro en tienda",
@@ -178,7 +207,7 @@ export default function CheckoutPage() {
         `Envío: ${selectedShipping}`,
         `Pago: ${selectedPayment}`,
         "",
-        `ID de Orden: ${order.id}`
+        `ID de Orden: ${createdOrder.id}`
       ].filter(Boolean).join("\n");
 
       // Clear cart after successful order creation
@@ -186,7 +215,7 @@ export default function CheckoutPage() {
 
       // Show success message
       toast.success("Pedido creado exitosamente");
-      redirect(`/cart/success?order_id=${order.id}`);
+      
       // Handle long messages
       const encodedMessage = encodeURIComponent(message);
       if (encodedMessage.length > 4000) {
@@ -197,7 +226,7 @@ export default function CheckoutPage() {
           `Total: $${total.toFixed(2)}`,
           "",
           "Por favor, contáctenos para ver los detalles completos.",
-          `ID de Orden: ${order.id}`
+          `ID de Orden: ${createdOrder.id}`
         ].join("\n");
 
         window.open(
@@ -214,7 +243,16 @@ export default function CheckoutPage() {
       console.error("Error creating order:", error);
       toast.error("Error al crear el pedido. Por favor intente nuevamente.");
     }
+    finally{
+      // Redirect to success page
+      redirect(`/cart/success?order_id=${createdOrder?.id}`);
+    }
   };
+  useEffect(() => {
+    if (customerInfo.email) {
+      setCustomerInfo(customerInfo);
+    }
+  }, []);
   useEffect(() => {
     if (customerInfo.email) {
       setCustomerInfo(customerInfo);
@@ -428,6 +466,10 @@ export default function CheckoutPage() {
                     alt={item.name}
                     fill
                     className="object-cover"
+                    priority
+                    loading="lazy"
+                    blurDataURL={item.image_url}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   <span className="absolute top-1 right-1 bg-gray-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
                     {item.quantity}

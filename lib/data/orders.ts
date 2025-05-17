@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../supabase/admin";
+import { supabaseClient } from "../supabase/client";
 import { OrderStatus, Database } from "../types/database.types";
 import { VALID_PAYMENT_METHODS } from "../constants";
 import { toast } from "sonner";
@@ -34,9 +34,9 @@ export async function createOrder(params: CreateOrderParams): Promise<Order> {
     }
 
 
-    const { data, error } = await supabaseAdmin.rpc('create_order_with_items', {
+    const { data, error } = await supabaseClient.rpc('create_order_with_items', {
       p_user_id: params.user_id,
-      p_status: params.status || 'created',
+      p_status: params.status || 'pending',
       p_total_amount: params.total_amount,
       p_shipping_address: params.shipping_address,
       p_payment_method: params.payment_method,
