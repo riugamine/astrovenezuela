@@ -10,7 +10,7 @@ export const StatCard: FC<StatCardProps> = ({
   icon, 
   isLoading, 
   trend, 
-  variant 
+  variant,
 }) => (
   <Card 
     className={`hover:shadow-md transition-shadow ${

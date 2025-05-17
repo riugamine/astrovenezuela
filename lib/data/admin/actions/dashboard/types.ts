@@ -12,7 +12,7 @@ export interface DashboardStats {
   lowStockProducts: number;
   outOfStockProducts: number;
   salesOverTime: Array<{date: string, amount: number}>;
-  ordersOverTime: Array<{date: string, count: number}>;
+  ordersOverTime: Array<{date: string, count: number, total_amount: number}>;
 }
 
 export interface SalesData {

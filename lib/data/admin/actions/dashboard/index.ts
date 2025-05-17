@@ -6,7 +6,8 @@ import { DashboardStats, SalesData } from './types';
 // Función auxiliar para procesar datos de ventas
 function processSalesData(salesData: SalesData[]): Array<{date: string, amount: number}> {
   return salesData.reduce((acc: Array<{date: string, amount: number}>, order) => {
-    const date = new Date(order.created_at).toLocaleDateString();
+    // Format date as YYYY-MM-DD for proper sorting and display
+    const date = new Date(order.created_at).toISOString().split('T')[0];
     const existingDate = acc.find(item => item.date === date);
     if (existingDate) {
       existingDate.amount += order.total_amount;
@@ -14,7 +15,7 @@ function processSalesData(salesData: SalesData[]): Array<{date: string, amount: 
       acc.push({ date, amount: order.total_amount });
     }
     return acc;
-  }, []);
+  }, []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Sort by date
 }
 
 // Función auxiliar para calcular tasa de retención
@@ -93,7 +94,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       newUsersThisMonth: usersResult.count || 0,
       userRetentionRate: calculateRetentionRate(currentMonthOrdersResult.data || [], usersResult.count || 1),
       salesOverTime,
-      ordersOverTime: salesOverTime.map(item => ({ date: item.date, count: 1 }))
+      ordersOverTime: salesOverTime.map(item => ({ date: item.date, count: 1, total_amount: item.amount }))
     };
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
