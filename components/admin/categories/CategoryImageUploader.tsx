@@ -21,14 +21,32 @@ export function CategoryImageUploader({
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must not exceed 10MB');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
     setUploading(true);
 
     try {
-      const imageUrl = await uploadCategoryBanner(file);
-      onBannerChange(imageUrl);
+      const response = await fetch('/api/upload/category', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload image');
+      }
+
+      const { url } = await response.json();
+      onBannerChange(url);
       toast.success('Imagen subida correctamente');
-    } catch (error) {
-      toast.error('Error al subir la imagen');
+    } catch (error: any) {
+      toast.error(error.message || 'Error al subir la imagen');
     } finally {
       setUploading(false);
     }

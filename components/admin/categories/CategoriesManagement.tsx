@@ -244,6 +244,7 @@ const CategoriesManagement: FC = () => {
       toast.success("Categoría actualizada exitosamente");
       setIsEditOpen(false);
       setSelectedCategory(null);
+      reset();
     },
     onError: (error: Error) => {
       toast.error(error.message || "Error al actualizar la categoría");
@@ -257,6 +258,7 @@ const CategoriesManagement: FC = () => {
       toast.success("Estado de la categoría actualizado exitosamente");
       setIsDeleteOpen(false);
       setSelectedCategory(null);
+      reset();
     },
     onError: (error: Error) => {
       toast.error(error.message || "Error al cambiar el estado de la categoría");

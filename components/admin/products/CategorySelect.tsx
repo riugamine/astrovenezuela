@@ -22,6 +22,7 @@ export function CategorySelect({ control, name, onCategoryChange }: CategorySele
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories,
+    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
   });
 
   const mainCategories = categories.filter(cat => !cat.parent_id);
@@ -42,7 +43,7 @@ export function CategorySelect({ control, name, onCategoryChange }: CategorySele
               }}
               disabled={isLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className={isLoading ? 'animate-pulse' : ''}>
                 <SelectValue placeholder={
                   isLoading 
                     ? "Cargando categorías..."

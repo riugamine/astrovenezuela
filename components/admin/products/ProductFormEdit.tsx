@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import {useQuery} from '@tanstack/react-query';
+import { getCategories, getSubcategories } from '@/lib/data/admin/actions/categories';
+import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -74,6 +77,7 @@ interface ProductFormEditProps {
 
 export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) {
   const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(true);
   
   const form = useForm<EditProductFormData>({
     resolver: zodResolver(editProductSchema),
@@ -84,6 +88,54 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
     }
   });
 
+  // Query para cargar las categorías
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories
+  });
+
+  // Query para cargar las subcategorías cuando se selecciona una categoría
+  const { data: subcategories, isLoading: subcategoriesLoading } = useQuery({
+    queryKey: ['subcategories', form.watch('category_id')],
+    queryFn: () => getSubcategories(form.watch('category_id')),
+    enabled: !!form.watch('category_id')
+  });
+
+  useEffect(() => {
+    const loadCategoryData = async () => {
+      try {
+        setIsLoading(true);
+        const categoryDetails = await getProductCategoryDetails(initialData.id);
+
+        if (categoryDetails.parent_id) {
+          form.setValue('category_id', categoryDetails.parent_id);
+          form.setValue('subcategory_id', categoryDetails.category_id);
+        } else {
+          form.setValue('category_id', categoryDetails.category_id);
+        }
+      } catch (error) {
+        console.error('Error al cargar datos de la categoría:', error);
+        toast.error('Error al cargar datos de la categoría');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCategoryData();
+  }, [initialData.id, form]);
+
+  // Determinar si el formulario está listo para editar
+  const isFormReady = !isLoading && !categoriesLoading && 
+    (!form.watch('category_id') || !subcategoriesLoading);
+
+  if (!isFormReady) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Cargando datos del producto...</span>
+      </div>
+    );
+  }
   const updateProductMutation = useMutation({
     mutationFn: async (data: EditProductFormData) => {
       const totalStock = data.variants.reduce((sum, variant) => sum + variant.stock, 0);

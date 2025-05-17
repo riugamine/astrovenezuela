@@ -213,23 +213,39 @@ export async function toggleProductStatus(productId: string, isActive: boolean):
  * @param buffer - Buffer de la imagen a comprimir
  * @returns Buffer comprimido
  */
-async function compressImage(buffer: Buffer): Promise<Buffer> {
+async function compressImage(buffer: Buffer, isMainImage: boolean = false): Promise<Buffer> {
   try {
-    const compressed = await sharp(buffer)
-      .resize(1920, 1080, {
-        fit: 'inside',
-        withoutEnlargement: true
-      })
-      .jpeg({
-        quality: 70,
-        progressive: true
-      })
-      .toBuffer();
+    let imageProcessor = sharp(buffer);
+    
+    // Configuración específica según el tipo de imagen
+    if (isMainImage) {
+      imageProcessor = imageProcessor
+        .resize(800, 600, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .jpeg({
+          quality: 100,
+          progressive: true,
+          mozjpeg: true // Mejor compresión
+        });
+    } else {
+      imageProcessor = imageProcessor
+        .resize(600, 500, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .jpeg({
+          quality: 85,
+          progressive: true,
+          mozjpeg: true
+        });
+    }
 
-    return compressed;
+    return await imageProcessor.toBuffer();
   } catch (error) {
     console.error('Error compressing image:', error);
-    return buffer; // Retorna el buffer original si hay error
+    return buffer;
   }
 }
 
@@ -241,14 +257,16 @@ async function compressImage(buffer: Buffer): Promise<Buffer> {
 export async function uploadProductImage(formData: FormData): Promise<string> {
   const file = formData.get('file') as File;
   const path = formData.get('path') as string;
+  const isMainImage = path.includes('main-images');
 
   if (!file || !path) {
     throw new Error('File and path are required');
   }
 
-  // Validar tamaño del archivo (10MB)
-  if (file.size > 10 * 1024 * 1024) {
-    throw new Error('File size exceeds 10MB limit');
+  // Validar tamaño del archivo (5MB para imágenes principales, 3MB para detalles)
+  const maxSize = isMainImage ? 5 * 1024 * 1024 : 3 * 1024 * 1024;
+  if (file.size > maxSize) {
+    throw new Error(`File size exceeds ${isMainImage ? '5MB' : '3MB'} limit`);
   }
 
   // Validar tipo de archivo
@@ -258,16 +276,16 @@ export async function uploadProductImage(formData: FormData): Promise<string> {
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const compressedBuffer = await compressImage(buffer);
+    const compressedBuffer = await compressImage(buffer, isMainImage);
     
-    const fileExt = file.name.split('.').pop();
+    const fileExt = 'jpg'; // Forzar formato JPEG para mejor compresión
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const filePath = `${path}/${fileName}`;
 
     const { data, error } = await supabaseAdmin.storage
       .from('products')
       .upload(filePath, compressedBuffer, {
-        contentType: file.type,
+        contentType: 'image/jpeg',
         cacheControl: '3600',
         upsert: false
       });
