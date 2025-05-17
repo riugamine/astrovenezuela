@@ -1,11 +1,8 @@
-import { Suspense } from 'react';
-import { Category } from '@/lib/types/database.types';
+import { getCategories } from "@/lib/data/categories";
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
+import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
 import { supabaseClient } from '@/lib/supabase/client';
-import { InfiniteProductsGrid } from '@/components/shop/InfiniteProductsGrid';
-import { ProductGridSkeleton } from '@/components/shop/InfiniteProductsGrid';
+
 const PRODUCTS_PER_PAGE = 12;
 
 async function getCategoryWithInitialProducts(slug: string) {
@@ -21,8 +18,19 @@ async function getCategoryWithInitialProducts(slug: string) {
 
   if (categoryError || !category) return null;
 
-  const categoryIds = [category.id, ...(category.subcategories?.map((sub: Category) => sub.id) || [])];
-  
+  let categoryIds = [category.id];
+
+  if (category.parent_id === null) {
+    const { data: subcategories } = await supabaseClient
+      .from('categories')
+      .select('id')
+      .eq('parent_id', category.id)
+      .eq('is_active', true);
+    
+    if (subcategories?.length) {
+      categoryIds = [...categoryIds, ...subcategories.map(sub => sub.id)];
+    }
+  }
   const { data: products, error: productsError } = await supabaseClient
     .from('products')
     .select(`
@@ -42,31 +50,10 @@ async function getCategoryWithInitialProducts(slug: string) {
   };
 }
 
-async function fetchCategoryProducts(categoryId: string, page: number) {
-  const start = (page - 1) * PRODUCTS_PER_PAGE;
-  const end = start + PRODUCTS_PER_PAGE - 1;
-
-  const { data: products, error, count } = await supabaseClient
-    .from('products')
-    .select(`
-      *,
-      product_images (id, product_id, image_url, order_index),
-      variants:product_variants(id, size, stock)
-    `, { count: 'exact' })
-    .eq('category_id', categoryId)
-    .eq('is_active', true)
-    .range(start, end);
-
-  if (error) throw error;
-
-  return {
-    products: products || [],
-    hasMore: count ? count > (page * PRODUCTS_PER_PAGE) : false
-  };
-}
-
 export default async function CategoryPage({ params }: { params: { slug: string } }) {
-  const data = await getCategoryWithInitialProducts(params.slug);
+  const resolvedParams = await Promise.resolve(params);
+  // Obtener datos de la categoría y productos iniciales
+  const data = await getCategoryWithInitialProducts(resolvedParams.slug);
   
   if (!data) {
     notFound();
@@ -74,68 +61,29 @@ export default async function CategoryPage({ params }: { params: { slug: string 
 
   const { category, products } = data;
 
+  // Obtener todas las categorías para los filtros
+  const categories = await getCategories();
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="relative h-[30vh] md:h-[40vh] w-full mb-8 rounded-lg overflow-hidden bg-gradient-to-r from-primary/5 to-primary/10">
-        {category.banner_url && (
-          <Image
-            src={category.banner_url}
-            alt={category.name}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
+      {/* Banner de la categoría */}
+      <div className="mb-8 text-center space-y-4">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
+          {category.name}
+        </h1>
+        {category.description && (
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            {category.description}
+          </p>
         )}
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center px-4">
-            {category.name}
-          </h1>
-        </div>
       </div>
 
-      {category.description && (
-        <p className="text-muted-foreground text-center mb-8 max-w-2xl mx-auto px-4">
-          {category.description}
-        </p>
-      )}
-
-      {category.subcategories?.length > 0 && (
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 px-4">Subcategorías</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
-            {category.subcategories.map((subcat: Category) => (
-              <Link 
-                key={subcat.id} 
-                href={`/categories/${subcat.slug}`}
-                className="group p-4 bg-card rounded-lg hover:shadow-md transition-all duration-300"
-              >
-                <div className="relative h-32 mb-4 overflow-hidden rounded-md bg-muted">
-                  {subcat.banner_url && (
-                    <Image
-                      src={subcat.banner_url}
-                      alt={subcat.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  )}
-                </div>
-                <h3 className="font-semibold group-hover:text-primary transition-colors">
-                  {subcat.name}
-                </h3>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <Suspense fallback={<ProductGridSkeleton />}>
-        <InfiniteProductsGrid
-          queryKey={['products', category.id]}
-          fetchProducts={(page) => fetchCategoryProducts(category.id, page)}
-          initialProducts={products}
-        />
-      </Suspense>
+      {/* ProductsWrapper con filtros y grid infinito */}
+      <ProductsWrapper 
+        categories={categories} 
+        initialProducts={products}
+        queryKey={[`category-${category.id}-products`]}
+      />
     </div>
   );
 }

@@ -10,5 +10,5 @@ export default async function ProductsPage() {
   ]);
 
   // Pass data to client wrapper
-  return <ProductsWrapper categories={categories} initialProducts={initialProducts.products} />;
+  return <ProductsWrapper categories={categories} initialProducts={initialProducts.products} queryKey={['products']} />;
 }

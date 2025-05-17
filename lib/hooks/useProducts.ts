@@ -84,11 +84,11 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
   };
 }
 
-export function useProducts(initialData?: ProductWithDetails[]) {
+export function useProducts(initialData?: ProductWithDetails[], queryKey: string[] = ['products']) {
   const { selectedCategories, priceRange, sortBy } = useFilterStore();
 
   return useInfiniteQuery({
-    queryKey: ['products', { selectedCategories, priceRange, sortBy }],
+    queryKey: [...queryKey, { selectedCategories, priceRange, sortBy }],
     queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam, {
       categories: selectedCategories,
       priceRange,

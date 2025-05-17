@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 interface InfiniteProductsGridProps {
   initialProducts?: ProductWithDetails[];
+  queryKey: string[];
 }
 
 const ProductList = memo(function ProductList({ products }: { products: ProductWithDetails[] }) {
@@ -46,7 +47,7 @@ const ProductGridSkeleton = memo(function ProductGridSkeleton() {
   );
 });
 
-export function InfiniteProductsGrid({ initialProducts }: InfiniteProductsGridProps) {
+export function InfiniteProductsGrid({ initialProducts, queryKey }: InfiniteProductsGridProps) {
   const { ref, inView } = useInView({
     threshold: 0,
     triggerOnce: false,
@@ -64,7 +65,7 @@ export function InfiniteProductsGrid({ initialProducts }: InfiniteProductsGridPr
     error,
     isLoading,
     isFetching,
-  } = useProducts(initialProducts);
+  } = useProducts(initialProducts, queryKey);
 
   const handleFetchNextPage = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {

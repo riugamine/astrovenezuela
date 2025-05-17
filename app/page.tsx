@@ -45,7 +45,7 @@ export default async function Home() {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <Image
-            src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/public/brand-assets/brand-images/astro1.jpg"
+            src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/public/brand-assets/brand-images/hero-image%20(1).jpg"
             alt="Hero Background"
             fill
             className="object-cover"
@@ -58,15 +58,15 @@ export default async function Home() {
         <div className="container relative mx-auto px-4 py-12 min-h-screen flex items-center justify-center">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <div className="space-y-6">
-              <span className="inline-block text-purple-400 text-sm font-medium tracking-wider uppercase bg-purple-950/50 px-4 py-1.5 rounded-full">
+              <span className="inline-block text-purple-400 text-base md:text-lg font-medium tracking-wider uppercase bg-purple-950/50 px-4 py-2 rounded-full">
                 Nueva Colección
               </span>
 
-              <h1 className="font-exo text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
-                <HyperText>Supera tus límites</HyperText>
+              <h1 className="font-exo text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white leading-tight">
+                <HyperText>Brilla como una estrella</HyperText>
               </h1>
 
-              <p className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
+              <p className="text-gray-300 text-xl md:text-2xl lg:text-3xl leading-relaxed max-w-3xl mx-auto">
                 Equipamiento deportivo de alta calidad para atletas que buscan
                 la excelencia
               </p>
