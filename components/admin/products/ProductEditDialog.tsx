@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ProductForm } from './ProductForm';
+import { ProductFormEdit } from './ProductFormEdit';
 
 interface ProductEditDialogProps {
   product: any;
@@ -29,7 +29,7 @@ export function ProductEditDialog({ product, isOpen, onClose }: ProductEditDialo
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="flex-1 px-6 pb-6 max-h-[300px] sm:max-h-[400px] lg:max-h-[700px]">
-          <ProductForm 
+          <ProductFormEdit
             initialData={{
               ...product,
               price: Number(product.price),

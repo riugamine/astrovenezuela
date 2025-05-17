@@ -14,7 +14,6 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { deleteProduct } from '@/lib/data/admin-actions';
 
 interface ProductDeleteDialogProps {
   productId: string;

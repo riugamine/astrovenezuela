@@ -19,9 +19,9 @@ export async function getProducts(): Promise<ProductWithRelations[]> {
 }
 
 export async function createProduct(productData: CreateProductData): Promise<ProductWithRelations> {
-  const { variants, product_images, ...mainProductData } = productData;
+  const { variants, product_images, subcategory_id, ...mainProductData } = productData;
 
-  // Crear producto principal
+  // Create main product
   const { data: product, error: productError } = await supabaseAdmin
     .from('products')
     .insert(mainProductData)
@@ -30,7 +30,7 @@ export async function createProduct(productData: CreateProductData): Promise<Pro
 
   if (productError) throw productError;
 
-  // Crear variantes si existen
+  // Create variants if they exist
   if (variants?.length) {
     const variantsWithProductId = variants.map(variant => ({
       ...variant,
@@ -44,7 +44,7 @@ export async function createProduct(productData: CreateProductData): Promise<Pro
     if (variantsError) throw variantsError;
   }
 
-  // Crear imágenes si existen
+  // Create images if they exist
   if (product_images?.length) {
     const imagesWithProductId = product_images.map(image => ({
       ...image,
@@ -62,9 +62,9 @@ export async function createProduct(productData: CreateProductData): Promise<Pro
 }
 
 export async function updateProduct(productId: string, productData: Partial<ProductData>): Promise<ProductWithRelations> {
-  const { variants, product_images, ...mainProductData } = productData;
+  const { variants, product_images, subcategory_id, ...mainProductData } = productData;
 
-  // Actualizar producto principal
+  // Update main product
   const { data: product, error: productError } = await supabaseAdmin
     .from('products')
     .update(mainProductData)
@@ -74,36 +74,68 @@ export async function updateProduct(productId: string, productData: Partial<Prod
 
   if (productError) throw productError;
 
-  // Actualizar variantes si se proporcionaron
+  // Update variants if provided
   if (variants) {
-    // Eliminar variantes existentes
-    await supabaseAdmin
+    // Get existing variants and their order references
+    const { data: existingVariants } = await supabaseAdmin
       .from('product_variants')
-      .delete()
+      .select('id, size, order_items(id)')
       .eq('product_id', productId);
 
-    // Insertar nuevas variantes
-    const variantsWithProductId = variants.map(variant => ({
-      ...variant,
-      product_id: productId
-    }));
+    // Create a map of existing variants by size
+    const existingVariantMap = new Map(
+      existingVariants?.map(v => [v.size, { id: v.id, hasOrders: v.order_items.length > 0 }]) || []
+    );
 
-    const { error: variantsError } = await supabaseAdmin
-      .from('product_variants')
-      .insert(variantsWithProductId);
+    // Update or insert variants
+    for (const variant of variants) {
+      const existing = existingVariantMap.get(variant.size);
+      
+      if (existing) {
+        // Update existing variant
+        const { error } = await supabaseAdmin
+          .from('product_variants')
+          .update({ stock: variant.stock })
+          .eq('id', existing.id);
 
-    if (variantsError) throw variantsError;
+        if (error) throw error;
+      } else {
+        // Insert new variant
+        const { error } = await supabaseAdmin
+          .from('product_variants')
+          .insert({
+            size: variant.size,
+            stock: variant.stock,
+            product_id: productId
+          });
+
+        if (error) throw error;
+      }
+    }
+
+    // Only delete variants that aren't in any orders
+    const currentSizes = new Set(variants.map(v => v.size));
+    const variantsToDelete = existingVariants
+      ?.filter(v => !currentSizes.has(v.size) && v.order_items.length === 0)
+      .map(v => v.id) || [];
+
+    if (variantsToDelete.length > 0) {
+      const { error } = await supabaseAdmin
+        .from('product_variants')
+        .delete()
+        .in('id', variantsToDelete);
+
+      if (error) throw error;
+    }
   }
 
-  // Actualizar imágenes si se proporcionaron
+  // Handle images update (unchanged)
   if (product_images) {
-    // Eliminar imágenes existentes
     await supabaseAdmin
       .from('product_images')
       .delete()
       .eq('product_id', productId);
 
-    // Insertar nuevas imágenes
     const imagesWithProductId = product_images.map(image => ({
       ...image,
       product_id: productId
@@ -170,7 +202,7 @@ export async function deleteProduct(productId: string): Promise<void> {
 export async function toggleProductStatus(productId: string, isActive: boolean): Promise<void> {
   const { error } = await supabaseAdmin
     .from('products')
-    .update({ is_active: !isActive })
+    .update({ is_active: isActive })
     .eq('id', productId);
 
   if (error) throw error;

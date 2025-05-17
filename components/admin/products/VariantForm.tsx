@@ -59,6 +59,12 @@ export function VariantForm({ variants, onChange }: VariantFormProps) {
   // Calculate total stock
   const totalStock = variants.reduce((sum, variant) => sum + variant.stock, 0);
 
+  // Get available sizes by filtering out already selected ones
+  const getAvailableSizes = (currentIndex: number) => {
+    const selectedSizes = variants.map((v, i) => i !== currentIndex ? v.size : null);
+    return SIZES.filter(size => !selectedSizes.includes(size));
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
@@ -81,11 +87,16 @@ export function VariantForm({ variants, onChange }: VariantFormProps) {
                   <SelectValue placeholder="Seleccionar talla" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SIZES.map((size) => (
+                  {getAvailableSizes(index).map((size) => (
                     <SelectItem key={size} value={size}>
                       {size}
                     </SelectItem>
                   ))}
+                  {variant.size && !getAvailableSizes(index).includes(variant.size) && (
+                    <SelectItem key={variant.size} value={variant.size}>
+                      {variant.size}
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
