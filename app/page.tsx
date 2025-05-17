@@ -17,6 +17,7 @@ import {
   faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 import { Card } from "@/components/ui/card";
+import Image from 'next/image';
 // Fetch categories server-side
 async function getCategories() {
   const { data: categoriesData, error: categoriesError } = await supabaseClient
@@ -39,58 +40,61 @@ export default async function Home() {
   return (
     <ShopLayout>
       {/* Hero Section */}
-      <section className="relative min-h-screen bg-gradient-to-br from-black via-purple-950 to-black overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative min-h-screen overflow-hidden">
+        {/* Background Image with Overlay */}
         <div className="absolute inset-0">
+          <Image
+            src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/public/brand-assets/brand-images/astro1.jpg"
+            alt="Hero Background"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-purple-950/50 to-black/50" />
           <Meteors className="opacity-40" />
         </div>
-      
-        <div className="container relative mx-auto px-4 py-12 min-h-screen flex items-center">
-          <div className="grid md:grid-cols-2 gap-12 items-center w-full">
-            {/* Contenido textual */}
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <span className="inline-block text-purple-400 text-sm font-medium tracking-wider uppercase bg-purple-950/50 px-4 py-1.5 rounded-full">
-                  Nueva Colección
-                </span>
-                
-                <h1 className="font-exo text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
-                  <HyperText>Supera tus límites</HyperText>
-                </h1>
-                
-                <p className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-xl">
-                  Equipamiento deportivo de alta calidad para atletas que buscan la excelencia
-                </p>
-              </div>
-      
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-purple-600 hover:bg-purple-700 transition-all group text-base"
-                >
-                  <Link href="/products" className="inline-flex items-center">
-                    Explorar Colección
-                    <FontAwesomeIcon
-                      icon={faArrowRight}
-                      className="ml-2 group-hover:translate-x-1 transition-transform"
-                    />
-                  </Link>
-                </Button>
-      
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-white/20 hover:bg-white/10 text-white transition-all text-base"
-                  asChild
-                >
-                  <Link href="/categories">Ver Categorías</Link>
-                </Button>
-              </div>
+
+        <div className="container relative mx-auto px-4 py-12 min-h-screen flex items-center justify-center">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <div className="space-y-6">
+              <span className="inline-block text-purple-400 text-sm font-medium tracking-wider uppercase bg-purple-950/50 px-4 py-1.5 rounded-full">
+                Nueva Colección
+              </span>
+
+              <h1 className="font-exo text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+                <HyperText>Supera tus límites</HyperText>
+              </h1>
+
+              <p className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
+                Equipamiento deportivo de alta calidad para atletas que buscan
+                la excelencia
+              </p>
             </div>
-      
-            {/* Carrusel de productos */}
-            <div className="relative hidden md:block">
-              <ProductsShowcase />
+
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button
+                asChild
+                size="lg"
+                className="bg-purple-600 hover:bg-purple-700 transition-all group text-base"
+              >
+                <Link href="/products" className="inline-flex items-center">
+                  Explorar Colección
+                  <FontAwesomeIcon
+                    icon={faArrowRight}
+                    className="ml-2 group-hover:translate-x-1 transition-transform"
+                  />
+                </Link>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-white/20 hover:bg-white/10 text-white transition-all text-base"
+                asChild
+              >
+                <Link href="/categories">Ver Categorías</Link>
+              </Button>
             </div>
           </div>
         </div>
