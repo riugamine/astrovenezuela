@@ -1,5 +1,5 @@
 'use client';
-
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShoppingCart,
@@ -35,7 +35,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useCartStore } from "@/lib/store/useCartStore";
 import {
@@ -48,11 +47,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Switch } from "@/components/ui/switch";
-import { useCategoriesStore } from '@/lib/store/useCategoriesStore';
+import { useQuery } from '@tanstack/react-query';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { getBrandLogo } from "@/lib/utils";
 import Image from 'next/image';
+import { getCategories } from '@/lib/data/categories';
+
 // Interface for navigation items
 interface NavigationItem {
   title: string;
@@ -115,13 +116,12 @@ const Header = () => {
   const { theme, setTheme } = useTheme();
   const totalItems = useCartStore((state) => state.totalItems);
   const { user, signOut } = useAuthStore();
-  const { categories, fetchCategories, isLoading } = useCategoriesStore();
 
-  useEffect(() => {
-    if (categories.length === 0) {
-      fetchCategories();
-    }
-  }, [categories.length, fetchCategories]);
+  // Use React Query for categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+  });
 
   // Organize categories into a hierarchy
   const mainCategories = categories.filter(cat => !cat.parent_id);
@@ -130,13 +130,16 @@ const Header = () => {
   const hasSubcategories = (categoryId: string) => 
     categories.some(cat => cat.parent_id === categoryId);
 
+  // Handle theme-dependent logo
+  const logoSrc = theme === 'dark' ? getBrandLogo('blanco') : getBrandLogo('azul-marino');
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto">
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Mobile Menu */}
           <div className="flex items-center gap-2">
-            <Sheet>
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild className="lg:hidden">
                 <Button variant="ghost" size="icon">
                   <FontAwesomeIcon icon={faBars} className="h-5 w-5" />
@@ -221,7 +224,7 @@ const Header = () => {
             {/* Logo */}
             <Link href="/" className="flex items-center justify-center">
               <Image 
-                src={getBrandLogo(theme === 'dark' ? 'blanco' : 'azul-bebe')} 
+                src={logoSrc}
                 alt="Astro" 
                 width={120}
                 height={40}
@@ -229,7 +232,6 @@ const Header = () => {
                 priority
               />
             </Link>
-
           </div>
 
           {/* Desktop Navigation */}

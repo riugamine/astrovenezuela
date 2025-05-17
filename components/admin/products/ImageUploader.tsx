@@ -6,15 +6,15 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
-import { CreateProductImage } from '@/lib/data/admin/actions/products/types';
+import { ProductDetailImage } from '@/lib/data/admin/actions/products/types';
 import { toast } from 'sonner';
 import { uploadProductImage, deleteProductImage } from '@/lib/data/admin/actions/products';
 
 interface ImageUploaderProps {
   mainImage: string;
-  detailImages: CreateProductImage[];
+  detailImages: ProductDetailImage[];
   onMainImageChange: (url: string) => void;
-  onDetailImagesChange: (images: CreateProductImage[]) => void;
+  onDetailImagesChange: (images: ProductDetailImage[]) => void;
 }
 
 export function ImageUploader({
@@ -74,8 +74,8 @@ export function ImageUploader({
             id: crypto.randomUUID(),
             image_url: imageUrl,
             order_index: detailImages.length + uploadedCount,
-            product_id: '' // Set a default empty string for new images
-          } as CreateProductImage; // Use type assertion instead of type predicate
+            product_id: ''
+          };
         } catch (error) {
           console.error('Error uploading image:', error);
           return null;
@@ -83,7 +83,7 @@ export function ImageUploader({
       });
 
       const newImages = (await Promise.all(uploadPromises))
-        .filter((img): img is NonNullable<typeof img> => img !== null); // Fix type predicate
+        .filter((img): img is ProductDetailImage => img !== null);
       
       if (newImages.length > 0) {
         onDetailImagesChange([...detailImages, ...newImages]);
@@ -156,7 +156,7 @@ export function ImageUploader({
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {detailImages.map((image, index) => (
-            <div key={`Detail ${index + 1}`} className="relative aspect-square">
+            <div key={image.id} className="relative aspect-square">
               <Image
                 src={image.image_url}
                 alt={`Detail ${index + 1}`}

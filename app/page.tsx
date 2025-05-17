@@ -2,7 +2,7 @@ import ShopLayout from "@/components/layout/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import Image from "next/image";
+import { ProductsShowcase } from "@/components/shop/ProductsShowcase";
 import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase/client";
 import { Meteors } from "@/components/magicui/meteors";
@@ -39,33 +39,59 @@ export default async function Home() {
   return (
     <ShopLayout>
       {/* Hero Section */}
-      <section className="relative h-[80vh] sm:h-[85vh] overflow-hidden">
+      <section className="relative min-h-screen bg-gradient-to-br from-black via-purple-950 to-black overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
-          <Meteors className="opacity-60" />
+          <Meteors className="opacity-40" />
         </div>
-        <div className="container relative mx-auto px-4 h-full flex items-center">
-          <div className="max-w-2xl text-white">
-            <h1 className="font-exo text-4xl sm:text-5xl font-bold mb-6">
-              <HyperText>Supera tus límites</HyperText>
-            </h1>
-            <p className="font-gabarito text-lg sm:text-xl mb-8 text-gray-100">
-              Equipamiento deportivo de alta calidad para atletas que buscan la
-              excelencia
-            </p>
-            <Link href="/products">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="group hover:opacity-90 transition-opacity"
-              >
-                Explorar Colección
-                <FontAwesomeIcon
-                  icon={faArrowRight}
-                  className="ml-2 transition-transform duration-300 group-hover:translate-x-1"
-                />
-              </Button>
-            </Link>
+      
+        <div className="container relative mx-auto px-4 py-12 min-h-screen flex items-center">
+          <div className="grid md:grid-cols-2 gap-12 items-center w-full">
+            {/* Contenido textual */}
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <span className="inline-block text-purple-400 text-sm font-medium tracking-wider uppercase bg-purple-950/50 px-4 py-1.5 rounded-full">
+                  Nueva Colección
+                </span>
+                
+                <h1 className="font-exo text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+                  <HyperText>Supera tus límites</HyperText>
+                </h1>
+                
+                <p className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-xl">
+                  Equipamiento deportivo de alta calidad para atletas que buscan la excelencia
+                </p>
+              </div>
+      
+              <div className="flex flex-wrap gap-4">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-purple-600 hover:bg-purple-700 transition-all group text-base"
+                >
+                  <Link href="/products" className="inline-flex items-center">
+                    Explorar Colección
+                    <FontAwesomeIcon
+                      icon={faArrowRight}
+                      className="ml-2 group-hover:translate-x-1 transition-transform"
+                    />
+                  </Link>
+                </Button>
+      
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-white/20 hover:bg-white/10 text-white transition-all text-base"
+                  asChild
+                >
+                  <Link href="/categories">Ver Categorías</Link>
+                </Button>
+              </div>
+            </div>
+      
+            {/* Carrusel de productos */}
+            <div className="relative hidden md:block">
+              <ProductsShowcase />
+            </div>
           </div>
         </div>
       </section>
