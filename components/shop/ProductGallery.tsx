@@ -30,35 +30,10 @@ export function ProductGallery({ product }: ProductGalleryProps) {
   ];
 
   return (
-    <div className="flex flex-col-reverse md:flex-row gap-4">
-      <ScrollArea className="h-[400px] md:h-[500px] w-full md:w-24 p-1">
-        <div className="flex md:flex-col gap-2">
-          {images.map((image, index) => (
-            <button
-              key={`thumb-${index}`}
-              onClick={() => setSelectedImage(index)}
-              className={cn(
-                "relative flex-shrink-0 w-20 h-20 border rounded-md overflow-hidden transition-all",
-                "hover:ring-2 hover:ring-primary/50",
-                selectedImage === index && "ring-2 ring-primary shadow-lg"
-              )}
-              aria-label={`Ver ${image.alt}`}
-            >
-              <Image
-                src={image.url}
-                alt={image.alt}
-                fill
-                className="object-cover hover:scale-105 transition-transform duration-300"
-                sizes="80px"
-                quality={60}
-              />
-            </button>
-          ))}
-        </div>
-      </ScrollArea>
-
-      <div className="relative flex-1">
-        <AspectRatio ratio={1}>
+    <div className="flex flex-col md:flex-row gap-4">
+      {/* Imagen Principal */}
+      <div className="relative flex-1 order-1 md:order-2">
+        <AspectRatio ratio={1} className="bg-muted/10 rounded-lg overflow-hidden">
           <Image
             src={images[selectedImage].url}
             alt={images[selectedImage].alt}
@@ -69,6 +44,42 @@ export function ProductGallery({ product }: ProductGalleryProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, (max-width: 1024px) 60vw, 50vw"
           />
         </AspectRatio>
+      </div>
+
+      {/* Miniaturas */}
+      <div className="order-2 md:order-1 md:w-24">
+        <ScrollArea className="h-24 md:h-[500px] w-full">
+          <div className="flex md:flex-col gap-2 p-1">
+            {images.map((image, index) => (
+              <button
+                key={`thumb-${index}`}
+                onClick={() => setSelectedImage(index)}
+                className={cn(
+                  "relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden",
+                  "border-2 transition-all duration-200 ease-in-out",
+                  "hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary",
+                  selectedImage === index 
+                    ? "border-primary shadow-md" 
+                    : "border-transparent hover:border-muted"
+                )}
+                aria-label={`Ver ${image.alt}`}
+              >
+                <Image
+                  src={image.url}
+                  alt={image.alt}
+                  fill
+                  className={cn(
+                    "object-cover transition-transform duration-300",
+                    "group-hover:scale-105",
+                    selectedImage === index && "scale-105"
+                  )}
+                  sizes="80px"
+                  quality={60}
+                />
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );
