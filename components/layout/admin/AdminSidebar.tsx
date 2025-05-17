@@ -63,7 +63,7 @@ const AdminSidebar: FC = () => {
       <div className="flex items-center justify-between mb-8">
         {!isCollapsed && (
           <Image
-            src={getBrandLogo(theme === "dark" ? "blanco" : "azul-marino")}
+            src={getBrandLogo(theme === "dark" ? "azul-marino" : "blanco")}
             alt="Astro"
             width={120}
             height={40}
