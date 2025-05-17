@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/lib/store/useCartStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faMinus, faPlus, faShoppingCart } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
+import { Meteors } from "@/components/magicui/meteors";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalItems, orderNotes, setOrderNotes } = useCartStore();
@@ -23,8 +24,36 @@ export default function CartPage() {
       <h1 className="text-3xl font-bold mb-8">Tu Carrito</h1>
 
       {items.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-lg text-muted-foreground">Tu carrito está vacío</p>
+        <div className="relative min-h-[60vh] flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-black via-purple-950 to-black">
+          <div className="absolute inset-0">
+            <Meteors className="opacity-40" />
+          </div>
+          <div className="relative z-10 text-center space-y-6 max-w-md mx-auto px-4">
+            <div className="w-24 h-24 mx-auto bg-purple-600/20 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon icon={faShoppingCart} className="h-12 w-12 text-purple-400" />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-2xl font-semibold text-white">Tu carrito está vacío</h2>
+              <p className="text-gray-400">
+                ¿No sabes por dónde empezar? Descubre nuestra colección de productos deportivos
+              </p>
+            </div>
+            <div className="pt-4">
+              <Button
+                asChild
+                size="lg"
+                className="bg-purple-600 hover:bg-purple-700 transition-all group text-base"
+              >
+                <Link href="/products" className="inline-flex items-center gap-2">
+                  Explorar Productos
+                  <FontAwesomeIcon
+                    icon={faShoppingCart}
+                    className="ml-2 group-hover:scale-110 transition-transform"
+                  />
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
