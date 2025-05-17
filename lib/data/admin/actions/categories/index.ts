@@ -14,7 +14,7 @@ async function generateCategorySlug(name: string, parentId?: string | null): Pro
       .select("slug")
       .eq("id", parentId)
       .single();
-    return `${parent?.slug}/${baseSlug}`;
+    return `${baseSlug}`;
   }
   
   return baseSlug;
