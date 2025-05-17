@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,27 +17,34 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner, faDollarSign } from "@fortawesome/free-solid-svg-icons";
-import { ImageUploader } from "./ImageUploader";
-import { VariantForm } from "./VariantForm";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { ImageUploaderEdit } from "./ImageUploaderEdit";
+import { VariantFormEdit } from "./VariantFormEdit";
 import { CategorySelect } from "./CategorySelect";
 import { SubcategorySelect } from "./SubcategorySelect";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createProduct, getCategoryDetails } from '@/lib/data/admin/actions/products';
+import { updateProduct, getProductCategoryDetails, getCategoryDetails } from '@/lib/data/admin/actions/products';
+import { faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { type ProductData } from '@/lib/data/admin/actions/products/types';
 
-// Define the schemas for new product only
-const variantSchema = z.object({
+// Define the schemas for editing
+const editVariantSchema = z.object({
+  id: z.string(),
   size: z.string(),
   stock: z.number().int().positive("El stock debe ser un número entero positivo"),
+  product_id: z.string()
 });
 
-const productImageSchema = z.object({
+const editProductImageSchema = z.object({
+  id: z.string(),
   image_url: z.string().url(),
   order_index: z.number(),
+  product_id: z.string()
 });
 
-const createProductSchema = z.object({
+const editProductSchema = z.object({
+  id: z.string(),
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
   price: z.number().positive("El precio debe ser mayor a 0"),
@@ -45,68 +53,83 @@ const createProductSchema = z.object({
   subcategory_id: z.string().optional(),
   main_image_url: z.string().url("La imagen principal es requerida"),
   is_active: z.boolean(),
-  product_images: z.array(productImageSchema),
-  variants: z.array(variantSchema)
+  slug: z.string(),
+  stock: z.number(),
+  product_images: z.array(editProductImageSchema),
+  variants: z.array(editVariantSchema)
     .min(1, "Debe agregar al menos una variante con talla y stock")
     .refine(
       (variants) => variants.reduce((total, variant) => total + variant.stock, 0) > 0,
       "El stock total debe ser mayor a 0"
-    )
+    ),
+  updated_at: z.string()
 });
 
-type CreateProductFormData = z.infer<typeof createProductSchema>;
+type EditProductFormData = z.infer<typeof editProductSchema>;
 
-interface ProductFormProps {
+interface ProductFormEditProps {
   onClose: () => void;
+  initialData: ProductData;
 }
 
-export function ProductForm({ onClose }: ProductFormProps) {
+export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) {
   const queryClient = useQueryClient();
   
-  const form = useForm<CreateProductFormData>({
-    resolver: zodResolver(createProductSchema),
+  const form = useForm<EditProductFormData>({
+    resolver: zodResolver(editProductSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      price: 0,
-      reference_number: "",
-      category_id: "",
-      subcategory_id: "",
-      main_image_url: "",
-      is_active: true,
-      product_images: [],
-      variants: []
+      ...initialData,
+      product_images: initialData.product_images || [],
+      variants: initialData.variants || []
     }
   });
 
-  const createProductMutation = useMutation({
-    mutationFn: async (data: CreateProductFormData) => {
+  const updateProductMutation = useMutation({
+    mutationFn: async (data: EditProductFormData) => {
       const totalStock = data.variants.reduce((sum, variant) => sum + variant.stock, 0);
       
       const submitData = {
         ...data,
         stock: totalStock,
-        slug: data.name.toLowerCase().replace(/\s+/g, '-'),
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      return createProduct(submitData);
+      return updateProduct(data.id, submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Producto creado exitosamente');
+      toast.success('Producto actualizado exitosamente');
       onClose();
     },
     onError: (error) => {
-      console.error('Error creating product:', error);
-      toast.error('Error al crear el producto');
+      console.error('Error updating product:', error);
+      toast.error('Error al actualizar el producto');
     }
   });
 
-  const onSubmit = (data: CreateProductFormData) => {
-    createProductMutation.mutate(data);
+  const onSubmit = (data: EditProductFormData) => {
+    updateProductMutation.mutate(data);
   };
+
+  useEffect(() => {
+    const loadCategoryData = async () => {
+      try {
+        const categoryDetails = await getProductCategoryDetails(initialData.id);
+
+        if (categoryDetails.parent_id) {
+          form.setValue('category_id', categoryDetails.parent_id);
+          form.setValue('subcategory_id', categoryDetails.category_id);
+        } else {
+          form.setValue('category_id', categoryDetails.category_id);
+        }
+      } catch (error) {
+        console.error('Error al cargar datos de la categoría:', error);
+        toast.error('Error al cargar datos de la categoría');
+      }
+    };
+
+    loadCategoryData();
+  }, [initialData.id, form]);
   const handleCategoryChange = async (categoryId: string) => {
     try {
       // Get the category details to check if it's a main category or subcategory
@@ -129,7 +152,6 @@ export function ProductForm({ onClose }: ProductFormProps) {
       toast.error('Error al cambiar la categoría');
     }
   };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -243,7 +265,7 @@ export function ProductForm({ onClose }: ProductFormProps) {
           <h2 className="text-2xl font-semibold tracking-tight">Imágenes</h2>
           <Card>
             <CardContent className="p-6">
-              <ImageUploader
+              <ImageUploaderEdit
                 mainImage={form.watch("main_image_url")}
                 detailImages={form.watch("product_images")}
                 onMainImageChange={(url) =>
@@ -262,7 +284,7 @@ export function ProductForm({ onClose }: ProductFormProps) {
           <h2 className="text-2xl font-semibold tracking-tight">Variantes</h2>
           <Card>
             <CardContent className="p-6">
-              <VariantForm
+              <VariantFormEdit
                 variants={form.watch("variants")}
                 onChange={(variants) => form.setValue("variants", variants)}
               />
@@ -284,9 +306,9 @@ export function ProductForm({ onClose }: ProductFormProps) {
             <Button
               type="submit"
               className="min-w-[100px]"
-              disabled={createProductMutation.isPending}
+              disabled={updateProductMutation.isPending}
             >
-              {createProductMutation.isPending ? (
+              {updateProductMutation.isPending ? (
                 <>
                   <FontAwesomeIcon
                     icon={faSpinner}

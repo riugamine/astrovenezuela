@@ -14,7 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import type { Category } from '@/lib/types/category';
+import type { Category } from '@/lib/data/admin/actions/categories/types';
+import { CategoryImageUploader } from './CategoryImageUploader';
 
 interface SubcategoryDialogProps {
   isOpen: boolean;
@@ -47,9 +48,9 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
   onClose,
   parentCategory,
   onSubmit,
-  isLoading
+  isLoading,
 }) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CategoryFormData>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CategoryFormData>({
     resolver: zodResolver(subcategorySchema),
     defaultValues: {
       is_active: true
@@ -94,10 +95,12 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
 
             <div>
               <Label htmlFor="banner_url">URL del Banner</Label>
-              <Input id="banner_url" {...register('banner_url')} />
-              {errors.banner_url && (
-                <p className="text-sm text-red-500 mt-1">{errors.banner_url.message}</p>
-              )}
+              <CategoryImageUploader
+                    bannerUrl={watch("banner_url") || ""}
+                    onBannerChange={(url) => {
+                      setValue("banner_url", url);
+                    }}
+                  />
             </div>
           </div>
           <DialogFooter className="mt-6">

@@ -6,18 +6,18 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
-import { CreateProductImage } from '@/lib/data/admin/actions/products/types';
+import { ProductDetailImage } from '@/lib/data/admin/actions/products/types';
 import { toast } from 'sonner';
 import { uploadProductImage, deleteProductImage } from '@/lib/data/admin/actions/products';
 
 interface ImageUploaderProps {
   mainImage: string;
-  detailImages: CreateProductImage[];
+  detailImages: ProductDetailImage[];
   onMainImageChange: (url: string) => void;
-  onDetailImagesChange: (images: CreateProductImage[]) => void;
+  onDetailImagesChange: (images: ProductDetailImage[]) => void;
 }
 
-export function ImageUploader({
+export function ImageUploaderEdit({
   mainImage,
   detailImages,
   onMainImageChange,
@@ -75,7 +75,7 @@ export function ImageUploader({
             image_url: imageUrl,
             order_index: detailImages.length + uploadedCount,
             product_id: '' // Set a default empty string for new images
-          } as CreateProductImage; // Use type assertion instead of type predicate
+          } as ProductDetailImage; // Use type assertion instead of type predicate
         } catch (error) {
           console.error('Error uploading image:', error);
           return null;

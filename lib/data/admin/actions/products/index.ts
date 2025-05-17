@@ -1,7 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { ProductData, ProductWithRelations } from './types';
+import { ProductData, ProductWithRelations, CreateProductData, CreateProductImage, CreateProductVariant } from './types';
 import sharp from 'sharp';
 
 export async function getProducts(): Promise<ProductWithRelations[]> {
@@ -18,7 +18,7 @@ export async function getProducts(): Promise<ProductWithRelations[]> {
   return data || [];
 }
 
-export async function createProduct(productData: ProductData): Promise<ProductWithRelations> {
+export async function createProduct(productData: CreateProductData): Promise<ProductWithRelations> {
   const { variants, product_images, ...mainProductData } = productData;
 
   // Crear producto principal

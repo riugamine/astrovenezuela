@@ -43,7 +43,11 @@ export function CategorySelect({ control, name, onCategoryChange }: CategorySele
               disabled={isLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecciona una categoría" />
+                <SelectValue placeholder={
+                  isLoading 
+                    ? "Cargando categorías..."
+                    : "Selecciona una categoría"
+                } />
               </SelectTrigger>
               <SelectContent>
                 {mainCategories.map((category) => (

@@ -1,0 +1,131 @@
+'use client';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { ProductVariant } from '@/lib/data/admin/actions/products/types';
+
+interface VariantFormProps {
+  variants: ProductVariant[];
+  onChange: (variants: ProductVariant[]) => void;
+}
+
+// Predefined size options including "única"
+const SIZES = ['Única', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+export function VariantFormEdit({ variants, onChange }: VariantFormProps) {
+  const addVariant = () => {
+    onChange([...variants, { 
+      id: crypto.randomUUID(),
+      size: '', 
+      stock: 0,
+      product_id: variants[0]?.product_id || '' // Get product_id from existing variants or empty string
+    }]);
+  };
+
+  const removeVariant = (index: number) => {
+    onChange(variants.filter((_, i) => i !== index));
+  };
+
+  const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
+    const newVariants = variants.map((variant, i) => {
+      if (i === index) {
+        return { 
+          ...variant, 
+          [field]: value,
+          id: variant.id || crypto.randomUUID()
+        };
+      }
+      return variant;
+    });
+    onChange(newVariants);
+  };
+
+  // Calculate total stock
+  const totalStock = variants.reduce((sum, variant) => sum + variant.stock, 0);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">Variantes de Talla</h3>
+        <div className="text-sm text-gray-500">
+          Stock Total: {totalStock}
+        </div>
+      </div>
+
+      {variants.map((variant, index) => (
+        <Card key={variant.id || index} className="relative">
+          <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor={`size-${index}`}>Talla</Label>
+              <Select
+                value={variant.size}
+                onValueChange={(value) => updateVariant(index, 'size', value)}
+              >
+                <SelectTrigger id={`size-${index}`}>
+                  <SelectValue placeholder="Seleccionar talla" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SIZES.map((size) => (
+                    <SelectItem key={size} value={size}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`stock-${index}`}>Stock</Label>
+              <div className="flex gap-2">
+                <Input
+                  id={`stock-${index}`}
+                  type="number"
+                  min="0"
+                  value={variant.stock === 0 ? '' : variant.stock}
+                  onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
+                  className="flex-1"
+                />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => removeVariant(index)}
+                  className="shrink-0"
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+      
+      <Button
+        type="button"
+        variant="outline"
+        onClick={addVariant}
+        className="w-full"
+        disabled={variants.some(v => v.size === 'Única') || variants.length >= SIZES.length}
+      >
+        <FontAwesomeIcon icon={faPlus} className="mr-2" />
+        Agregar Variante
+      </Button>
+
+      {variants.length === 0 && (
+        <p className="text-sm text-gray-500 text-center mt-4">
+          Agrega al menos una variante de talla para el producto.
+        </p>
+      )}
+    </div>
+  );
+}
