@@ -41,6 +41,7 @@ export function CategoriesCarousel({ categories }: CategoriesCarouselProps) {
                     alt={category.name}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
                   <div className="absolute bottom-0 w-full p-4">

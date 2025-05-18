@@ -156,7 +156,7 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
                 <Slider
                   value={tempPriceRange}
                   min={0}
-                  max={1000}
+                  max={500}
                   step={10}
                   onValueChange={setTempPriceRange}
                 />

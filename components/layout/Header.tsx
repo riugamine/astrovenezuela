@@ -230,6 +230,7 @@ const Header = () => {
                 height={40}
                 className="object-contain"
                 priority
+                sizes="(100vw - 32px) 400px, 120px"
               />
             </Link>
           </div>

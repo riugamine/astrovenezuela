@@ -16,7 +16,7 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
   const from = (page - 1) * PRODUCTS_PER_PAGE;
   
   // First, get the count with the same filters
-  const countQuery = supabaseClient
+  let countQuery = supabaseClient
     .from('products')
     .select('id', { count: 'exact' })
     .eq('is_active', true)
@@ -25,8 +25,9 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
 
   // Apply category filter to count query
   if (categories.length > 0) {
-    countQuery.or(
-      `category_id.in.(${categories.join(',')}),category.parent_id.in.(${categories.join(',')})`
+    countQuery = countQuery.or(
+      categories.map(id => `category_id.eq.${id}`).join(',') + ',' +
+      categories.map(id => `category.parent_id.eq.${id}`).join(',')
     );
   }
 
@@ -47,7 +48,8 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
   // Apply category filter to main query
   if (categories.length > 0) {
     mainQuery = mainQuery.or(
-      `category_id.in.(${categories.join(',')}),category.parent_id.in.(${categories.join(',')})`
+      categories.map(id => `category_id.eq.${id}`).join(',') + ',' +
+      categories.map(id => `category.parent_id.eq.${id}`).join(',')
     );
   }
 
