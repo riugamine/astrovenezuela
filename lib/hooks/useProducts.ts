@@ -15,43 +15,39 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
   const { categories, priceRange, sortBy } = options;
   const from = (page - 1) * PRODUCTS_PER_PAGE;
   
-  // First, get the count with the same filters
-  let countQuery = supabaseClient
-    .from('products')
-    .select('id', { count: 'exact' })
-    .eq('is_active', true)
-    .gte('price', priceRange[0])
-    .lte('price', priceRange[1]);
+  // Base query builder function
+  const buildQuery = (query: any) => {
+    let baseQuery = query
+      .eq('is_active', true)
+      .gte('price', priceRange[0])
+      .lte('price', priceRange[1]);
 
-  // Apply category filter to count query
-  if (categories.length > 0) {
-    countQuery = countQuery.or(
-      categories.map(id => `category_id.eq.${id}`).join(',') + ',' +
-      categories.map(id => `category.parent_id.eq.${id}`).join(',')
-    );
-  }
+    // Modificar la forma en que construimos el filtro de categorías
+    if (categories.length > 0) {
+      baseQuery = baseQuery.in('category_id', categories);
+    }
 
-  // Build the main query
-  let mainQuery = supabaseClient
-    .from('products')
-    .select(`
-      *,
-      product_images (*),
-      variants:product_variants (*),
-      category:categories!inner (*)
-    `)
-    .eq('is_active', true)
-    .gte('price', priceRange[0])
-    .lte('price', priceRange[1])
-    .range(from, from + PRODUCTS_PER_PAGE - 1);
+    return baseQuery;
+  };
 
-  // Apply category filter to main query
-  if (categories.length > 0) {
-    mainQuery = mainQuery.or(
-      categories.map(id => `category_id.eq.${id}`).join(',') + ',' +
-      categories.map(id => `category.parent_id.eq.${id}`).join(',')
-    );
-  }
+  // Build count query
+  const countQuery = buildQuery(
+    supabaseClient
+      .from('products')
+      .select('id', { count: 'exact' })
+  );
+
+  // Build main query
+  let mainQuery = buildQuery(
+    supabaseClient
+      .from('products')
+      .select(`
+        *,
+        product_images (*),
+        variants:product_variants (*),
+        category:categories (*)
+      `)
+  ).range(from, from + PRODUCTS_PER_PAGE - 1);
 
   // Apply sorting
   switch (sortBy) {
