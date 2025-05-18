@@ -99,107 +99,115 @@ export default async function Home() {
           </div>
         </div>
       </section>
-      {/* Features Section */}
-      <section className="py-12 sm:py-16">
+     {/* Value Proposition Section */}
+     <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-6 hover:shadow-md transition-shadow">
-              <div className="space-y-4 text-center">
-                <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary/10">
+          <div className="text-center mb-12">
+            <h2 className="font-exo text-3xl sm:text-4xl font-bold mb-4">¿Por qué elegir Astro?</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Nos dedicamos a proporcionar equipamiento deportivo de alta calidad que te ayude a alcanzar tu máximo potencial</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="p-8 hover:shadow-lg transition-all duration-300 border-none bg-gradient-to-br from-purple-50 to-white dark:from-gray-900 dark:to-gray-800">
+              <div className="space-y-4">
+                <div className="mx-auto w-14 h-14 flex items-center justify-center rounded-full bg-primary/10 transform transition-transform duration-300 hover:scale-110">
                   <FontAwesomeIcon
                     icon={faGem}
-                    className="text-primary text-xl"
+                    className="text-primary text-2xl"
                   />
                 </div>
-                <h3 className="font-exo text-base font-semibold">
+                <h3 className="font-exo text-lg font-semibold text-center">
                   Calidad Premium
                 </h3>
-                <p className="text-muted-foreground text-sm">
-                  Materiales de alta resistencia para un rendimiento óptimo
+                <p className="text-muted-foreground text-center">
+                  Materiales de alta resistencia seleccionados cuidadosamente para garantizar durabilidad y rendimiento
                 </p>
               </div>
             </Card>
 
-            <Card className="p-6 hover:shadow-md transition-shadow">
-              <div className="space-y-4 text-center">
-                <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary/10">
+            <Card className="p-8 hover:shadow-lg transition-all duration-300 border-none bg-gradient-to-br from-purple-50 to-white dark:from-gray-900 dark:to-gray-800">
+              <div className="space-y-4">
+                <div className="mx-auto w-14 h-14 flex items-center justify-center rounded-full bg-primary/10 transform transition-transform duration-300 hover:scale-110">
                   <FontAwesomeIcon
                     icon={faPalette}
-                    className="text-primary text-xl"
+                    className="text-primary text-2xl"
                   />
                 </div>
-                <h3 className="font-exo text-base font-semibold">
-                  Diseño Únicos
+                <h3 className="font-exo text-lg font-semibold text-center">
+                  Diseños Exclusivos
                 </h3>
-                <p className="text-muted-foreground text-sm">
-                  Colecciones exclusivas enfocadas en deportistas de alto
-                  rendimiento
+                <p className="text-muted-foreground text-center">
+                  Colecciones únicas diseñadas para destacar en cada entrenamiento y competencia
                 </p>
               </div>
             </Card>
 
-            <Card className="p-6 hover:shadow-md transition-shadow">
-              <div className="space-y-4 text-center">
-                <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary/10">
+            <Card className="p-8 hover:shadow-lg transition-all duration-300 border-none bg-gradient-to-br from-purple-50 to-white dark:from-gray-900 dark:to-gray-800">
+              <div className="space-y-4">
+                <div className="mx-auto w-14 h-14 flex items-center justify-center rounded-full bg-primary/10 transform transition-transform duration-300 hover:scale-110">
                   <FontAwesomeIcon
                     icon={faHandHoldingHeart}
-                    className="text-primary text-xl"
+                    className="text-primary text-2xl"
                   />
                 </div>
-                <h3 className="font-exo text-base font-semibold">
-                  Responsabilidad Social
+                <h3 className="font-exo text-lg font-semibold text-center">
+                  Impacto Social
                 </h3>
-                <p className="text-muted-foreground text-sm">
-                  La industria textil dedicada al hogar teniendo como meta
-                  mejorar su calidad de vida
+                <p className="text-muted-foreground text-center">
+                  Comprometidos con el desarrollo de la industria textil local y el bienestar de nuestras comunidades
                 </p>
               </div>
             </Card>
 
-            <Card className="p-6 hover:shadow-md transition-shadow">
-              <div className="space-y-4 text-center">
-                <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary/10">
+            <Card className="p-8 hover:shadow-lg transition-all duration-300 border-none bg-gradient-to-br from-purple-50 to-white dark:from-gray-900 dark:to-gray-800">
+              <div className="space-y-4">
+                <div className="mx-auto w-14 h-14 flex items-center justify-center rounded-full bg-primary/10 transform transition-transform duration-300 hover:scale-110">
                   <FontAwesomeIcon
                     icon={faShieldHalved}
-                    className="text-primary text-xl"
+                    className="text-primary text-2xl"
                   />
                 </div>
-                <h3 className="font-exo text-base font-semibold">
-                  Garantía Total
+                <h3 className="font-exo text-lg font-semibold text-center">
+                  Garantía Asegurada
                 </h3>
-                <p className="text-muted-foreground text-sm">
-                  30 días para cambios y devoluciones
+                <p className="text-muted-foreground text-center">
+                  30 días de garantía con política de devolución sin complicaciones
                 </p>
               </div>
             </Card>
           </div>
         </div>
       </section>
+
       {/* Categories Section */}
-      <section className="py-12 sm:py-16 bg-gray-50 dark:bg-gray-900/30">
+      <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="font-exo text-3xl sm:text-4xl font-bold mb-4">Explora Nuestras Categorías</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Encuentra el equipamiento perfecto para cada disciplina deportiva</p>
+          </div>
           <CategoriesCarousel categories={categories} />
         </div>
       </section>
 
       {/* Latest Products Section */}
-      <section className="py-12 sm:py-16">
+      <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
-          <h2 className="font-exo text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12">
-            Nuevos Ingresos
-          </h2>
+          <div className="text-center mb-12">
+            <h2 className="font-exo text-3xl sm:text-4xl font-bold mb-4">Nuevos Ingresos</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
+          </div>
           <ProductGrid />
-          <div className="text-center mt-8 sm:mt-12">
+          <div className="text-center mt-12">
             <Link href="/products">
               <Button
                 variant="outline"
                 size="lg"
-                className="group hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="group hover:bg-primary hover:text-primary-foreground transition-all duration-300"
               >
-                Ver Catálogo Completo
+                Explorar Catálogo Completo
                 <FontAwesomeIcon
                   icon={faArrowRight}
-                  className="ml-2 transition-transform duration-300 group-hover:translate-x-1"
+                  className="ml-2 transition-transform duration-300 group-hover:translate-x-2"
                 />
               </Button>
             </Link>

@@ -5,12 +5,28 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { getBrandLogo } from "@/lib/utils";
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHome } from "@fortawesome/free-solid-svg-icons";
 
 export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#001730] via-[#32217A] to-[#7F98C9] p-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <div className="flex flex-col items-center space-y-4 mb-8">
+      <div className="relative w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        {/* Home Link - Positioned absolutely */}
+        <Link href="/" className="absolute top-4 left-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-muted-foreground hover:text-primary transition-colors rounded-full p-2 hover:bg-primary/10"
+          >
+            <FontAwesomeIcon icon={faHome} className="h-4 w-4" />
+            
+          </Button>
+        </Link>
+
+        <div className="flex flex-col items-center space-y-4 mb-8 mt-8">
           <Image
             src={getBrandLogo("azul-marino")}
             alt="Astro"
