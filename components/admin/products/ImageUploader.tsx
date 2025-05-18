@@ -6,15 +6,15 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faUpload } from "@fortawesome/free-solid-svg-icons";
-import { ProductDetailImage } from "@/lib/data/admin/actions/products/types";
+import { CreateProductImage } from "@/lib/data/admin/actions/products/types";
 import { toast } from "sonner";
 import { deleteProductImage } from "@/lib/data/admin/actions/products";
 
 interface ImageUploaderProps {
   mainImage: string;
-  detailImages: ProductDetailImage[];
+  detailImages: CreateProductImage[];
   onMainImageChange: (url: string) => void;
-  onDetailImagesChange: (images: ProductDetailImage[]) => void;
+  onDetailImagesChange: (images: CreateProductImage[]) => void;
 }
 
 export function ImageUploader({
@@ -85,7 +85,7 @@ export function ImageUploader({
     setUploading(true);
     const totalFiles = files.length;
     let uploadedCount = 0;
-    const newImages: ProductDetailImage[] = [];
+    const newImages: CreateProductImage[] = [];
     let hasErrors = false;
 
     try {
@@ -106,10 +106,8 @@ export function ImageUploader({
           setUploadProgress((uploadedCount / totalFiles) * 100);
 
           newImages.push({
-            id: crypto.randomUUID(),
             image_url: imageUrl,
             order_index: detailImages.length + uploadedCount,
-            product_id: "",
           });
         } catch (error: any) {
           console.error("Error uploading image:", error);
@@ -200,7 +198,7 @@ export function ImageUploader({
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {detailImages.map((image, index) => (
-            <div key={image.id} className="relative aspect-square">
+            <div key={`Detail ${index + 1}`} className="relative aspect-square">
               <Image
                 src={image.image_url}
                 alt={`Detail ${index + 1}`}

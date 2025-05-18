@@ -87,7 +87,28 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
       variants: initialData.variants || []
     }
   });
+  const updateProductMutation = useMutation({
+    mutationFn: async (data: EditProductFormData) => {
+      const totalStock = data.variants.reduce((sum, variant) => sum + variant.stock, 0);
+      
+      const submitData = {
+        ...data,
+        stock: totalStock,
+        updated_at: new Date().toISOString()
+      };
 
+      return updateProduct(data.id, submitData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Producto actualizado exitosamente');
+      onClose();
+    },
+    onError: (error) => {
+      console.error('Error updating product:', error);
+      toast.error('Error al actualizar el producto');
+    }
+  });
   // Query para cargar las categorías
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
@@ -112,10 +133,11 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
           form.setValue('subcategory_id', categoryDetails.category_id);
         } else {
           form.setValue('category_id', categoryDetails.category_id);
+          form.setValue('subcategory_id', ''); // Clear subcategory
         }
       } catch (error) {
-        console.error('Error al cargar datos de la categoría:', error);
-        toast.error('Error al cargar datos de la categoría');
+        console.error('Error loading category data:', error);
+        toast.error('Error loading category data');
       } finally {
         setIsLoading(false);
       }
@@ -124,64 +146,12 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
     loadCategoryData();
   }, [initialData.id, form]);
 
-  // Determinar si el formulario está listo para editar
-  const isFormReady = !isLoading && !categoriesLoading && 
-    (!form.watch('category_id') || !subcategoriesLoading);
 
-  if (!isFormReady) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Cargando datos del producto...</span>
-      </div>
-    );
-  }
-  const updateProductMutation = useMutation({
-    mutationFn: async (data: EditProductFormData) => {
-      const totalStock = data.variants.reduce((sum, variant) => sum + variant.stock, 0);
-      
-      const submitData = {
-        ...data,
-        stock: totalStock,
-        updated_at: new Date().toISOString()
-      };
-
-      return updateProduct(data.id, submitData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Producto actualizado exitosamente');
-      onClose();
-    },
-    onError: (error) => {
-      console.error('Error updating product:', error);
-      toast.error('Error al actualizar el producto');
-    }
-  });
 
   const onSubmit = (data: EditProductFormData) => {
     updateProductMutation.mutate(data);
   };
 
-  useEffect(() => {
-    const loadCategoryData = async () => {
-      try {
-        const categoryDetails = await getProductCategoryDetails(initialData.id);
-
-        if (categoryDetails.parent_id) {
-          form.setValue('category_id', categoryDetails.parent_id);
-          form.setValue('subcategory_id', categoryDetails.category_id);
-        } else {
-          form.setValue('category_id', categoryDetails.category_id);
-        }
-      } catch (error) {
-        console.error('Error al cargar datos de la categoría:', error);
-        toast.error('Error al cargar datos de la categoría');
-      }
-    };
-
-    loadCategoryData();
-  }, [initialData.id, form]);
   const handleCategoryChange = async (categoryId: string) => {
     try {
       // Get the category details to check if it's a main category or subcategory
@@ -204,6 +174,19 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
       toast.error('Error al cambiar la categoría');
     }
   };
+    // Determinar si el formulario está listo para editar
+    const isFormReady = !isLoading && !categoriesLoading && 
+    (!form.watch('category_id') || !subcategoriesLoading);
+
+  if (!isFormReady) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Cargando datos del producto...</span>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

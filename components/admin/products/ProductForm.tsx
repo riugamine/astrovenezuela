@@ -196,6 +196,7 @@ export function ProductForm({ onClose }: ProductFormProps) {
                         placeholder="0.00"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value === 0 ? "" : field.value}
                       />
                     </div>
                   </FormControl>
