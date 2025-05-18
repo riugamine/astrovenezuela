@@ -13,6 +13,7 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useQuery } from "@tanstack/react-query";
 import { getOrderWithItems } from "@/lib/data/orders";
 import { toast } from "sonner";
+import Image from "next/image";
 
 type OrderWithItems = Database["public"]["Tables"]["orders"]["Row"] & {
   order_items: (Database["public"]["Tables"]["order_items"]["Row"] & {
@@ -56,8 +57,8 @@ export default function SuccessPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <Card className="p-6 space-y-6">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-2xl p-6">
           <div className="flex items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           </div>
@@ -71,58 +72,73 @@ export default function SuccessPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <Card className="p-6 space-y-6">
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-green-600">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-muted/20">
+      <Card className="w-full max-w-2xl p-6 space-y-8">
+        <div className="text-center space-y-6">
+          <h1 className="text-3xl font-bold text-green-600">
             ¡Gracias por tu compra!
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Un asesor de ventas te contactará por WhatsApp para coordinar la
             entrega de tu pedido.
           </p>
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Detalles del pedido:</h2>
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold border-b pb-2">Detalles del pedido:</h2>
           <div className="space-y-4">
             {order.order_items.map((item: OrderWithItems["order_items"][number]) => (
               <div
                 key={item.id}
-                className="flex items-center gap-4 border-b pb-4"
+                className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted/80 transition-colors"
               >
-                <img
+                <Image
                   src={item.product.main_image_url}
                   alt={item.product.name}
-                  className="w-20 h-20 object-cover rounded"
+                  className="w-24 h-24 object-cover rounded-md shadow-sm"
+                  width={200}
+                  height={200}
+                  priority
+                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 200px"
                 />
-                <div>
-                  <h3 className="font-medium">{item.product.name}</h3>
+                <div className="flex-1">
+                  <h3 className="font-medium text-lg">{item.product.name}</h3>
                   <p className="text-sm text-muted-foreground">
                     Talla: {item.variant.size} | Cantidad: {item.quantity}
                   </p>
-                  <p className="font-medium">${item.price}</p>
+                  <p className="font-medium text-green-600 mt-1">${item.price}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="pt-4">
-            <p className="font-semibold">Total: ${order.total_amount}</p>
+          <div className="pt-4 border-t">
+            <p className="text-xl font-semibold text-right">
+              Total: <span className="text-green-600">${order.total_amount}</span>
+            </p>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-          <Button asChild className="bg-green-600 hover:bg-green-700">
+          <Button 
+            asChild 
+            className="bg-green-600 hover:bg-green-700 text-lg py-6"
+            size="lg"
+          >
             <Link href={`https://wa.me/584243091410`} target="_blank">
-              <FontAwesomeIcon icon={faWhatsapp} className="mr-2" />
+              <FontAwesomeIcon icon={faWhatsapp} className="mr-2 text-xl" />
               Contactar por WhatsApp
             </Link>
           </Button>
 
-          <Button asChild variant="outline">
+          <Button 
+            asChild 
+            variant="outline" 
+            size="lg"
+            className="text-lg py-6"
+          >
             <Link href="/">
-              <FontAwesomeIcon icon={faShoppingBag} className="mr-2" />
+              <FontAwesomeIcon icon={faShoppingBag} className="mr-2 text-xl" />
               Seguir comprando
             </Link>
           </Button>
