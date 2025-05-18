@@ -1,63 +1,96 @@
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { createClient } from '@/lib/supabase/client';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { faShoppingBag } from '@fortawesome/free-solid-svg-icons';
-import { Database } from '@/lib/types/database.types';
+"use client";
 
-type OrderWithItems = Database['public']['Tables']['orders']['Row'] & {
-  order_items: (Database['public']['Tables']['order_items']['Row'] & {
-    product: Database['public']['Tables']['products']['Row'];
-    variant: Database['public']['Tables']['product_variants']['Row'];
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
+import { Database } from "@/lib/types/database.types";
+import { useEffect } from "react";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useQuery } from "@tanstack/react-query";
+import { getOrderWithItems } from "@/lib/data/orders";
+import { toast } from "sonner";
+
+type OrderWithItems = Database["public"]["Tables"]["orders"]["Row"] & {
+  order_items: (Database["public"]["Tables"]["order_items"]["Row"] & {
+    product: Database["public"]["Tables"]["products"]["Row"];
+    variant: Database["public"]["Tables"]["product_variants"]["Row"];
   })[];
 };
+export default function SuccessPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("order_id");
+  console.log(orderId);
+  const { user } = useAuthStore();
+  // Redirect if no order ID or user
+  useEffect(() => {
+    if (!orderId) {
+      toast.error("ID de orden no proporcionado");
+      router.push("/");
+    }
+  }, [orderId, router]);
 
-interface SuccessPageProps {
-  searchParams: {
-    order_id?: string;
-  };
-}
+  // Fetch order data
+  const { data: order, isLoading } = useQuery({
+    queryKey: ['order', orderId],
+    queryFn: async () => {
+      if (!user?.id || !orderId) {
+        router.push('/');
+        return null;
+      }
+      const data = await getOrderWithItems(orderId, user.id);
+      if (!data) {
+        toast.error('Orden no encontrada');
+        router.push('/');
+        return null;
+      }
+      return data;
+    },
+    enabled: !!orderId && !!user?.id,
+    retry: 1
+  });
 
-export default async function SuccessPage({ searchParams }: SuccessPageProps) {
-  const supabase = createClient();
-  const orderId = searchParams.order_id;
-
-  if (!orderId) {
-    redirect('/');
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <Card className="p-6 space-y-6">
+          <div className="flex items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        </Card>
+      </div>
+    );
   }
 
-  // Fetch order details with proper typing
-  const { data: order } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      order_items (*, product:products(*), variant:product_variants(*))
-    `)
-    .eq('id', orderId)
-    .single<OrderWithItems>();
-
   if (!order) {
-    redirect('/');
+    return null;
   }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       <Card className="p-6 space-y-6">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-green-600">¡Gracias por tu compra!</h1>
+          <h1 className="text-2xl font-bold text-green-600">
+            ¡Gracias por tu compra!
+          </h1>
           <p className="text-muted-foreground">
-            Un asesor de ventas te contactará por WhatsApp para coordinar la entrega de tu pedido.
+            Un asesor de ventas te contactará por WhatsApp para coordinar la
+            entrega de tu pedido.
           </p>
         </div>
 
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Detalles del pedido:</h2>
           <div className="space-y-4">
-            {order.order_items.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 border-b pb-4">
+            {order.order_items.map((item: OrderWithItems["order_items"][number]) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-4 border-b pb-4"
+              >
                 <img
                   src={item.product.main_image_url}
                   alt={item.product.name}
@@ -86,7 +119,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
               Contactar por WhatsApp
             </Link>
           </Button>
-          
+
           <Button asChild variant="outline">
             <Link href="/">
               <FontAwesomeIcon icon={faShoppingBag} className="mr-2" />

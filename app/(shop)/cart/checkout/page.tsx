@@ -28,8 +28,14 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { redirect } from "next/navigation";
 import { CustomerInfo } from "@/lib/types/database.types";
+// Importar el tipo de método de pago desde constants
+import { VALID_PAYMENT_METHODS } from "@/lib/constants";
+
+// Actualizar la interfaz para usar el tipo literal
+type PaymentMethod = typeof VALID_PAYMENT_METHODS[number];
+
 interface PaymentMethodUI {
-  id: string;
+  id: PaymentMethod;
   name: string;
   description: string;
 }
@@ -82,7 +88,7 @@ const initialFormFields = {
     email: "" // Mantenemos el email pero lo inicializamos vacío
   } satisfies CustomerInfo,
   shippingMethod: "",
-  paymentMethod: "",
+  paymentMethod: "" as PaymentMethod | "",
   orderNotes: ""
 };
 export default function CheckoutPage() {
@@ -90,7 +96,7 @@ export default function CheckoutPage() {
   const { orderNotes, setOrderNotes } = useCartStore();
   const { items, totalItems, clearCart } = useCartStore();
   const [shippingMethod, setShippingMethod] = useState<string>(initialFormFields.shippingMethod);
-  const [paymentMethod, setPaymentMethod] = useState<string>(initialFormFields.paymentMethod);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">(initialFormFields.paymentMethod);
   const { customerInfo, setCustomerInfo } = useCustomerStore();
 
   const subtotal = items.reduce(
@@ -212,7 +218,7 @@ export default function CheckoutPage() {
 
       // Clear cart after successful order creation
       clearCart();
-
+      cleanupForm();
       // Show success message
       toast.success("Pedido creado exitosamente");
       
@@ -240,7 +246,7 @@ export default function CheckoutPage() {
         );
       }
     } catch (error) {
-      console.error("Error creating order:", error);
+      
       toast.error("Error al crear el pedido. Por favor intente nuevamente.");
     }
     finally{
@@ -467,7 +473,6 @@ export default function CheckoutPage() {
                     fill
                     className="object-cover"
                     priority
-                    loading="lazy"
                     blurDataURL={item.image_url}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />

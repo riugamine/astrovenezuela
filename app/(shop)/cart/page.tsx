@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/lib/store/useCartStore";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faMinus, faPlus, faShoppingCart } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
@@ -10,20 +11,39 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalItems, orderNotes, setOrderNotes } = useCartStore();
+  const { user } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const total = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
   );
 
+  const handleCheckout = () => {
+    if (!user) {
+      toast.error("Necesitas iniciar sesión para realizar un pedido");
+      router.push("/auth");
+      return;
+    }
+
+    setIsLoading(true);
+    router.push("/cart/checkout");
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Tu Carrito</h1>
 
       {items.length === 0 ? (
+        // Empty cart state remains unchanged
         <div className="relative min-h-[60vh] flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-black via-purple-950 to-black">
           <div className="absolute inset-0">
             <Meteors className="opacity-40" />
@@ -56,85 +76,89 @@ export default function CartPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           {/* Lista de productos */}
-          <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <div
-                key={item.variant_id}
-                className="flex gap-4 p-4 border rounded-lg"
-              >
-                <Link
-                  href={`/products/${item.slug}`}
-                  className="relative w-24 h-24 transition-opacity hover:opacity-80"
-                >
-                  <Image
-                    src={item.image_url}
-                    alt={item.name}
-                    fill
-                    className="object-cover rounded-md"
-                  />
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-base truncate">{item.name}</h3>
-                  <p className="text-sm text-muted-foreground">Talla: {item.size}</p>
-                  <p className="font-semibold mt-1">${item.price.toLocaleString('es-VE')}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      updateQuantity(
-                        item.variant_id,
-                        Math.max(1, item.quantity - 1)
-                      )
-                    }
+          <div className="lg:col-span-2">
+            <ScrollArea className="pr-4">
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div
+                    key={item.variant_id}
+                    className="flex flex-col sm:flex-row gap-4 p-4 border rounded-lg"
                   >
-                    <FontAwesomeIcon icon={faMinus} className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateQuantity(
-                        item.variant_id,
-                        parseInt(e.target.value) || 1
-                      )
-                    }
-                    className="w-20 text-center"
-                    min={1}
-                    max={item.max_stock}
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      updateQuantity(
-                        item.variant_id,
-                        Math.min(item.quantity + 1, item.max_stock)
-                      )
-                    }
-                    disabled={item.quantity >= item.max_stock}
-                  >
-                    <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="ml-auto text-destructive"
-                    onClick={() => removeItem(item.variant_id)}
-                  >
-                    <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                  </Button>
-                </div>
+                    <Link
+                      href={`/products/${item.slug}`}
+                      className="relative w-full sm:w-24 h-32 sm:h-24 transition-opacity hover:opacity-80"
+                    >
+                      <Image
+                        src={item.image_url}
+                        alt={item.name}
+                        fill
+                        className="object-cover rounded-md"
+                      />
+                    </Link>
+                    <div className="flex-1 min-w-0 space-y-2 sm:space-y-0">
+                      <h3 className="font-medium text-base truncate">{item.name}</h3>
+                      <p className="text-sm text-muted-foreground">Talla: {item.size}</p>
+                      <p className="font-semibold">${item.price.toLocaleString('es-VE')}</p>
+                    </div>
+                    <div className="flex items-center gap-2 self-center sm:self-auto">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() =>
+                          updateQuantity(
+                            item.variant_id,
+                            Math.max(1, item.quantity - 1)
+                          )
+                        }
+                      >
+                        <FontAwesomeIcon icon={faMinus} className="h-4 w-4" />
+                      </Button>
+                      <Input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateQuantity(
+                            item.variant_id,
+                            parseInt(e.target.value) || 1
+                          )
+                        }
+                        className="w-20 text-center"
+                        min={1}
+                        max={item.max_stock}
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() =>
+                          updateQuantity(
+                            item.variant_id,
+                            Math.min(item.quantity + 1, item.max_stock)
+                          )
+                        }
+                        disabled={item.quantity >= item.max_stock}
+                      >
+                        <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto text-destructive"
+                        onClick={() => removeItem(item.variant_id)}
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </ScrollArea>
           </div>
 
           {/* Resumen del pedido */}
-          <div className="lg:col-span-1">
-            <div className="border rounded-lg p-6 space-y-4">
+          <div className="lg:col-span-1 sticky top-4">
+            <div className="border rounded-lg p-6 space-y-4 bg-background">
               <h2 className="text-xl font-semibold">Resumen del pedido</h2>
               <div className="space-y-2">
                 <div className="flex justify-between">
@@ -158,8 +182,19 @@ export default function CartPage() {
                 />
               </div>
 
-              <Button className="w-full" asChild>
-                <Link href="/cart/checkout">Proceder al pago</Link>
+              <Button 
+                className="w-full" 
+                onClick={handleCheckout}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
+                    Procesando...
+                  </div>
+                ) : (
+                  'Proceder al pago'
+                )}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
