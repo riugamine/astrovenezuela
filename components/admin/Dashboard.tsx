@@ -111,7 +111,7 @@ export default function AdminDashboard() {
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         {/* Sales Chart - 8 columns */}
-        <Card className="md:col-span-8 overflow-hidden">
+        <Card className="md:col-span-8 overflow-hidden py-6">
           <CardHeader className="space-y-1 pb-2">
             <CardTitle className="text-base font-medium">
               Tendencia de Ventas
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
         <div className="md:col-span-4 space-y-4">
           {/* Recent Orders */}
 
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 py-6">
             <CardHeader className="space-y-1">
               <CardTitle className="text-base font-medium">
                 Órdenes Recientes

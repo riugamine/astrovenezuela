@@ -13,7 +13,7 @@ export const StatCard: FC<StatCardProps> = ({
   variant,
 }) => (
   <Card 
-    className={`hover:shadow-md transition-shadow ${
+    className={`hover:shadow-md transition-shadow py-6 ${
       variant === "warning" ? 'border-yellow-500' :
       variant === "destructive" ? 'border-red-500' : ''
     }`}
