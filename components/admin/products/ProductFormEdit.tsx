@@ -35,7 +35,7 @@ import { type ProductData } from '@/lib/data/admin/actions/products/types';
 const editVariantSchema = z.object({
   id: z.string(),
   size: z.string(),
-  stock: z.number().int().positive("El stock debe ser un número entero positivo"),
+  stock: z.number().int().min(0, "El stock no puede ser negativo"),
   product_id: z.string()
 });
 
@@ -57,14 +57,14 @@ const editProductSchema = z.object({
   main_image_url: z.string().url("La imagen principal es requerida"),
   is_active: z.boolean(),
   slug: z.string(),
-  stock: z.number(),
+  stock: z.number().int().positive("El stock debe ser un número entero positivo"),
   product_images: z.array(editProductImageSchema),
   variants: z.array(editVariantSchema)
-    .min(1, "Debe agregar al menos una variante con talla y stock")
-    .refine(
-      (variants) => variants.reduce((total, variant) => total + variant.stock, 0) > 0,
-      "El stock total debe ser mayor a 0"
-    ),
+  .min(1, "Debe agregar al menos una variante con talla y stock")
+  .refine(
+    (variants) => variants.reduce((total, variant) => total + variant.stock, 0) > 0,
+    "El stock total debe ser mayor a 0"
+  ),
   updated_at: z.string()
 });
 
@@ -147,7 +147,7 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
   }, [initialData.id, form]);
 
 
-
+console.log('Initial Data:', initialData);
   const onSubmit = (data: EditProductFormData) => {
     updateProductMutation.mutate(data);
   };

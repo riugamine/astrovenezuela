@@ -108,7 +108,7 @@ export function VariantForm({ variants, onChange }: VariantFormProps) {
                   id={`stock-${index}`}
                   type="number"
                   min="0"
-                  value={variant.stock === 0 ? '' : variant.stock}
+                  value={variant.stock === 0 ? 0 : variant.stock}
                   onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
                   className="flex-1"
                 />
