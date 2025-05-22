@@ -90,10 +90,10 @@ export default async function Home() {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-white/20 hover:bg-white/10 text-white transition-all text-base"
+                className="border-white/20 hover:bg-secondary transition-all text-base"
                 asChild
               >
-                <Link href="/categories">Ver Categorías</Link>
+                <Link href="/categories" className="text-primary hover:text-white">Ver Categorías</Link>
               </Button>
             </div>
           </div>

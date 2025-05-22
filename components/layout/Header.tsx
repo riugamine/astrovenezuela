@@ -7,7 +7,6 @@ import {
   faBars,
   faSun,
   faMoon,
-  faTshirt,
   faHome,
 } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
@@ -172,7 +171,6 @@ const Header = () => {
                             title: category.name,
                             href: `/categories/${category.slug}`,
                             description: category.description,
-                            icon: faTshirt
                           }}
                         >
                           <div className="space-y-2">
@@ -193,7 +191,6 @@ const Header = () => {
                             href={`/categories/${category.slug}`}
                             className="flex items-center gap-2 py-2 hover:text-primary transition-colors"
                           >
-                            <FontAwesomeIcon icon={faTshirt} className="h-4 w-4" />
                             <span>{category.name}</span>
                           </Link>
                         </AccordionItem>
@@ -243,7 +240,6 @@ const Header = () => {
                   hasSubcategories(category.id) ? (
                     <NavigationMenuItem key={category.id}>
                       <NavigationMenuTrigger className="gap-2">
-                        <FontAwesomeIcon icon={faTshirt} className="h-4 w-4" />
                         {category.name}
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
@@ -253,7 +249,7 @@ const Header = () => {
                               title: category.name,
                               href: `/categories/${category.slug}`,
                               description: category.description,
-                              icon: faTshirt
+                              
                             }}
                           />
                           <div className="grid grid-cols-2 gap-3 pt-4 border-t">
@@ -277,7 +273,7 @@ const Header = () => {
                           title: category.name,
                           href: `/categories/${category.slug}`,
                           description: category.description,
-                          icon: faTshirt
+                          
                         }}
                       />
                     </NavigationMenuItem>
@@ -316,7 +312,7 @@ const Header = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-sm font-medium">
+                    <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-sm font-medium text-white">
                       {user.email?.[0].toUpperCase()}
                     </div>
                   </Button>

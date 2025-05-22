@@ -41,7 +41,7 @@ export function OrderDetails({ orderId, onClose }: OrderDetailsProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        <Card className='py-6'>
           <CardHeader>
             <CardTitle>Información del Cliente</CardTitle>
           </CardHeader>

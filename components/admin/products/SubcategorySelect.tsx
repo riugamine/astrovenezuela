@@ -21,7 +21,9 @@ export function SubcategorySelect({ control, name, parentCategoryId }: Subcatego
   const { data: subcategories = [], isLoading } = useQuery({
     queryKey: ['subcategories', parentCategoryId],
     queryFn: async () => {
+      console.log("Fetching subcategories for parent category ID:", parentCategoryId);
       if (!parentCategoryId) return [];
+      console.log("Fetching subcategories for parent category ID:", getSubcategories(parentCategoryId));
       return getSubcategories(parentCategoryId);
     },
   });
