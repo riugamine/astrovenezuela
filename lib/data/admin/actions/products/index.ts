@@ -63,11 +63,17 @@ export async function createProduct(productData: CreateProductData): Promise<Pro
 
 export async function updateProduct(productId: string, productData: Partial<ProductData>): Promise<ProductWithRelations> {
   const { variants, product_images, subcategory_id, ...mainProductData } = productData;
+  
+  // Si hay un subcategory_id, usarlo como category_id
+  const finalProductData = {
+    ...mainProductData,
+    category_id: subcategory_id || mainProductData.category_id
+  };
 
   // Update main product
   const { data: product, error: productError } = await supabaseAdmin
     .from('products')
-    .update(mainProductData)
+    .update(finalProductData)
     .eq('id', productId)
     .select()
     .single();

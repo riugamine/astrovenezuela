@@ -5,11 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Control } from 'react-hook-form';
 import { getSubcategories } from '@/lib/data/admin/actions/categories';
-interface Category {
-  id: string;
-  name: string;
-  parent_id: string | null;
-}
+
 
 interface SubcategorySelectProps {
   control: Control<any>;
@@ -21,9 +17,7 @@ export function SubcategorySelect({ control, name, parentCategoryId }: Subcatego
   const { data: subcategories = [], isLoading } = useQuery({
     queryKey: ['subcategories', parentCategoryId],
     queryFn: async () => {
-      console.log("Fetching subcategories for parent category ID:", parentCategoryId);
       if (!parentCategoryId) return [];
-      console.log("Fetching subcategories for parent category ID:", getSubcategories(parentCategoryId));
       return getSubcategories(parentCategoryId);
     },
   });

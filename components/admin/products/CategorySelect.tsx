@@ -6,11 +6,6 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Control } from 'react-hook-form';
 import { getCategories } from '@/lib/data/admin/actions/categories';
 
-interface Category {
-  id: string;
-  name: string;
-  parent_id: string | null;
-}
 
 interface CategorySelectProps {
   control: Control<any>;

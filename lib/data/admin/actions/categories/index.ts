@@ -84,8 +84,7 @@ function organizeCategories(categories: Category[]): CategoryWithSubcategories[]
 export async function getCategories(): Promise<CategoryWithSubcategories[]> {
   const { data, error } = await supabaseAdmin
     .from("categories")
-    .select("*");
-
+    .select("*")
   if (error) throw error;
   if (!data) return [];
 
@@ -97,6 +96,8 @@ export async function getSubcategories(parentId: string): Promise<Category[]> {
     .from("categories")
     .select("*")
     .eq("parent_id", parentId)
+    .eq('is_active', true)
+    .not('subcategory', 'is', null)
     .order("name");
 
   if (error) throw error;
@@ -109,13 +110,14 @@ export async function createCategory(categoryData: CategoryData): Promise<Catego
   if (!(await isSlugUnique(slug))) {
     throw new Error("A category with this name already exists");
   }
-
+  const subcategory = categoryData.parent_id ? categoryData.name : null;
   const { data, error } = await supabaseAdmin
     .from("categories")
     .insert({
       ...categoryData,
       slug,
-      is_active: categoryData.is_active ?? true
+      is_active: categoryData.is_active ?? true,
+      subcategory
     })
     .select()
     .single();

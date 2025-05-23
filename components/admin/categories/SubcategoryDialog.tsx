@@ -39,6 +39,7 @@ const subcategorySchema = z.object({
   banner_url: z.string()
    .min(10, "La URL del banner debe tener al menos 10 caracteres")
    .optional(),
+   subcategory: z.string()
 });
 
 type CategoryFormData = z.infer<typeof subcategorySchema>;
@@ -61,7 +62,8 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
     if (!parentCategory) return;
     onSubmit({
       ...data,
-      parent_id: parentCategory?.id
+      parent_id: parentCategory?.id,
+      subcategory: data.name
     });
     reset();
   };

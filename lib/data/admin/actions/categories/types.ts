@@ -8,6 +8,7 @@ export interface Category {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  subcategory: string | null; // Nuevo campo
 }
 
 export interface CategoryData {
@@ -17,6 +18,7 @@ export interface CategoryData {
   banner_url?: string | null;
   is_active: boolean;
   slug?: string;
+  subcategory?: string | null; // Nuevo campo
 }
 
 export interface CategoryWithSubcategories extends Category {

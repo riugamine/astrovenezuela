@@ -109,18 +109,7 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
       toast.error('Error al actualizar el producto');
     }
   });
-  // Query para cargar las categorías
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: getCategories
-  });
 
-  // Query para cargar las subcategorías cuando se selecciona una categoría
-  const { data: subcategories, isLoading: subcategoriesLoading } = useQuery({
-    queryKey: ['subcategories', form.watch('category_id')],
-    queryFn: () => getSubcategories(form.watch('category_id')),
-    enabled: !!form.watch('category_id')
-  });
 
   useEffect(() => {
     const loadCategoryData = async () => {
@@ -133,10 +122,9 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
           form.setValue('subcategory_id', categoryDetails.category_id);
         } else {
           form.setValue('category_id', categoryDetails.category_id);
-          form.setValue('subcategory_id', ''); // Clear subcategory
+          form.setValue('subcategory_id', ''); 
         }
       } catch (error) {
-        console.error('Error loading category data:', error);
         toast.error('Error loading category data');
       } finally {
         setIsLoading(false);
@@ -147,7 +135,6 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
   }, [initialData.id, form]);
 
 
-console.log('Initial Data:', initialData);
   const onSubmit = (data: EditProductFormData) => {
     updateProductMutation.mutate(data);
   };
@@ -170,22 +157,9 @@ console.log('Initial Data:', initialData);
       // Trigger validation after setting values
       await form.trigger(['category_id', 'subcategory_id']);
     } catch (error) {
-      console.error('Error getting category details:', error);
       toast.error('Error al cambiar la categoría');
     }
   };
-    // Determinar si el formulario está listo para editar
-    const isFormReady = !isLoading && !categoriesLoading && 
-    (!form.watch('category_id') || !subcategoriesLoading);
-
-  if (!isFormReady) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Cargando datos del producto...</span>
-      </div>
-    );
-  }
 
   return (
     <Form {...form}>
