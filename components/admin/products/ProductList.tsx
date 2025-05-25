@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -146,20 +153,39 @@ export function ProductList() {
   return (
     <Card className="w-full">
       <CardContent className="p-6 space-y-6">
-        {/* Search Bar with Icon */}
-        <div className="relative">
+        {/* Search Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="relative">
+            <Input
+              placeholder="Buscar por nombre..."
+              value={
+                (table.getColumn("name")?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn("name")?.setFilterValue(event.target.value)
+              }
+              className="pl-10"
+            />
+            <FontAwesomeIcon
+              icon={faSearch}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+          </div>
+
           <Input
-            placeholder="Buscar productos..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
+            placeholder="Buscar por referencia..."
+            value={
+              (table
+                .getColumn("reference_number")
+                ?.getFilterValue() as string) ?? ""
             }
-            className="pl-10"
+            onChange={(event) =>
+              table
+                .getColumn("reference_number")
+                ?.setFilterValue(event.target.value)
+            }
           />
-          <FontAwesomeIcon
-            icon={faSearch}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
+
         </div>
 
         {/* Responsive Table Container */}
@@ -191,8 +217,8 @@ export function ProductList() {
                   <TableRow key={index}>
                     <TableCell colSpan={columns.length}>
                       <div className="flex items-center space-x-4">
-                        <Skeleton className="h-12 w-12 rounded-md bg-primary" />
-                        <Skeleton className="h-4 w-[200px] bg-secondary" />
+                        <Skeleton className="h-12 w-12 rounded-md bg-primary/50" />
+                        <Skeleton className="h-4 w-[200px] bg-secondary/50" />
                       </div>
                     </TableCell>
                   </TableRow>
