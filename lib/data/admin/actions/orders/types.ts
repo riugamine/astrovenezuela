@@ -16,10 +16,17 @@ export interface OrderItem {
   id: string;
   order_id: string;
   products_id: string;
+  variant_id?: string;
   quantity: number;
   products: {
     name: string;
     price: number;
+    stock: number;
+  };
+  product_variants?: {
+    id: string;
+    stock: number;
+    size?: string;
   };
 }
 

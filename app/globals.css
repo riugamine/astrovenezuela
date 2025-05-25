@@ -23,6 +23,8 @@
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
 
+  --color-success: hsl(var(--success));
+
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
 
@@ -120,6 +122,8 @@
     /* Color de acento - Beige más oscuro para mejor contraste */
     --accent: 39 100% 88%; /* #FFE9C2 */
     --accent-foreground: 212 100% 10%;
+    /* Color de acento - Beige más oscuro para mejor contraste */
+    --success: 138 45% 40%
 
     /* Color muted - Gris más oscuro para mejor contraste */
     --muted: 220 13% 75%; /* #BABABA */
