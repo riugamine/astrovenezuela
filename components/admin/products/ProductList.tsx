@@ -3,13 +3,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -185,7 +178,6 @@ export function ProductList() {
                 ?.setFilterValue(event.target.value)
             }
           />
-
         </div>
 
         {/* Responsive Table Container */}

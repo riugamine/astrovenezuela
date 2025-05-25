@@ -5,6 +5,7 @@ export interface OrderWithProfile {
   total_amount: number;
   shipping_address: string;
   payment_method: string;
+  whatsapp_number: string;
   created_at: string;
   profiles: {
     full_name: string;

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
-import { getOrderById } from '@/lib/data/admin-actions';
+import { getOrderById } from '@/lib/data/admin/actions/orders';
 interface OrderDetailsProps {
   orderId: string;
   onClose: () => void;
@@ -63,7 +63,7 @@ export function OrderDetails({ orderId, onClose }: OrderDetailsProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='py-6'>
           <CardHeader>
             <CardTitle>Información de Entrega</CardTitle>
           </CardHeader>
@@ -82,7 +82,7 @@ export function OrderDetails({ orderId, onClose }: OrderDetailsProps) {
         </Card>
       </div>
 
-      <Card>
+      <Card className='py-6'>
         <CardHeader>
           <CardTitle>Productos</CardTitle>
         </CardHeader>

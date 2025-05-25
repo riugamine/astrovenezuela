@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch, faEye } from "@fortawesome/free-solid-svg-icons";
 import { OrderStatusComponent } from './OrderStatus';
-import { getOrders } from '@/lib/data/admin-actions';
+import { getOrders } from '@/lib/data/admin/actions/orders';
 interface OrderListProps {
   onSelectOrder: (orderId: string) => void;
 }
