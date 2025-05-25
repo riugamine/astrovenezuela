@@ -49,8 +49,8 @@ const createProductSchema = z.object({
   variants: z.array(variantSchema)
     .min(1, "Debe agregar al menos una variante con talla y stock")
     .refine(
-      (variants) => variants.reduce((total, variant) => total + variant.stock, 0) > 0,
-      "El stock total debe ser mayor a 0"
+      (variants) => variants.reduce((total, variant) => total + variant.stock, 0) >= 0,
+      "El stock total debe ser mayor o igual a 0"
     )
 });
 
