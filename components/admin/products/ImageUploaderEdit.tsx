@@ -9,7 +9,6 @@ import { faTrash, faUpload } from "@fortawesome/free-solid-svg-icons";
 import { ProductDetailImage } from "@/lib/data/admin/actions/products/types";
 import { toast } from "sonner";
 import {
-  uploadProductImage,
   deleteProductImage,
 } from "@/lib/data/admin/actions/products";
 

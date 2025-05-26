@@ -5,14 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Control } from 'react-hook-form';
 import { getCategories } from '@/lib/data/admin/actions/categories';
-
+import { CreateProductFormData } from './ProductForm'
 
 interface CategorySelectProps {
   control: Control<any>;
-  name: string;
+  name: keyof CreateProductFormData;
   onCategoryChange?: (categoryId: string) => void;
 }
-
 export function CategorySelect({ control, name, onCategoryChange }: CategorySelectProps) {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],

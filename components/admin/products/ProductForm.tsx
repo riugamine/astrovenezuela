@@ -54,7 +54,7 @@ const createProductSchema = z.object({
     )
 });
 
-type CreateProductFormData = z.infer<typeof createProductSchema>;
+export type CreateProductFormData = z.infer<typeof createProductSchema>;
 
 interface ProductFormProps {
   onClose: () => void;
