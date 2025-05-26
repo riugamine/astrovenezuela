@@ -517,7 +517,7 @@ const CategoriesManagement: FC = () => {
               {selectedCategory?.parent_id ? "Subcategoría" : "Categoría"}
             </DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que deseas eliminar{" "}
+              ¿Estás seguro de que deseas eliminar 
               {selectedCategory?.parent_id ? "la subcategoría" : "la categoría"}{" "}
               "{selectedCategory?.name}"? Esta acción no se puede deshacer.
             </DialogDescription>

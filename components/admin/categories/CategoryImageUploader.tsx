@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
-import { uploadCategoryBanner } from '@/lib/data/admin/actions/categories/index';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
