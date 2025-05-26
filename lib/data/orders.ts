@@ -1,12 +1,11 @@
 import { supabaseClient } from "../supabase/client";
-import { OrderStatus, Database } from "../types/database.types";
+import { Database } from "../types/database.types";
 import { VALID_PAYMENT_METHODS } from "../constants";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useAuthStore } from "../store/useAuthStore";
 
 type Order = Database['public']['Tables']['orders']['Row'];
-type OrderItem = Database['public']['Tables']['order_items']['Row'];
 
 // Validation schema for order items
 const OrderItemSchema = z.object({
@@ -16,8 +15,6 @@ const OrderItemSchema = z.object({
   price: z.number().positive()
 });
 
-// Definir el tipo de método de pago usando los valores literales del array
-type PaymentMethod = (typeof VALID_PAYMENT_METHODS)[number];
 
 // Crear el schema de Zod para los métodos de pago usando los valores del array
 const PaymentMethodSchema = z.enum(VALID_PAYMENT_METHODS);
