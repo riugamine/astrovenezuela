@@ -7,10 +7,7 @@ import { Category } from "@/lib/types/database.types";
 import { useFilterStore } from "@/lib/store/useFilterStore";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFilter } from "@fortawesome/free-solid-svg-icons";
 import { Slider } from "@/components/ui/slider";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CategoryFilterProps {
@@ -19,7 +16,6 @@ interface CategoryFilterProps {
 
 // Available sizes for filtering
 const SIZES = ['Única', 'XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
-type Size = typeof SIZES[number];
 
 // Helper function to organize categories by parent
 function organizeCategories(categories: Category[]) {

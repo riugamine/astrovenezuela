@@ -34,20 +34,6 @@ const registerSchema = z.object({
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
-// Función mejorada para manejar errores de autenticación
-const getAuthErrorMessage = (error: any): string => {
-  const errorMap: { [key: string]: string } = {
-    'User already registered': 'Este correo electrónico ya está registrado',
-    'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres',
-    'Email not confirmed': 'Por favor, confirma tu correo electrónico',
-    'Invalid email': 'El correo electrónico no es válido',
-    'Signup disabled': 'El registro está temporalmente deshabilitado',
-    'Network request failed': 'Error de conexión. Verifica tu conexión a internet',
-    'Rate limit exceeded': 'Has realizado demasiados intentos. Por favor, espera unos minutos',
-  };
-
-  return errorMap[error.message] || 'Ha ocurrido un error durante el registro. Por favor, intenta nuevamente.';
-};
 
 export function RegisterForm() {
   const [loading, setLoading] = useState(false);

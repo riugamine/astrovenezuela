@@ -61,7 +61,6 @@ const CountrySelect = ({
   disabled,
   value,
   onChange,
-  options,
 }: CountrySelectProps) => {
   return (
     <Button
