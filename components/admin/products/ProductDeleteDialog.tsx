@@ -73,7 +73,7 @@ export function ProductDeleteDialog({
         <DialogHeader>
           <DialogTitle>Eliminar Producto</DialogTitle>
           <DialogDescription>
-            ¿Estás seguro de que deseas eliminar el producto "{productName}"? Esta
+            ¿Estás seguro de que deseas eliminar el producto {productName}? Esta
             acción no se puede deshacer.
           </DialogDescription>
         </DialogHeader>

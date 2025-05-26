@@ -3,7 +3,7 @@
 import { FC, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisVertical, faPencilAlt, faTrash, faEye, faToggleOn, faToggleOff } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsisVertical, faPencilAlt, faEye, faToggleOn, faToggleOff } from '@fortawesome/free-solid-svg-icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,7 @@ import { ProductViewDialog } from './ProductViewDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { ProductWithRelations } from '@/lib/data/admin/actions/products/types';
 import { ProductEditDialog } from './ProductEditDialog';
-import { toggleProductStatus, deleteProduct } from '@/lib/data/admin/actions/products';
+import { toggleProductStatus } from '@/lib/data/admin/actions/products';
 import { toast } from 'sonner';
 
 interface ProductActionsProps {

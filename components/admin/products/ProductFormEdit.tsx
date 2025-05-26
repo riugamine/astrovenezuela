@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {useQuery} from '@tanstack/react-query';
-import { getCategories, getSubcategories } from '@/lib/data/admin/actions/categories';
-import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
