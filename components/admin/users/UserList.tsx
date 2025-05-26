@@ -17,6 +17,7 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { Badge } from "@/components/ui/badge";
 import { UserActions } from "./UserActions";
 import { getUsers } from '@/lib/data/admin/actions/users';
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -117,6 +118,7 @@ export function UserList() {
               table.getColumn("full_name")?.setFilterValue(event.target.value)
             }
             className="pl-10"
+            disabled={isLoading}
           />
           <FontAwesomeIcon 
             icon={faSearch} 
@@ -143,18 +145,44 @@ export function UserList() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+              {isLoading ? (
+                // Skeleton loading state
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[150px]" />
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+                    <TableCell>
+                      <Skeleton className="h-4 w-[200px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[100px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[80px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[120px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-8 w-[100px]" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
