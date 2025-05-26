@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import { FC, useState, useEffect } from "react";
 import {
   ColumnDef,
@@ -137,10 +137,12 @@ const CategoriesManagement: FC = () => {
       cell: ({ row }) => {
         const url = row.getValue("banner_url");
         return url ? (
-          <img
-            src={row.getValue("banner_url")}
-            alt="Banner"
-            className="h-8 w-12 object-cover rounded"
+                    <Image 
+            src={row.getValue("banner_url")} 
+            alt={'Banner'}
+            width={200}
+            height={200}
+            className="object-cover"
           />
         ) : (
           "Sin banner"
