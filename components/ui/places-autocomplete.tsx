@@ -10,7 +10,7 @@ import {
 import { Input } from "./input";
 import { cn } from "@/lib/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLocationDot, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 // Interfaces para el manejo de datos
 interface Location {
@@ -39,14 +39,11 @@ function PlacesAutocompleteInput({
   onChange,
   required,
   agencyType = 'mrw', // Add default value
-  placeholder = "Buscar agencia...",
   className,
 }: PlacesAutocompleteProps) {
   const places = useMapsLibrary("places");
   // Change to useRef instead of useState for the input element
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [autocomplete, setAutocomplete] =
-    useState<google.maps.places.Autocomplete | null>(null);
   const [mapCenter, setMapCenter] = useState<Location>({
     lat: 10.4806, // Coordenadas centrales de Venezuela
     lng: -66.9036,
@@ -123,7 +120,6 @@ function PlacesAutocompleteInput({
     };
 
     autocompleteInstance.addListener("place_changed", placeChangedListener);
-    setAutocomplete(autocompleteInstance);
 
     return () => {
       if (autocompleteInstance) {
@@ -163,9 +159,10 @@ function PlacesAutocompleteInput({
 
       <div className="rounded-lg overflow-hidden border shadow-lg">
         <Map
-          zoom={15} // Aumentamos el zoom para mejor visibilidad de la agencia seleccionada
+          zoom={15} 
           center={mapCenter}
           className="w-full h-[300px]"
+          
         >
           {nearbyPlaces.map((place) => (
             <Marker
@@ -176,8 +173,8 @@ function PlacesAutocompleteInput({
               icon={{
                 url:
                   agencyType === "zoom"
-                    ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-                    : "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                    ? "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    : "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
               }}
             />
           ))}
