@@ -11,15 +11,17 @@ interface CategorySelectProps {
   control: Control<any>;
   name: keyof CreateProductFormData;
   onCategoryChange?: (categoryId: string) => void;
+  selectedCategoryId?: string;
 }
-export function CategorySelect({ control, name, onCategoryChange }: CategorySelectProps) {
+export function CategorySelect({ control, name, onCategoryChange, selectedCategoryId  }: CategorySelectProps) {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories,
-    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
+    staleTime: 1000 * 60 * 5,
   });
 
   const mainCategories = categories.filter(cat => !cat.parent_id);
+
 
   return (
     <FormField
@@ -30,7 +32,7 @@ export function CategorySelect({ control, name, onCategoryChange }: CategorySele
           <FormLabel>Categoría Principal</FormLabel>
           <FormControl>
             <Select
-              value={field.value || ''}
+              value={selectedCategoryId || field.value || ''}
               onValueChange={(value) => {
                 field.onChange(value);
                 onCategoryChange?.(value);

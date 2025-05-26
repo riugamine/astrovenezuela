@@ -11,15 +11,17 @@ interface SubcategorySelectProps {
   control: Control<any>;
   name: string;
   parentCategoryId?: string;
+  selectedSubcategoryId?: string;
 }
 
-export function SubcategorySelect({ control, name, parentCategoryId }: SubcategorySelectProps) {
+export function SubcategorySelect({ control, name, parentCategoryId, selectedSubcategoryId  }: SubcategorySelectProps) {
   const { data: subcategories = [], isLoading } = useQuery({
     queryKey: ['subcategories', parentCategoryId],
     queryFn: async () => {
       if (!parentCategoryId) return [];
       return getSubcategories(parentCategoryId);
     },
+    enabled: !!parentCategoryId,
   });
 
   if (!parentCategoryId) {
@@ -35,7 +37,7 @@ export function SubcategorySelect({ control, name, parentCategoryId }: Subcatego
           <FormLabel>Subcategoría (Opcional)</FormLabel>
           <FormControl>
             <Select
-              value={field.value || "none"}  // Cambiamos el valor por defecto a "none"
+              value={selectedSubcategoryId || field.value || 'none'}  // Cambiamos el valor por defecto a "none"
               onValueChange={(value) => {
                 field.onChange(value === "none" ? "" : value); // Convertimos "none" a "" cuando se envía el formulario
               }}

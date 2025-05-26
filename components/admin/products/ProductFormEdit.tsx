@@ -1,6 +1,6 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,29 +24,35 @@ import { CategorySelect } from "./CategorySelect";
 import { SubcategorySelect } from "./SubcategorySelect";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateProduct, getProductCategoryDetails, getCategoryDetails } from '@/lib/data/admin/actions/products';
-import { faDollarSign } from '@fortawesome/free-solid-svg-icons';
-import { type ProductData } from '@/lib/data/admin/actions/products/types';
+import {
+  updateProduct,
+  getProductCategoryDetails,
+  getCategoryDetails,
+} from "@/lib/data/admin/actions/products";
+import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
+import { type ProductData } from "@/lib/data/admin/actions/products/types";
 
 // Define the schemas for editing
 const editVariantSchema = z.object({
   id: z.string(),
   size: z.string(),
   stock: z.number().int().min(0, "El stock no puede ser negativo"),
-  product_id: z.string()
+  product_id: z.string(),
 });
 
 const editProductImageSchema = z.object({
   id: z.string(),
   image_url: z.string().url(),
   order_index: z.number(),
-  product_id: z.string()
+  product_id: z.string(),
 });
 
 const editProductSchema = z.object({
   id: z.string(),
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
-  description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
+  description: z
+    .string()
+    .min(10, "La descripción debe tener al menos 10 caracteres"),
   price: z.number().positive("El precio debe ser mayor a 0"),
   reference_number: z.string().min(1, "El número de referencia es requerido"),
   category_id: z.string().min(1, "La categoría es requerida"),
@@ -54,15 +60,20 @@ const editProductSchema = z.object({
   main_image_url: z.string().url("La imagen principal es requerida"),
   is_active: z.boolean(),
   slug: z.string(),
-  stock: z.number().int().positive("El stock debe ser un número entero positivo"),
+  stock: z
+    .number()
+    .int()
+    .positive("El stock debe ser un número entero positivo"),
   product_images: z.array(editProductImageSchema),
-  variants: z.array(editVariantSchema)
-  .min(1, "Debe agregar al menos una variante con talla y stock")
-  .refine(
-    (variants) => variants.reduce((total, variant) => total + variant.stock, 0) > 0,
-    "El stock total debe ser mayor a 0"
-  ),
-  updated_at: z.string()
+  variants: z
+    .array(editVariantSchema)
+    .min(1, "Debe agregar al menos una variante con talla y stock")
+    .refine(
+      (variants) =>
+        variants.reduce((total, variant) => total + variant.stock, 0) > 0,
+      "El stock total debe ser mayor a 0"
+    ),
+  updated_at: z.string(),
 });
 
 type EditProductFormData = z.infer<typeof editProductSchema>;
@@ -72,92 +83,70 @@ interface ProductFormEditProps {
   initialData: ProductData;
 }
 
-export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) {
+export function ProductFormEdit({
+  onClose,
+  initialData,
+}: ProductFormEditProps) {
   const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(true);
-  
+
   const form = useForm<EditProductFormData>({
     resolver: zodResolver(editProductSchema),
     defaultValues: {
       ...initialData,
       product_images: initialData.product_images || [],
-      variants: initialData.variants || []
-    }
+      variants: initialData.variants || [],
+    },
   });
   const updateProductMutation = useMutation({
     mutationFn: async (data: EditProductFormData) => {
-      const totalStock = data.variants.reduce((sum, variant) => sum + variant.stock, 0);
-      
+      const totalStock = data.variants.reduce(
+        (sum, variant) => sum + variant.stock,
+        0
+      );
+
       const submitData = {
         ...data,
         stock: totalStock,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       return updateProduct(data.id, submitData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Producto actualizado exitosamente');
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Producto actualizado exitosamente");
       onClose();
     },
     onError: (error) => {
-      console.error('Error updating product:', error);
-      toast.error('Error al actualizar el producto');
-    }
+      console.error("Error updating product:", error);
+      toast.error("Error al actualizar el producto");
+    },
   });
-
-
-  useEffect(() => {
-    const loadCategoryData = async () => {
-      try {
-        setIsLoading(true);
-        const categoryDetails = await getProductCategoryDetails(initialData.id);
-
-        if (categoryDetails.parent_id) {
-          form.setValue('category_id', categoryDetails.parent_id);
-          form.setValue('subcategory_id', categoryDetails.category_id);
-        } else {
-          form.setValue('category_id', categoryDetails.category_id);
-          form.setValue('subcategory_id', ''); 
-        }
-      } catch (error) {
-        toast.error('Error loading category data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadCategoryData();
-  }, [initialData.id, form]);
-
 
   const onSubmit = (data: EditProductFormData) => {
     updateProductMutation.mutate(data);
   };
 
-  const handleCategoryChange = async (categoryId: string) => {
-    try {
-      // Get the category details to check if it's a main category or subcategory
-      const categoryDetails = await getCategoryDetails(categoryId);
-  
-      if (categoryDetails.parent_id) {
-        // If it has a parent_id, it's a subcategory
-        form.setValue('subcategory_id', categoryId);
-        form.setValue('category_id', categoryDetails.parent_id);
-      } else {
-        // If it doesn't have a parent_id, it's a main category
-        form.setValue('category_id', categoryId);
-        form.setValue('subcategory_id', ''); // Clear subcategory when selecting a main category
-      }
-  
-      // Trigger validation after setting values
-      await form.trigger(['category_id', 'subcategory_id']);
-    } catch (error) {
-      toast.error('Error al cambiar la categoría');
-    }
-  };
+  const { data: categoryDetails } = useQuery<{ category_id: string; parent_id: string | null }>({
+    queryKey: ["productCategory", initialData.id],
+    queryFn: () => getProductCategoryDetails(initialData.id),
+  });
 
+  const handleCategoryChange = (categoryId: string) => {
+    form.setValue("category_id", categoryId);
+    form.setValue("subcategory_id", ""); // Limpiar subcategoría al cambiar categoría padre
+  };
+  useEffect(() => {
+    if (categoryDetails) {
+      if (categoryDetails.parent_id) {
+        form.setValue("category_id", categoryDetails.parent_id);
+        form.setValue("subcategory_id", categoryDetails.category_id);
+      } else {
+        form.setValue("category_id", categoryDetails.category_id);
+        form.setValue("subcategory_id", "");
+      }
+    }
+  }, [categoryDetails, form]);
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -178,10 +167,7 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
                 <FormItem>
                   <FormLabel>Nombre del Producto *</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Ej: Camisa Casual"
-                      {...field}
-                    />
+                    <Input placeholder="Ej: Camisa Casual" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -195,10 +181,7 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
                 <FormItem>
                   <FormLabel>Número de Referencia *</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Ej: REF-001"
-                      {...field}
-                    />
+                    <Input placeholder="Ej: REF-001" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -235,14 +218,22 @@ export function ProductFormEdit({ onClose, initialData }: ProductFormEditProps) 
             <div className="space-y-4">
               <CategorySelect
                 control={form.control}
-                name="category_id" 
+                name="category_id"
                 onCategoryChange={handleCategoryChange}
+                selectedCategoryId={
+                  categoryDetails?.parent_id || categoryDetails?.category_id
+                }
               />
 
               <SubcategorySelect
                 control={form.control}
                 name="subcategory_id"
                 parentCategoryId={form.watch("category_id")}
+                selectedSubcategoryId={
+                  categoryDetails?.parent_id
+                    ? categoryDetails?.category_id
+                    : undefined
+                }
               />
             </div>
           </div>
