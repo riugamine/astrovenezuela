@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, totalItems, orderNotes, setOrderNotes } = useCartStore();
+  const { items, removeItem, updateQuantity, orderNotes, setOrderNotes } = useCartStore();
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();

@@ -3,8 +3,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
+
 // Schema de validación para el registro
-const registerSchema = z.object({
+export const registerSchema = z.object({
   name: z.string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
     .max(50, 'El nombre no puede exceder 50 caracteres')
@@ -68,8 +69,9 @@ export async function registerUser(data: RegisterData): Promise<RegisterResponse
       user: authData.user 
     };
 
-  } catch (error) {
-    console.error('Error en el registro:', error);
+  } catch (err) {
+    console.error('Authentication error:', err);
+    throw err;
     return { 
       error: 'Ha ocurrido un error inesperado',
       success: false 

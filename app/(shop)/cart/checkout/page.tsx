@@ -1,5 +1,4 @@
 "use client";
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -246,24 +245,13 @@ export default function CheckoutPage() {
         );
       }
     } catch (error) {
-      
-      toast.error("Error al crear el pedido. Por favor intente nuevamente.");
+      toast.error("Error al crear el pedido. Por favor intente nuevamente." + error);
     }
     finally{
       // Redirect to success page
       redirect(`/cart/success?order_id=${createdOrder?.id}`);
     }
   };
-  useEffect(() => {
-    if (customerInfo.email) {
-      setCustomerInfo(customerInfo);
-    }
-  }, []);
-  useEffect(() => {
-    if (customerInfo.email) {
-      setCustomerInfo(customerInfo);
-    }
-  }, []);
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

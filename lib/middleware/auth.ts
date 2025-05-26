@@ -12,7 +12,7 @@ export async function authMiddleware(request: NextRequest) {
   // Crear cliente de Supabase
   const supabase = await createClient();
   
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Rutas protegidas que requieren autenticación
   const protectedRoutes = ['/admin', '/profile', '/orders'];

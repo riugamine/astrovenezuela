@@ -87,7 +87,6 @@ const CategoriesManagement: FC = () => {
       accessorKey: "name",
       header: "Nombre",
       cell: ({ row }) => {
-        const depth = row.original.parent_id ? 1 : 0;
         return (
           <div
             className={cn(

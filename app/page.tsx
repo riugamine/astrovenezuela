@@ -2,7 +2,6 @@ import ShopLayout from "@/components/layout/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { ProductsShowcase } from "@/components/shop/ProductsShowcase";
 import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase/client";
 import { Meteors } from "@/components/magicui/meteors";

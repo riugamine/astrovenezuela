@@ -15,11 +15,11 @@ export async function POST(request: NextRequest) {
     const imageUrl = await uploadProductImage(formData);
     
     return NextResponse.json({ url: imageUrl });
-  } catch (error: any) {
-    console.error('Error uploading image:', error);
+  } catch (error: unknown) {
+    const err = error as { message?: string; statusCode?: number };
     return NextResponse.json(
-      { error: error.message || 'Failed to upload image' },
-      { status: error.statusCode || 500 }
+      { error: err.message || 'Failed to upload image' },
+      { status: err.statusCode || 500 }
     );
   }
 }
