@@ -1,6 +1,5 @@
 "use client";
 
-import { FC } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "../ui/badge";
