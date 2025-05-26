@@ -10,7 +10,10 @@ interface CategoryImageUploaderProps {
 }
 
 
-
+type UploadError = {
+  message: string;
+  code?: string;
+};
 export function CategoryImageUploader({
   bannerUrl,
   onBannerChange
@@ -44,8 +47,9 @@ export function CategoryImageUploader({
       const { url } = await response.json();
       onBannerChange(url);
       toast.success('Imagen subida correctamente');
-    } catch (error: any) {
-      toast.error(error.message || 'Error al subir la imagen');
+    } catch (error: unknown) {
+      const err = error as UploadError;
+      toast.error(err.message || 'Error al subir la imagen');
     } finally {
       setUploading(false);
     }
