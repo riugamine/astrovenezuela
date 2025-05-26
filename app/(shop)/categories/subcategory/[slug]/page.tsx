@@ -39,8 +39,12 @@ async function getSubcategoryWithInitialProducts(slug: string) {
     products: products || []
   };
 }
-
-export default async function SubcategoryPage({ params }: { params: { slug: string } }) {
+type PageParams = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
+export default async function SubcategoryPage({ params }: PageParams) {
   const resolvedParams = await Promise.resolve(params);
   const data = await getSubcategoryWithInitialProducts(resolvedParams.slug);
   

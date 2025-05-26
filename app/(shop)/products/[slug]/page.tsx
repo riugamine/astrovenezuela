@@ -42,8 +42,10 @@ async function getProduct(slug: string) {
     relatedProducts: relatedProducts || [],
   };
 }
-
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+type PageParams = {
+  params: Promise<{ slug: string }>
+}
+export default async function ProductPage({ params }: PageParams) {
   const resolvedParams = await Promise.resolve(params);
   const data = await getProduct(resolvedParams.slug);
 

@@ -6,6 +6,7 @@ type ProductRow = Tables['products']['Row'];
 type ProductImageRow = Tables['product_detail_images']['Row'];
 type ProductVariantRow = Tables['product_variants']['Row'];
 
+export const products: ProductWithDetails[] = [];
 export type ProductWithDetails = ProductRow & {
   product_images: ProductImageRow[];
   variants: ProductVariantRow[];

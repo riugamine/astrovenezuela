@@ -49,8 +49,10 @@ async function getCategoryWithInitialProducts(slug: string) {
     products: products || []
   };
 }
-
-export default async function CategoryPage({ params }: { params: { slug: string } }) {
+type PageParams = {
+  params: Promise<{ slug: string }>
+}
+export default async function CategoryPage({ params }: PageParams) {
   const resolvedParams = await Promise.resolve(params);
   // Obtener datos de la categoría y productos iniciales
   const data = await getCategoryWithInitialProducts(resolvedParams.slug);
