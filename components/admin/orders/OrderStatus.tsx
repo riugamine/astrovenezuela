@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -12,7 +11,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateOrderStatus } from "@/lib/data/admin/actions/orders";
 import { type OrderWithProfile } from "@/lib/data/admin/actions/orders/types";
 import { toast } from "sonner";
-import { Order } from "@/lib/types/database.types";
 
 const STATUS_COLORS = {
   pending: "warning",
@@ -27,7 +25,7 @@ const STATUS_LABELS: Record<OrderWithProfile["status"], string> = {
   delivered: "Entregado",
 } as const;
 
-export function OrderStatusComponent({ order }: { order: Order }) {
+export function OrderStatusComponent({ order }: { order: OrderWithProfile }) {
   const queryClient = useQueryClient();
 
   const updateStatus = useMutation({
