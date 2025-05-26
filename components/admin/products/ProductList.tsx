@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -44,10 +44,13 @@ export function ProductList() {
       header: "Nombre",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <img
+          <Image
             src={row.original.main_image_url}
             alt={row.getValue("name")}
-            className="w-10 h-10 object-cover rounded-md"
+            width={32}
+            height={32}
+            className="rounded-md"
+            sizes="(100w) 100px"
           />
           <span className="font-medium">{row.getValue("name")}</span>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,7 +27,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   updateProduct,
   getProductCategoryDetails,
-  getCategoryDetails,
 } from "@/lib/data/admin/actions/products";
 import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
 import { type ProductData } from "@/lib/data/admin/actions/products/types";
