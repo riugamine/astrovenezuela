@@ -24,19 +24,8 @@ async function compressImage(buffer: Buffer): Promise<Buffer> {
   }
 }
 // Helper function to generate category slug
-async function generateCategorySlug(name: string, parentId?: string | null): Promise<string> {
-  const baseSlug = generateSlug(name);
-  
-  if (parentId) {
-    const { data: parent } = await supabaseAdmin
-      .from("categories")
-      .select("slug")
-      .eq("id", parentId)
-      .single();
-    return `${baseSlug}`;
-  }
-  
-  return baseSlug;
+async function generateCategorySlug(name: string): Promise<string> {
+  return generateSlug(name);
 }
 
 // Helper to check if slug exists
@@ -105,7 +94,7 @@ export async function getSubcategories(parentId: string): Promise<Category[]> {
 }
 
 export async function createCategory(categoryData: CategoryData): Promise<Category> {
-  const slug = await generateCategorySlug(categoryData.name, categoryData.parent_id);
+  const slug = await generateCategorySlug(categoryData.name);
   
   if (!(await isSlugUnique(slug))) {
     throw new Error("A category with this name already exists");
@@ -145,7 +134,7 @@ export async function updateCategory(
 
   // 3. Solo procesamos el slug si el nombre ha cambiado
   if (categoryData.name && categoryData.name !== existingCategory.name) {
-    const slug = await generateCategorySlug(categoryData.name, categoryData.parent_id ?? existingCategory.parent_id);
+    const slug = await generateCategorySlug(categoryData.name);
     if (!(await isSlugUnique(slug, categoryId))) {
       throw new Error("A category with this name already exists");
     }
@@ -243,6 +232,7 @@ export async function uploadCategoryBanner(file: File): Promise<string> {
 
     return publicUrl;
   } catch (error) {
+    console.error('Error uploading category banner:', error);
     throw new Error('Failed to upload category banner');
   }
 }

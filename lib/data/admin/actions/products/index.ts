@@ -1,7 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { ProductData, ProductWithRelations, CreateProductData, CreateProductImage, CreateProductVariant } from './types';
+import { ProductData, ProductWithRelations, CreateProductData } from './types';
 import sharp from 'sharp';
 
 export async function getProducts(): Promise<ProductWithRelations[]> {
@@ -19,7 +19,7 @@ export async function getProducts(): Promise<ProductWithRelations[]> {
 }
 
 export async function createProduct(productData: CreateProductData): Promise<ProductWithRelations> {
-  const { variants, product_images, subcategory_id, ...mainProductData } = productData;
+  const { variants, product_images, ...mainProductData } = productData;
 
   // Create main product
   const { data: product, error: productError } = await supabaseAdmin
