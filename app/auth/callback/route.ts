@@ -1,40 +1,56 @@
 import { createClient } from '@/lib/supabase/client';
 import { NextResponse } from 'next/server';
 
-// Función para manejar la redirección después de la autenticación
+// Function to handle authentication redirects
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get('code');
   const token = requestUrl.searchParams.get('token');
   const type = requestUrl.searchParams.get('type');
 
-  if (token && type === 'signup') {
-    const supabase = createClient();
-    
+  const supabase = createClient();
+
+  // Handle Google OAuth callback
+  if (code) {
     try {
-      // Intercambiar el token por una sesión
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      
+      if (error) {
+        console.error('Error in OAuth callback:', error);
+        return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
+      }
+
+      if (data.session) {
+        return NextResponse.redirect(`${requestUrl.origin}/`);
+      }
+    } catch (error) {
+      console.error('Error processing OAuth:', error);
+      return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
+    }
+  }
+
+  // Handle email verification
+  if (token && type === 'signup') {
+    try {
       const { data: { session }, error } = await supabase.auth.verifyOtp({
         token_hash: token,
         type: 'signup'
       });
       
       if (error) {
-        console.error('Error en la verificación:', error);
+        console.error('Error in verification:', error);
         return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
       }
 
       if (session) {
-        // Si la sesión se creó exitosamente, redirigimos al inicio
         return NextResponse.redirect(`${requestUrl.origin}/`);
       }
-
-      // Si no hay sesión pero tampoco hay error, redirigimos a auth
-      return NextResponse.redirect(`${requestUrl.origin}/auth`);
     } catch (error) {
-      console.error('Error al procesar la autenticación:', error);
+      console.error('Error processing verification:', error);
       return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
     }
   }
 
-  // Si no hay token o tipo, redirigimos a la página de autenticación
+  // If no valid parameters found, redirect to auth page
   return NextResponse.redirect(`${requestUrl.origin}/auth`);
 }
