@@ -85,7 +85,7 @@ export function RegisterForm() {
         <Input
           {...register('name')}
           placeholder="Nombre completo"
-          className="w-full text-[#001730]"
+          className="w-full text-[#001730] bg-white"
           disabled={loading}
         />
         {errors.name && (

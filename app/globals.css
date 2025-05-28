@@ -116,7 +116,7 @@
     --primary-900: 212 100% 15%;
 
     /* Color secundario - Morado más oscuro */
-    --secondary: 255 72% 25%; /* #291A64 */
+    --secondary: 255 72% 50%; /* #291A64 */
     --secondary-foreground: 0 0% 100%;
 
     /* Color de acento - Beige más oscuro para mejor contraste */
@@ -158,8 +158,8 @@
     --popover-foreground: 0 0% 98%;
 
     /* Color primario más claro en modo oscuro */
-    --primary: 219 35% 75%; /* #A5B8DC */
-    --primary-foreground: 212 100% 5%;
+    --primary: 219 35% 50%; /* #A5B8DC */
+    --primary-foreground: 0 0% 95%;
 
     /* Color secundario más brillante */
     --secondary: 255 72% 40%; /* #432CA3 */
