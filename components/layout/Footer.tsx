@@ -63,7 +63,7 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Síguenos</h3>
             <a
-              href="https://instagram.com/joseangelweb_"
+              href="https://www.instagram.com/astro__ve/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block hover:text-accent"
