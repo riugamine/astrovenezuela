@@ -43,6 +43,7 @@ export function LoginForm() {
   // Separar los estados de carga para cada botón
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const { signInWithPassword, signInWithGoogle } = useAuthStore();
   const router = useRouter();
   const supabase = createClient();
   const { setUser } = useAuthStore();
@@ -84,22 +85,8 @@ export function LoginForm() {
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent'
-          },
-          skipBrowserRedirect: false
-        }
-      });
+      await signInWithGoogle();
   
-      if (error) {
-        toast.error('Error al iniciar sesión con Google. Por favor, intenta nuevamente.');
-        console.error('Error de Google OAuth:', error);
-      }
     } catch (error: any) {
       toast.error('No se pudo conectar con Google. Por favor, intenta más tarde.');
       console.error('Error de Google OAuth:', error);
