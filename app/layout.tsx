@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "../providers/ThemeProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { CookieConsent } from '@/components/CookieConsent';
 // Configuración de la fuente Exo para títulos y texto destacado
 const exo = Exo({
   variable: "--font-exo",
@@ -56,6 +57,7 @@ export default function RootLayout({
           <Providers>{children}</Providers>
         </QueryProvider>
         <Toaster position="top-right" />
+        <CookieConsent />
       </body>
     </html>
   );

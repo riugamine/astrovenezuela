@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Switch } from "@/components/ui/switch";
 import { useQuery } from '@tanstack/react-query';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -114,7 +115,9 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const totalItems = useCartStore((state) => state.totalItems);
-  const { user, signOut } = useAuthStore();
+  const { user, isLoading } = useAuth();
+  const { signOut } = useAuthStore();
+  console.log(user);
 
   // Use React Query for categories
   const { data: categories = [] } = useQuery({

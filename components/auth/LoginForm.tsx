@@ -84,13 +84,18 @@ export function LoginForm() {
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          },
+          skipBrowserRedirect: false
         }
       });
-
+  
       if (error) {
         toast.error('Error al iniciar sesión con Google. Por favor, intenta nuevamente.');
         console.error('Error de Google OAuth:', error);

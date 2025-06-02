@@ -1,6 +1,6 @@
-'use server'
-
-import { createClient } from '@/lib/supabase/server';
+import { useEffect } from 'react';
+import { useAuthStore } from '@/lib/store/useAuthStore';
+import { createClient } from '@/lib/supabase/client';
 import { z } from 'zod';
 
 
@@ -77,4 +77,43 @@ export async function registerUser(data: RegisterData): Promise<RegisterResponse
       success: false 
     };
   }
+}
+/**
+ * Hook personalizado para manejar la autenticación
+ * Se puede usar en componentes específicos que necesiten autenticación
+ */
+export function useAuth() {
+  const { user, setUser, isLoading } = useAuthStore();
+  
+  useEffect(() => {
+    // Solo ejecutamos esta lógica si no tenemos un usuario y estamos cargando
+    if (!user && isLoading) {
+      const supabase = createClient();
+      
+      // Verificar la sesión actual al cargar
+      const checkSession = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+      };
+      
+      checkSession();
+      
+      // Suscribirse a cambios en la autenticación
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          if (session?.user) {
+            setUser(session.user);
+          } else {
+            setUser(null);
+          }
+        }
+      );
+      
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [user, setUser, isLoading]);
+  
+  return { user, isLoading };
 }

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { registerUser } from '@/app/actions/auth';
+import { registerUser } from '@/lib/hooks/useAuth';
 
 // Schema de validación mejorado
 const registerSchema = z.object({

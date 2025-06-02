@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 export default function AuthErrorPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#001730] via-[#32217A] to-[#7F98C9] p-4">
-      <Card className="w-full max-w-sm bg-white/95 backdrop-blur-sm shadow-lg">
+      <Card className="w-full max-w-sm bg-white/95 dark:bg-primary/20 text-primary backdrop-blur-sm shadow-lg py-6">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
             <div className="rounded-full bg-red-100 p-4">
@@ -22,7 +22,7 @@ export default function AuthErrorPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-primary">
             Ocurrió un error durante la autenticación.
             Intenta nuevamente.
           </p>

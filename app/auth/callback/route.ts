@@ -1,56 +1,42 @@
-import { createClient } from '@/lib/supabase/client';
 import { NextResponse } from 'next/server';
 
-// Function to handle authentication redirects
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
-  const token = requestUrl.searchParams.get('token');
-  const type = requestUrl.searchParams.get('type');
+  const { searchParams, origin } = new URL(request.url);
+  const error = searchParams.get('error');
+  const error_description = searchParams.get('error_description');
+  const next = searchParams.get('next') ?? '/';
 
-  const supabase = createClient();
-
-  // Handle Google OAuth callback
-  if (code) {
-    try {
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-      
-      if (error) {
-        console.error('Error in OAuth callback:', error);
-        return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
-      }
-
-      if (data.session) {
-        return NextResponse.redirect(`${requestUrl.origin}/`);
-      }
-    } catch (error) {
-      console.error('Error processing OAuth:', error);
-      return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
-    }
+  // Si hay un error en la respuesta de OAuth
+  if (error) {
+    console.error('Error de OAuth:', error, error_description);
+    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(error_description || '')}`);
   }
 
-  // Handle email verification
-  if (token && type === 'signup') {
-    try {
-      const { data: { session }, error } = await supabase.auth.verifyOtp({
-        token_hash: token,
-        type: 'signup'
-      });
-      
-      if (error) {
-        console.error('Error in verification:', error);
-        return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
-      }
-
-      if (session) {
-        return NextResponse.redirect(`${requestUrl.origin}/`);
-      }
-    } catch (error) {
-      console.error('Error processing verification:', error);
-      return NextResponse.redirect(`${requestUrl.origin}/auth/error`);
-    }
+  // Validar que next sea una ruta relativa por seguridad
+  if (!next.startsWith('/')) {
+    return NextResponse.redirect(`${origin}/auth/error?message=invalid_redirect`);
   }
 
-  // If no valid parameters found, redirect to auth page
-  return NextResponse.redirect(`${requestUrl.origin}/auth`);
+  // Con el flujo implícito, no necesitamos intercambiar código
+  // La biblioteca de Supabase maneja automáticamente la sesión
+  // Simplemente redirigimos al usuario a la página solicitada
+
+  // Determinar la URL de redirección basada en el entorno
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const isLocalEnv = process.env.NODE_ENV === 'development';
+  let redirectUrl;
+
+  if (isLocalEnv) {
+    redirectUrl = `${origin}${next}`;
+  } else if (forwardedHost) {
+    redirectUrl = `https://${forwardedHost}${next}`;
+  } else {
+    redirectUrl = `${origin}${next}`;
+  }
+
+  // Añadir parámetro para mostrar mensaje de éxito
+  redirectUrl += redirectUrl.includes('?') ? '&' : '?';
+  redirectUrl += 'auth_success=true';
+
+  return NextResponse.redirect(redirectUrl);
 }
