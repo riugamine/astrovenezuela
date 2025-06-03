@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-import { useAuthStore } from '@/lib/store/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
 import { z } from 'zod';
 
@@ -72,9 +70,5 @@ export async function registerUser(data: RegisterData): Promise<RegisterResponse
   } catch (err) {
     console.error('Authentication error:', err);
     throw err;
-    return { 
-      error: 'Ha ocurrido un error inesperado',
-      success: false 
-    };
   }
 }
