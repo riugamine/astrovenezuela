@@ -6,10 +6,11 @@ export const createClient = () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       auth: {
-        flowType: 'implicit',
+        flowType: 'pkce',
         detectSessionInUrl: true,
         autoRefreshToken: true,
-        persistSession: true
+        persistSession: true,
+        debug: process.env.NODE_ENV === 'development',
       }
     }
   );

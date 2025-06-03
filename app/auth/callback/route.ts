@@ -1,42 +1,44 @@
 import { NextResponse } from 'next/server';
+import { handleOAuthCallback } from '@/lib/services/oauth';
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const error = searchParams.get('error');
-  const error_description = searchParams.get('error_description');
-  const next = searchParams.get('next') ?? '/';
+  try {
+    const { searchParams, origin } = new URL(request.url);
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    const error = searchParams.get('error');
+    const error_description = searchParams.get('error_description');
 
-  // Si hay un error en la respuesta de OAuth
-  if (error) {
-    console.error('Error de OAuth:', error, error_description);
-    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(error_description || '')}`);
+    // Handle OAuth callback with our secure service
+    const result = await handleOAuthCallback({
+      code: code || '',
+      state: state || '',
+      error: error || undefined,
+      error_description: error_description || undefined,
+    });
+
+    if (result.success) {
+      // Determine redirect URL
+      const redirectUrl = `${origin}${result.redirectTo}`;
+      const finalUrl = new URL(redirectUrl);
+      
+      // Add success parameter for client-side handling
+      finalUrl.searchParams.set('auth_success', 'true');
+      
+      return NextResponse.redirect(finalUrl.toString());
+    }
+
+    // If we get here, something went wrong
+    return NextResponse.redirect(`${origin}/auth/error?message=unknown_error`);
+
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    
+    const { origin } = new URL(request.url);
+    const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+    
+    return NextResponse.redirect(
+      `${origin}/auth/error?message=${encodeURIComponent(errorMessage)}`
+    );
   }
-
-  // Validar que next sea una ruta relativa por seguridad
-  if (!next.startsWith('/')) {
-    return NextResponse.redirect(`${origin}/auth/error?message=invalid_redirect`);
-  }
-
-  // Con el flujo implícito, no necesitamos intercambiar código
-  // La biblioteca de Supabase maneja automáticamente la sesión
-  // Simplemente redirigimos al usuario a la página solicitada
-
-  // Determinar la URL de redirección basada en el entorno
-  const forwardedHost = request.headers.get('x-forwarded-host');
-  const isLocalEnv = process.env.NODE_ENV === 'development';
-  let redirectUrl;
-
-  if (isLocalEnv) {
-    redirectUrl = `${origin}${next}`;
-  } else if (forwardedHost) {
-    redirectUrl = `https://${forwardedHost}${next}`;
-  } else {
-    redirectUrl = `${origin}${next}`;
-  }
-
-  // Añadir parámetro para mostrar mensaje de éxito
-  redirectUrl += redirectUrl.includes('?') ? '&' : '?';
-  redirectUrl += 'auth_success=true';
-
-  return NextResponse.redirect(redirectUrl);
 }

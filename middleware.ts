@@ -1,94 +1,137 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/client';
+import { createMiddlewareSupabaseClient } from '@/lib/supabase/server';
 
-// Este middleware se ejecuta en cada navegación
+/**
+ * Secure middleware that validates authentication server-side
+ * This prevents client-side authentication bypass attacks
+ */
 export async function middleware(request: NextRequest) {
   try {
-    // Crear cliente de Supabase
-    const supabase = createClient();
+    // Create server-side Supabase client with proper cookie handling
+    const { supabase, response } = createMiddlewareSupabaseClient(request);
     
-    // Obtener información del usuario
+    // Validate session server-side
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error) {
-      console.error('Error de autenticación:', error.message);
-      return NextResponse.next();
+      console.error('Authentication validation error:', error.message);
+      // Continue without blocking for non-critical errors
     }
     
-    // Verificar rutas de administrador
-    if (request.nextUrl.pathname.startsWith('/admin')) {
-      // Si no hay usuario, redirigir a login
+    const pathname = request.nextUrl.pathname;
+    
+    // Handle admin routes with strict validation
+    if (pathname.startsWith('/admin')) {
       if (!user) {
-        return NextResponse.redirect(
-          new URL(`/auth?error=${encodeURIComponent('Por favor inicia sesión para acceder al área de administración')}`, request.url)
-        );
+        const redirectUrl = new URL('/auth', request.url);
+        redirectUrl.searchParams.set('error', 'Por favor inicia sesión para acceder al área de administración');
+        redirectUrl.searchParams.set('redirectTo', pathname);
+        return NextResponse.redirect(redirectUrl);
       }
       
-      // Verificar rol de administrador
+      // Validate admin role from user metadata
       const userRole = user.user_metadata?.role;
       
       if (!userRole) {
-        console.error('Rol de usuario no encontrado:', user.id);
-        return NextResponse.redirect(
-          new URL(`/?error=${encodeURIComponent('Rol de usuario no encontrado')}`, request.url)
-        );
+        console.error('No role found for user:', user.id);
+        const redirectUrl = new URL('/', request.url);
+        redirectUrl.searchParams.set('error', 'Rol de usuario no encontrado');
+        return NextResponse.redirect(redirectUrl);
       }
       
       if (userRole !== 'admin') {
-        console.warn('Intento de acceso no autorizado:', user.id);
-        return NextResponse.redirect(
-          new URL(`/?error=${encodeURIComponent('Acceso no autorizado')}`, request.url)
-        );
+        console.warn('Unauthorized admin access attempt:', {
+          userId: user.id,
+          email: user.email,
+          role: userRole,
+          ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+          userAgent: request.headers.get('user-agent')
+        });
+        
+        const redirectUrl = new URL('/', request.url);
+        redirectUrl.searchParams.set('error', 'Acceso no autorizado');
+        return NextResponse.redirect(redirectUrl);
       }
     }
     
-    // Verificar rutas protegidas (perfil, órdenes)
-    const protectedRoutes = ['/profile', '/orders'];
+    // Handle protected user routes
+    const protectedRoutes = ['/profile', '/orders', '/account'];
     const isProtectedRoute = protectedRoutes.some(route => 
-      request.nextUrl.pathname.startsWith(route)
+      pathname.startsWith(route)
     );
     
     if (isProtectedRoute && !user) {
-      return NextResponse.redirect(new URL('/auth', request.url));
+      const redirectUrl = new URL('/auth', request.url);
+      redirectUrl.searchParams.set('redirectTo', pathname);
+      return NextResponse.redirect(redirectUrl);
     }
     
-    // Rutas de autenticación cuando ya está logueado
+    // Redirect authenticated users away from auth pages
     const authRoutes = ['/auth'];
     const isAuthRoute = authRoutes.some(route => 
-      request.nextUrl.pathname.startsWith(route) && 
-      !request.nextUrl.pathname.startsWith('/auth/callback')
+      pathname.startsWith(route) && 
+      !pathname.startsWith('/auth/callback') &&
+      !pathname.startsWith('/auth/error')
     );
     
     if (isAuthRoute && user) {
-      return NextResponse.redirect(new URL('/', request.url));
+      // Check if there's a redirectTo parameter
+      const redirectTo = request.nextUrl.searchParams.get('redirectTo');
+      const targetUrl = redirectTo && redirectTo.startsWith('/') ? redirectTo : '/';
+      return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    // Verificar parámetro de éxito de autenticación
-    if (request.nextUrl.pathname.startsWith('/auth/callback')) {
+    // Handle OAuth callback success
+    if (pathname === '/auth/callback') {
       const authSuccess = request.nextUrl.searchParams.get('auth_success');
-      
-      if (authSuccess === 'true') {
-        // Redirigimos a la página principal sin el parámetro
-        const url = request.nextUrl.clone();
-        url.searchParams.delete('auth_success');
-        return NextResponse.redirect(url);
+      if (authSuccess === 'true' && user) {
+        // Clean redirect without the auth_success parameter
+        const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/';
+        const cleanUrl = new URL(redirectTo, request.url);
+        return NextResponse.redirect(cleanUrl);
       }
     }
+    
+    // Add security headers
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.set('X-Frame-Options', 'DENY');
+    responseHeaders.set('X-Content-Type-Options', 'nosniff');
+    responseHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // Set CSP for enhanced security
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self' https://*.supabase.co https://maps.googleapis.com",
+      "frame-src 'none'",
+    ].join('; ');
+    
+    responseHeaders.set('Content-Security-Policy', csp);
+    
+    return new NextResponse(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders,
+    });
+    
   } catch (error) {
-    console.error('Error en middleware:', error);
+    console.error('Middleware error:', error);
+    // Return original response on error to avoid breaking the app
+    return NextResponse.next();
   }
-  
-  return NextResponse.next();
 }
 
-// Configuramos el middleware para que se ejecute solo en rutas específicas
+// Configure middleware to run on specific routes
 export const config = {
   matcher: [
     '/auth/:path*',
     '/admin/:path*',
     '/profile/:path*',
     '/orders/:path*',
+    '/account/:path*',
   ],
 };
