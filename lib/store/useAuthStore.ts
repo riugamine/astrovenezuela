@@ -9,7 +9,6 @@ interface AuthState {
   session: any | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  sessionExpiry: string | null;
   
   // Actions
   setUser: (user: User | null) => void;
@@ -23,10 +22,6 @@ interface AuthState {
   // OAuth methods
   signInWithGoogle: () => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<{ error?: any; user?: User; session?: any }>;
-  
-  // Server-side validation
-  validateServerSession: () => Promise<AuthSession>;
-  refreshSession: () => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -36,7 +31,6 @@ export const useAuthStore = create<AuthState>()(
       session: null,
       isLoading: true,
       isAuthenticated: false,
-      sessionExpiry: null,
 
       setUser: (user) => set({ 
         user, 
@@ -44,16 +38,12 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: !!user 
       }),
 
-      setSession: (session) => set({ 
-        session,
-        sessionExpiry: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null
-      }),
+      setSession: (session) => set({ session }),
 
       clearAuth: () => set({ 
         user: null, 
         session: null,
         isAuthenticated: false,
-        sessionExpiry: null,
         isLoading: false
       }),
 
@@ -77,25 +67,28 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         try {
+          set({ isLoading: true });
+          
           const supabase = createClient();
           const { data: { user }, error } = await supabase.auth.getUser();
+          const { data: { session } } = await supabase.auth.getSession();
 
           if (error) {
-            throw error;
+            console.error('Auth check error:', error);
+            get().clearAuth();
+            return;
           }
 
-          // Validate with server-side session
-          const serverValidation = await get().validateServerSession();
-          
-          if (serverValidation.isValid && user) {
+          if (user && session) {
+            console.log('✅ Auth check successful:', { user: user.email });
             set({ 
-              user: serverValidation.user || user,
-              session: serverValidation.session,
+              user,
+              session,
               isLoading: false,
-              isAuthenticated: true,
-              sessionExpiry: serverValidation.expiresAt || null
+              isAuthenticated: true
             });
           } else {
+            console.log('ℹ️ No authenticated user found');
             get().clearAuth();
           }
         } catch (error) {
@@ -105,12 +98,33 @@ export const useAuthStore = create<AuthState>()(
       },
 
       initializeAuth: () => {
-        const { isLoading, checkAuth, handleAuthStateChange } = get();
+        const { checkAuth, handleAuthStateChange } = get();
         
-        if (isLoading) {
+        console.log('🔐 Initializing authentication...');
+        
+        // Check if we have an OAuth success parameter
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          const hasAuthSuccess = urlParams.get('auth_success') === 'true';
+          
+          if (hasAuthSuccess) {
+            console.log('🎉 OAuth success detected, clearing URL and checking auth...');
+            // Clear the URL parameter
+            const url = new URL(window.location.href);
+            url.searchParams.delete('auth_success');
+            window.history.replaceState({}, '', url.toString());
+            
+            // Give Supabase a moment to establish the session
+            setTimeout(() => checkAuth(), 500);
+          } else {
+            checkAuth();
+          }
+        } else {
           checkAuth();
-          handleAuthStateChange();
         }
+        
+        // Set up auth state change listener
+        handleAuthStateChange();
       },
 
       handleAuthStateChange: () => {
@@ -118,37 +132,35 @@ export const useAuthStore = create<AuthState>()(
         
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
-            console.log('Auth state changed:', event, session?.user?.email);
+            console.log('🔔 Auth state changed:', event, session?.user?.email);
             
             switch (event) {
               case 'SIGNED_IN':
                 if (session?.user) {
-                  // Validate with server before trusting client session
-                  const serverValidation = await get().validateServerSession();
-                  
-                  if (serverValidation.isValid) {
-                    set({ 
-                      user: serverValidation.user,
-                      session: serverValidation.session,
-                      isLoading: false,
-                      isAuthenticated: true,
-                      sessionExpiry: serverValidation.expiresAt || null
-                    });
-                  }
+                  console.log('✅ User signed in');
+                  set({ 
+                    user: session.user,
+                    session: session,
+                    isLoading: false,
+                    isAuthenticated: true
+                  });
                 }
                 break;
                 
               case 'SIGNED_OUT':
+                console.log('👋 User signed out');
                 get().clearAuth();
                 break;
                 
               case 'TOKEN_REFRESHED':
                 if (session) {
-                  get().setSession(session);
+                  console.log('🔄 Token refreshed');
+                  set({ session });
                 }
                 break;
                 
               default:
+                console.log('🔔 Other auth event:', event);
                 break;
             }
           }
@@ -161,9 +173,19 @@ export const useAuthStore = create<AuthState>()(
 
       signInWithGoogle: async () => {
         try {
-          // Import the server action dynamically to avoid issues
+          console.log('🔄 Initiating Google OAuth...');
+          
+          // Import the server action dynamically
           const { initiateGoogleOAuth } = await import('@/lib/services/oauth');
-          await initiateGoogleOAuth();
+          const result = await initiateGoogleOAuth();
+          
+          if (result.success && result.url) {
+            console.log('🔄 Redirecting to Google...');
+            // Redirect to the OAuth URL
+            window.location.href = result.url;
+          } else {
+            throw new Error(result.error || 'Failed to initiate OAuth');
+          }
         } catch (error) {
           console.error('Error initiating Google OAuth:', error);
           throw error;
@@ -182,62 +204,10 @@ export const useAuthStore = create<AuthState>()(
             return { error };
           }
 
-          // Validate server-side session after client sign-in
-          if (data.user && data.session) {
-            const serverValidation = await get().validateServerSession();
-            
-            if (serverValidation.isValid) {
-              set({ 
-                user: serverValidation.user,
-                session: serverValidation.session,
-                isLoading: false,
-                isAuthenticated: true,
-                sessionExpiry: serverValidation.expiresAt || null
-              });
-            }
-          }
-
           return { user: data.user, session: data.session };
         } catch (error) {
           console.error('Error signing in with password:', error);
           return { error };
-        }
-      },
-
-      validateServerSession: async () => {
-        try {
-          return await validateSession();
-        } catch (error) {
-          console.error('Server session validation error:', error);
-          return { user: null, session: null, isValid: false };
-        }
-      },
-
-      refreshSession: async () => {
-        try {
-          const supabase = createClient();
-          const { data, error } = await supabase.auth.refreshSession();
-          
-          if (error || !data.session) {
-            return false;
-          }
-          
-          // Validate the refreshed session with server
-          const serverValidation = await get().validateServerSession();
-          
-          if (serverValidation.isValid) {
-            set({
-              user: serverValidation.user,
-              session: serverValidation.session,
-              sessionExpiry: serverValidation.expiresAt || null
-            });
-            return true;
-          }
-          
-          return false;
-        } catch (error) {
-          console.error('Error refreshing session:', error);
-          return false;
         }
       },
     }),
@@ -245,10 +215,8 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       partialize: (state) => ({ 
         user: state.user,
-        sessionExpiry: state.sessionExpiry
       }),
-      // Add version for migration if needed
-      version: 2,
+      version: 3, // Increased version to clear old data
     }
   )
 );

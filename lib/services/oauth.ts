@@ -252,70 +252,80 @@ async function setSecureSession(session: any, user: any) {
 }
 
 /**
- * Validates current session from server-side
- * This ensures the session is still valid and secure
+ * Server action for initiating Google OAuth (Simplified)
+ * Following official Supabase documentation pattern
+ */
+export async function initiateGoogleOAuth(redirectTo?: string) {
+  try {
+    const supabase = await createServerSupabaseClient();
+    
+    // Use Supabase's built-in PKCE flow - much simpler and more secure
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+    
+    if (error) {
+      console.error('OAuth initiation failed:', error);
+      return { success: false, error: error.message };
+    }
+    
+    if (data.url) {
+      return { success: true, url: data.url };
+    }
+    
+    return { success: false, error: 'No OAuth URL received' };
+    
+  } catch (error) {
+    console.error('OAuth initiation error:', error);
+    return { success: false, error: 'Failed to initiate OAuth' };
+  }
+}
+
+/**
+ * Validates current session from server-side (Simplified)
+ * Let Supabase handle most of the complexity
  */
 export async function validateSession(): Promise<AuthSession> {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
     
-    if (error || !user) {
-      return { user: null, session: null, isValid: false };
-    }
-    
-    // Additional server-side validation
-    const cookieStore = await cookies();
-    const storedUserId = cookieStore.get('auth_user_id')?.value;
-    
-    if (storedUserId && storedUserId !== user.id) {
-      console.warn('User ID mismatch detected, clearing session');
-      await clearSession();
-      return { user: null, session: null, isValid: false };
-    }
-    
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (sessionError || !session) {
+    if (userError || sessionError || !user || !session) {
       return { user: null, session: null, isValid: false };
     }
+    
+    console.log('✅ Session validation successful:', { userId: user.id, email: user.email });
     
     return {
       user,
       session,
       isValid: true,
-      expiresAt: new Date(session.expires_at! * 1000).toISOString(),
+      expiresAt: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : undefined,
     };
     
   } catch (error) {
-    console.error('Session validation error:', error);
+    console.error('❌ Session validation error:', error);
     return { user: null, session: null, isValid: false };
   }
 }
 
 /**
- * Clears session and all related security data
- * This ensures complete cleanup on logout
+ * Clears session (Simplified)
  */
 export async function clearSession() {
   try {
     const supabase = await createServerSupabaseClient();
     await supabase.auth.signOut();
-    
-    const cookieStore = await cookies();
-    cookieStore.delete('auth_user_id');
-    cookieStore.delete('auth_session_hash');
-    cookieStore.delete('oauth_state');
-    
   } catch (error) {
     console.error('Error clearing session:', error);
   }
-}
-
-/**
- * Server action for initiating Google OAuth
- * This is called from the client-side components
- */
-export async function initiateGoogleOAuth(redirectTo?: string) {
-  return initiateOAuth({ provider: 'google', redirectTo });
 } 

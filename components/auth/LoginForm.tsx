@@ -108,9 +108,6 @@ export function LoginForm() {
     try {
       setIsGoogleLoading(true);
       
-      // Get redirect URL from current page
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirectTo = urlParams.get('redirectTo');
       
       await signInWithGoogle();
       
