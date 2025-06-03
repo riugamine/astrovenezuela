@@ -55,10 +55,23 @@ export function InfiniteProductsGrid({ initialProducts, queryKey }: InfiniteProd
     rootMargin: '100px',
   });
 
-  const { selectedCategories, priceRange, sortBy } = useFilterStore();
+  const { selectedCategories, priceRange, sortBy, selectedSizes } = useFilterStore();
+  
+  // Check if any filters are applied
+  const hasFilters = selectedCategories.length > 0 || 
+                    selectedSizes.length > 0 || 
+                    sortBy !== 'newest' || 
+                    priceRange[0] !== 0 || 
+                    priceRange[1] !== 1000;
+  
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey });
-  }, [selectedCategories, priceRange, sortBy, queryClient, queryKey]);
+    // Invalidate all queries that start with the base queryKey
+    // This will invalidate all variations of the query with different filters
+    queryClient.invalidateQueries({ 
+      queryKey: queryKey,
+      exact: false // This allows invalidating all queries that start with this key
+    });
+  }, [selectedCategories, priceRange, sortBy, selectedSizes, queryClient, queryKey]);
 
   const {
     data,
@@ -69,7 +82,11 @@ export function InfiniteProductsGrid({ initialProducts, queryKey }: InfiniteProd
     error,
     isLoading,
     isFetching,
-  } = useProducts(initialProducts, queryKey);
+  } = useProducts(
+    // Only pass initialProducts when no filters are applied
+    hasFilters ? undefined : initialProducts, 
+    queryKey
+  );
 
   const handleFetchNextPage = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {

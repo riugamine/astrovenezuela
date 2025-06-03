@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { supabaseClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { ProductWithDetails } from '@/lib/data/products';
 import { useFilterStore } from '@/lib/store/useFilterStore';
 
@@ -9,12 +9,16 @@ interface FetchProductsOptions {
   categories: string[];
   priceRange: [number, number];
   sortBy: string | null;
+  sizes?: string[];
 }
 
 async function fetchProductsPage(page: number, options: FetchProductsOptions) {
-  const { categories, priceRange, sortBy } = options;
+  const { categories, priceRange, sortBy, sizes } = options;
   const from = (page - 1) * PRODUCTS_PER_PAGE;
+  const to = from + PRODUCTS_PER_PAGE - 1;
   
+  const supabase = createClient();
+
   // Base query builder function
   const buildQuery = (query: any) => {
     let baseQuery = query
@@ -22,7 +26,7 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
       .gte('price', priceRange[0])
       .lte('price', priceRange[1]);
 
-    // Modificar la forma en que construimos el filtro de categorías
+    // Apply category filter
     if (categories.length > 0) {
       baseQuery = baseQuery.in('category_id', categories);
     }
@@ -30,16 +34,55 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
     return baseQuery;
   };
 
+  // If sizes are selected, we need to filter by products that have variants with those sizes
+  let productIdsWithSelectedSizes: string[] = [];
+  
+  if (sizes && sizes.length > 0) {
+    const { data: variantsData, error: variantsError } = await supabase
+      .from('product_variants')
+      .select('product_id')
+      .in('size', sizes)
+      .gt('stock', 0); // Only include variants with stock > 0
+
+    if (variantsError) {
+      console.error('Variants query error:', variantsError);
+      throw variantsError;
+    }
+
+    productIdsWithSelectedSizes = [...new Set(variantsData?.map(v => v.product_id) || [])];
+    
+    // If no products have the selected sizes, return empty result
+    if (productIdsWithSelectedSizes.length === 0) {
+      return {
+        products: [],
+        hasMore: false,
+        total: 0
+      };
+    }
+  }
+
   // Build count query
-  const countQuery = buildQuery(
-    supabaseClient
+  let countQuery = buildQuery(
+    supabase
       .from('products')
-      .select('id', { count: 'exact' })
+      .select('*', { count: 'exact', head: true })
   );
 
-  // Build main query
+  // Apply size filter to count query if sizes are selected
+  if (productIdsWithSelectedSizes.length > 0) {
+    countQuery = countQuery.in('id', productIdsWithSelectedSizes);
+  }
+
+  const { count, error: countError } = await countQuery;
+
+  if (countError) {
+    console.error('Count query error:', countError);
+    throw countError;
+  }
+
+  // Build main query with better error handling
   let mainQuery = buildQuery(
-    supabaseClient
+    supabase
       .from('products')
       .select(`
         *,
@@ -47,7 +90,14 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
         variants:product_variants (*),
         category:categories (*)
       `)
-  ).range(from, from + PRODUCTS_PER_PAGE - 1);
+  );
+
+  // Apply size filter to main query if sizes are selected
+  if (productIdsWithSelectedSizes.length > 0) {
+    mainQuery = mainQuery.in('id', productIdsWithSelectedSizes);
+  }
+
+  mainQuery = mainQuery.range(from, to);
 
   // Apply sorting
   switch (sortBy) {
@@ -67,43 +117,57 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
       mainQuery = mainQuery.order('created_at', { ascending: false });
   }
 
-  const [{ count }, { data, error }] = await Promise.all([
-    countQuery.single(),
-    mainQuery
-  ]);
+  const { data, error } = await mainQuery;
 
-  if (error) throw error;
+  if (error) {
+    console.error('Products query error:', error);
+    throw error;
+  }
 
   const total = count || 0;
 
   return {
     products: data as ProductWithDetails[],
-    hasMore: from + PRODUCTS_PER_PAGE < total
+    hasMore: from + PRODUCTS_PER_PAGE < total,
+    total
   };
 }
 
 export function useProducts(initialData?: ProductWithDetails[], queryKey: string[] = ['products']) {
-  const { selectedCategories, priceRange, sortBy } = useFilterStore();
+  const { selectedCategories, priceRange, sortBy, selectedSizes } = useFilterStore();
+
+  const finalQueryKey = [...queryKey, { filters: { selectedCategories, priceRange, sortBy, selectedSizes } }];
+  
+  // Check if any filters are applied
+  const hasFilters = selectedCategories.length > 0 || 
+                    selectedSizes.length > 0 || 
+                    sortBy !== 'newest' || 
+                    priceRange[0] !== 0 || 
+                    priceRange[1] !== 1000;
 
   return useInfiniteQuery({
-    queryKey: [...queryKey, { filters: { selectedCategories, priceRange, sortBy } }],
+    queryKey: finalQueryKey,
     queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam, {
       categories: selectedCategories,
       priceRange,
-      sortBy
+      sortBy,
+      sizes: selectedSizes
     }),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage.hasMore) return undefined;
       return allPages.length + 1;
     },
-    initialData: initialData
+    // Only use initialData when no filters are applied
+    initialData: !hasFilters && initialData
       ? {
-          pages: [{ products: initialData, hasMore: true }],
+          pages: [{ products: initialData, hasMore: true, total: initialData.length }],
           pageParams: [1],
         }
       : undefined,
-    staleTime: 0,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 }
