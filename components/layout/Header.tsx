@@ -52,7 +52,6 @@ import { Badge } from "@/components/ui/badge";
 import { getBrandLogo } from "@/lib/utils";
 import Image from 'next/image';
 import { getCategories } from '@/lib/data/categories';
-import { categoryToURLParam } from '@/lib/utils/category-utils';
 
 // Interface for navigation items
 interface NavigationItem {
@@ -170,7 +169,7 @@ const Header = () => {
                           key={category.id}
                           item={{
                             title: category.name,
-                            href: `/products?categories=${encodeURIComponent(category.id)}`,
+                            href: `/products?categories=${category.id}`,
                             description: category.description,
                           }}
                         >
@@ -178,7 +177,7 @@ const Header = () => {
                             {getSubcategories(category.id).map(subcat => (
                               <Link
                                 key={subcat.id}
-                                href={`/products?categories=${encodeURIComponent(subcat.id)}`}
+                                href={`/products?categories=${subcat.id}`}
                                 className="block py-2 hover:text-primary transition-colors"
                               >
                                 {subcat.name}
@@ -189,7 +188,7 @@ const Header = () => {
                       ) : (
                         <AccordionItem key={category.id} value={category.id} className="border-none">
                           <Link 
-                            href={`/products?categories=${encodeURIComponent(category.id)}`}
+                            href={`/products?categories=${category.id}`}
                             className="flex items-center gap-2 py-2 hover:text-primary transition-colors"
                           >
                             <span>{category.name}</span>
@@ -248,7 +247,7 @@ const Header = () => {
                           <NavigationItemCard
                             item={{
                               title: category.name,
-                              href: `/products?categories=${encodeURIComponent(category.id)}`,
+                              href: `/products?categories=${category.id}`,
                               description: category.description,
                               
                             }}
@@ -257,7 +256,7 @@ const Header = () => {
                             {getSubcategories(category.id).map(subcat => (
                               <Link
                                 key={subcat.id}
-                                href={`/products?categories=${encodeURIComponent(subcat.id)}`}
+                                href={`/products?categories=${subcat.id}`}
                                 className="p-3 hover:bg-secondary/10 rounded-lg transition-colors"
                               >
                                 {subcat.name}
@@ -272,7 +271,7 @@ const Header = () => {
                       <NavigationLink
                         item={{
                           title: category.name,
-                          href: `/products?categories=${encodeURIComponent(category.id)}`,
+                          href: `/products?categories=${category.id}`,
                           description: category.description,
                           
                         }}
