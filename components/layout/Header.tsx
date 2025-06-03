@@ -115,7 +115,6 @@ const Header = () => {
   const { theme, setTheme } = useTheme();
   const totalItems = useCartStore((state) => state.totalItems);
   const { user ,signOut } = useAuthStore();
-  console.log(user);
 
   // Use React Query for categories
   const { data: categories = [] } = useQuery({
