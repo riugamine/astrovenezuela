@@ -86,7 +86,6 @@ export async function getSubcategories(parentId: string): Promise<Category[]> {
     .select("*")
     .eq("parent_id", parentId)
     .eq('is_active', true)
-    .not('subcategory', 'is', null)
     .order("name");
 
   if (error) throw error;

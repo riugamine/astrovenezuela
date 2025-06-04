@@ -107,27 +107,11 @@ export function ProductForm({ onClose }: ProductFormProps) {
   const onSubmit = (data: CreateProductFormData) => {
     createProductMutation.mutate(data);
   };
-  const handleCategoryChange = async (categoryId: string) => {
-    try {
-      // Get the category details to check if it's a main category or subcategory
-      const categoryDetails = await getCategoryDetails(categoryId);
-  
-      if (categoryDetails.parent_id) {
-        // If it has a parent_id, it's a subcategory
-        form.setValue('subcategory_id', categoryId);
-        form.setValue('category_id', categoryDetails.parent_id);
-      } else {
-        // If it doesn't have a parent_id, it's a main category
-        form.setValue('category_id', categoryId);
-        form.setValue('subcategory_id', ''); // Clear subcategory when selecting a main category
-      }
-  
-      // Trigger validation after setting values
-      await form.trigger(['category_id', 'subcategory_id']);
-    } catch (error) {
-      console.error('Error getting category details:', error);
-      toast.error('Error al cambiar la categoría');
-    }
+  const handleCategoryChange = (categoryId: string) => {
+    // For new products, we just set the category and clear subcategory
+    // The user can then select a subcategory if needed
+    form.setValue('category_id', categoryId, { shouldValidate: true });
+    form.setValue('subcategory_id', '', { shouldValidate: true }); // Clear subcategory when changing main category
   };
 
   return (

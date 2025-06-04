@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -87,6 +87,13 @@ export function ProductFormEdit({
   initialData,
 }: ProductFormEditProps) {
   const queryClient = useQueryClient();
+  const [isFormReady, setIsFormReady] = useState(false);
+
+  // Fetch category details first
+  const { data: categoryDetails, isLoading: isLoadingCategoryDetails } = useQuery<{ category_id: string; parent_id: string | null }>({
+    queryKey: ["productCategory", initialData.id],
+    queryFn: () => getProductCategoryDetails(initialData.id),
+  });
 
   const form = useForm<EditProductFormData>({
     resolver: zodResolver(editProductSchema),
@@ -96,6 +103,23 @@ export function ProductFormEdit({
       variants: initialData.variants || [],
     },
   });
+
+  // Set form values when category details are loaded
+  useEffect(() => {
+    if (categoryDetails && !isFormReady) {
+      if (categoryDetails.parent_id) {
+        // Es una subcategoría - la categoría del producto es realmente una subcategoría
+        form.setValue("category_id", categoryDetails.parent_id, { shouldValidate: false });
+        form.setValue("subcategory_id", categoryDetails.category_id, { shouldValidate: false });
+      } else {
+        // Es una categoría principal
+        form.setValue("category_id", categoryDetails.category_id, { shouldValidate: false });
+        form.setValue("subcategory_id", "", { shouldValidate: false });
+      }
+      setIsFormReady(true);
+    }
+  }, [categoryDetails, form, isFormReady]);
+
   const updateProductMutation = useMutation({
     mutationFn: async (data: EditProductFormData) => {
       const totalStock = data.variants.reduce(
@@ -126,26 +150,23 @@ export function ProductFormEdit({
     updateProductMutation.mutate(data);
   };
 
-  const { data: categoryDetails } = useQuery<{ category_id: string; parent_id: string | null }>({
-    queryKey: ["productCategory", initialData.id],
-    queryFn: () => getProductCategoryDetails(initialData.id),
-  });
-
   const handleCategoryChange = (categoryId: string) => {
-    form.setValue("category_id", categoryId);
-    form.setValue("subcategory_id", ""); // Limpiar subcategoría al cambiar categoría padre
+    form.setValue("category_id", categoryId, { shouldValidate: true });
+    form.setValue("subcategory_id", "", { shouldValidate: true }); // Limpiar subcategoría al cambiar categoría padre
   };
-  useEffect(() => {
-    if (categoryDetails) {
-      if (categoryDetails.parent_id) {
-        form.setValue("category_id", categoryDetails.parent_id);
-        form.setValue("subcategory_id", categoryDetails.category_id);
-      } else {
-        form.setValue("category_id", categoryDetails.category_id);
-        form.setValue("subcategory_id", "");
-      }
-    }
-  }, [categoryDetails, form]);
+
+  // Show loading state while category details are being fetched
+  if (isLoadingCategoryDetails || !isFormReady) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="flex items-center gap-3">
+          <FontAwesomeIcon icon={faSpinner} className="animate-spin text-blue-600" />
+          <span className="text-sm text-gray-600">Cargando información del producto...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -219,20 +240,12 @@ export function ProductFormEdit({
                 control={form.control}
                 name="category_id"
                 onCategoryChange={handleCategoryChange}
-                selectedCategoryId={
-                  categoryDetails?.parent_id || categoryDetails?.category_id
-                }
               />
 
               <SubcategorySelect
                 control={form.control}
                 name="subcategory_id"
                 parentCategoryId={form.watch("category_id")}
-                selectedSubcategoryId={
-                  categoryDetails?.parent_id
-                    ? categoryDetails?.category_id
-                    : undefined
-                }
               />
             </div>
           </div>

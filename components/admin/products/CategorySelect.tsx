@@ -11,10 +11,10 @@ interface CategorySelectProps {
   control: Control<any>;
   name: keyof CreateProductFormData;
   onCategoryChange?: (categoryId: string) => void;
-  selectedCategoryId?: string;
 }
-export function CategorySelect({ control, name, onCategoryChange, selectedCategoryId  }: CategorySelectProps) {
-  const { data: categories = [], isLoading } = useQuery({
+
+export function CategorySelect({ control, name, onCategoryChange }: CategorySelectProps) {
+  const { data: categories = [], isLoading, isError } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories,
     staleTime: 1000 * 60 * 5,
@@ -22,6 +22,22 @@ export function CategorySelect({ control, name, onCategoryChange, selectedCatego
 
   const mainCategories = categories.filter(cat => !cat.parent_id);
 
+  if (isError) {
+    return (
+      <FormField
+        control={control}
+        name={name}
+        render={() => (
+          <FormItem>
+            <FormLabel>Categoría Principal</FormLabel>
+            <div className="text-sm text-red-600">
+              Error al cargar las categorías. Por favor, recarga la página.
+            </div>
+          </FormItem>
+        )}
+      />
+    );
+  }
 
   return (
     <FormField
@@ -32,7 +48,7 @@ export function CategorySelect({ control, name, onCategoryChange, selectedCatego
           <FormLabel>Categoría Principal</FormLabel>
           <FormControl>
             <Select
-              value={selectedCategoryId || field.value || ''}
+              value={field.value || ''}
               onValueChange={(value) => {
                 field.onChange(value);
                 onCategoryChange?.(value);
@@ -43,11 +59,13 @@ export function CategorySelect({ control, name, onCategoryChange, selectedCatego
                 <SelectValue placeholder={
                   isLoading 
                     ? "Cargando categorías..."
-                    : "Selecciona una categoría"
+                    : mainCategories.length === 0
+                      ? "No hay categorías disponibles"
+                      : "Selecciona una categoría"
                 } />
               </SelectTrigger>
               <SelectContent>
-                {mainCategories.map((category) => (
+                {!isLoading && mainCategories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>

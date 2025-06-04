@@ -6,16 +6,14 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Control } from 'react-hook-form';
 import { getSubcategories } from '@/lib/data/admin/actions/categories';
 
-
 interface SubcategorySelectProps {
   control: Control<any>;
   name: string;
   parentCategoryId?: string;
-  selectedSubcategoryId?: string;
 }
 
-export function SubcategorySelect({ control, name, parentCategoryId, selectedSubcategoryId  }: SubcategorySelectProps) {
-  const { data: subcategories = [], isLoading } = useQuery({
+export function SubcategorySelect({ control, name, parentCategoryId }: SubcategorySelectProps) {
+  const { data: subcategories = [], isLoading, isError } = useQuery({
     queryKey: ['subcategories', parentCategoryId],
     queryFn: async () => {
       if (!parentCategoryId) return [];
@@ -28,6 +26,23 @@ export function SubcategorySelect({ control, name, parentCategoryId, selectedSub
     return null;
   }
 
+  if (isError) {
+    return (
+      <FormField
+        control={control}
+        name={name}
+        render={() => (
+          <FormItem>
+            <FormLabel>Subcategoría (Opcional)</FormLabel>
+            <div className="text-sm text-red-600">
+              Error al cargar las subcategorías. Por favor, selecciona otra categoría.
+            </div>
+          </FormItem>
+        )}
+      />
+    );
+  }
+
   return (
     <FormField
       control={control}
@@ -37,13 +52,13 @@ export function SubcategorySelect({ control, name, parentCategoryId, selectedSub
           <FormLabel>Subcategoría (Opcional)</FormLabel>
           <FormControl>
             <Select
-              value={selectedSubcategoryId || field.value || 'none'}  // Cambiamos el valor por defecto a "none"
+              value={field.value || 'none'}
               onValueChange={(value) => {
-                field.onChange(value === "none" ? "" : value); // Convertimos "none" a "" cuando se envía el formulario
+                field.onChange(value === 'none' ? '' : value);
               }}
               disabled={isLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className={isLoading ? 'animate-pulse' : ''}>
                 <SelectValue placeholder={
                   isLoading 
                     ? "Cargando subcategorías..." 
@@ -54,7 +69,7 @@ export function SubcategorySelect({ control, name, parentCategoryId, selectedSub
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Sin subcategoría</SelectItem>
-                {subcategories.map((subcategory) => (
+                {!isLoading && subcategories.map((subcategory) => (
                   <SelectItem key={subcategory.id} value={subcategory.id}>
                     {subcategory.name}
                   </SelectItem>
