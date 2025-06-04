@@ -320,13 +320,6 @@ const Header = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">Perfil</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders">Pedidos</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()}>Cerrar Sesión</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
