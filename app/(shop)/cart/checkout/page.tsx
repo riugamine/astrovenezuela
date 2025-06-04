@@ -182,7 +182,7 @@ export default function CheckoutPage() {
       const selectedShipping = shippingMethods.find((m) => m.id === shippingMethod)?.name;
       
       // Store phone number in environment variable or configuration
-      const phoneNumber = "584243091410";
+      const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
       
       // Create a more structured message
       // In the handleSubmit function, update the message formatting:

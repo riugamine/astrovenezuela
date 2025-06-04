@@ -134,7 +134,7 @@ function OrderContent() {
             className="bg-green-600 hover:bg-green-700 text-lg py-6"
             size="lg"
           >
-            <Link href={`https://wa.me/584243091410`} target="_blank">
+            <Link href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}`} target="_blank">
               <FontAwesomeIcon icon={faWhatsapp} className="mr-2 text-xl" />
               Contactar por WhatsApp
             </Link>
