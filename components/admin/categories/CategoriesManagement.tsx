@@ -140,9 +140,9 @@ const CategoriesManagement: FC = () => {
                     <Image 
             src={row.getValue("banner_url")} 
             alt={'Banner'}
-            width={200}
-            height={200}
-            className="object-cover"
+            width={100}
+            height={100}
+            className="object-cover rounded-md w-10 h-10"
           />
         ) : (
           "Sin banner"
