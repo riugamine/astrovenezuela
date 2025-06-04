@@ -19,12 +19,19 @@ export async function getProducts(): Promise<ProductWithRelations[]> {
 }
 
 export async function createProduct(productData: CreateProductData): Promise<ProductWithRelations> {
-  const { variants, product_images, ...mainProductData } = productData;
+  const { variants, product_images, subcategory_id, ...mainProductData } = productData;
 
-  // Create main product
+  // Si hay un subcategory_id, usarlo como category_id en lugar del category_id original
+  // Esto es porque las subcategorías son categorías con parent_id en la estructura de BD
+  const finalProductData = {
+    ...mainProductData,
+    category_id: subcategory_id || mainProductData.category_id
+  };
+
+  // Create main product (finalProductData ya no contiene subcategory_id)
   const { data: product, error: productError } = await supabaseAdmin
     .from('products')
-    .insert(mainProductData)
+    .insert(finalProductData)
     .select()
     .single();
 
