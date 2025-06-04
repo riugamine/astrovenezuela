@@ -23,7 +23,7 @@ import { CategorySelect } from "./CategorySelect";
 import { SubcategorySelect } from "./SubcategorySelect";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createProduct, getCategoryDetails } from '@/lib/data/admin/actions/products';
+import { createProduct } from '@/lib/data/admin/actions/products';
 
 // Define the schemas for new product only
 const variantSchema = z.object({

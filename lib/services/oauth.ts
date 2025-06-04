@@ -255,7 +255,7 @@ async function setSecureSession(session: any, user: any) {
  * Server action for initiating Google OAuth (Simplified)
  * Following official Supabase documentation pattern
  */
-export async function initiateGoogleOAuth(redirectTo?: string) {
+export async function initiateGoogleOAuth() {
   try {
     const supabase = await createServerSupabaseClient();
     

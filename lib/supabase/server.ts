@@ -7,8 +7,6 @@ import { cookies } from 'next/headers';
  * This ensures secure session management on the server side
  */
 export const createServerSupabaseClient = async (
-  request?: NextRequest,
-  response?: NextResponse
 ) => {
   // Use Next.js cookies API for server components
   const cookieStore = await cookies();

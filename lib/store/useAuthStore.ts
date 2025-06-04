@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { persist } from 'zustand/middleware';
-import { validateSession, clearSession, AuthSession } from '@/lib/services/oauth';
+import { clearSession } from '@/lib/services/oauth';
 
 interface AuthState {
   user: User | null;
