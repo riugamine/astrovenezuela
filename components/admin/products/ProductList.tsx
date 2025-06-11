@@ -56,10 +56,7 @@ export function ProductList() {
         </div>
       ),
     },
-    {
-      accessorKey: "reference_number",
-      header: "Referencia",
-    },
+
     {
       accessorKey: "price",
       header: "Precio",
@@ -77,7 +74,7 @@ export function ProductList() {
             <div className="text-xs text-gray-500">
               {variants.map((v: any) => (
                 <span key={v.id} className="inline-block mr-2">
-                  {v.size}: {v.stock}
+                  {v.size}: {v.stock} {v.reference_number && `(${v.reference_number})`}
                 </span>
               ))}
             </div>
@@ -168,19 +165,7 @@ export function ProductList() {
             />
           </div>
 
-          <Input
-            placeholder="Buscar por referencia..."
-            value={
-              (table
-                .getColumn("reference_number")
-                ?.getFilterValue() as string) ?? ""
-            }
-            onChange={(event) =>
-              table
-                .getColumn("reference_number")
-                ?.setFilterValue(event.target.value)
-            }
-          />
+
         </div>
 
         {/* Responsive Table Container */}

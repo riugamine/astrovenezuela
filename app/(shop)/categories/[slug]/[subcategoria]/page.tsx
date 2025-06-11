@@ -53,7 +53,7 @@ async function getSubcategoryWithProducts(
       `
       *,
       product_images (id, product_id, image_url, order_index),
-      variants:product_variants(id, size, stock)
+              variants:product_variants(id, size, stock, reference_number)
     `
     )
     .eq("category_id", subcategory.id)

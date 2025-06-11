@@ -91,8 +91,8 @@ export function ImageUploader({
     try {
       for (const file of Array.from(files)) {
         try {
-          if (file.size > 10 * 1024 * 1024) {
-            toast.error(`La imagen ${file.name} excede el límite de 10MB`);
+          if (file.size > 8 * 1024 * 1024) {
+            toast.error(`La imagen ${file.name} excede el límite de 8MB`);
             hasErrors = true;
             continue;
           }
@@ -194,7 +194,7 @@ export function ImageUploader({
       <div className="space-y-2">
         <label className="block font-medium">
           Imágenes de Detalle ({detailImages.length}/10)
-          las imagenes de detalle no pueden superar los 3 mb de tamaño, si supera el tamaño se eliminara la imagen
+          las imagenes de detalle no pueden superar los 8 mb de tamaño, si supera el tamaño se eliminara la imagen
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {detailImages.map((image, index) => (
@@ -270,7 +270,7 @@ export function ImageUploader({
                   )}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1">
-                  Máximo 10MB por imagen
+                  Máximo 8MB por imagen
                 </span>
               </label>
             </div>

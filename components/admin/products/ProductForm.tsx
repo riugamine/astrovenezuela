@@ -29,6 +29,7 @@ import { createProduct } from '@/lib/data/admin/actions/products';
 const variantSchema = z.object({
   size: z.string(),
   stock: z.number().int().positive("El stock debe ser un número entero positivo"),
+  reference_number: z.string().optional(),
 });
 
 const productImageSchema = z.object({
@@ -40,7 +41,6 @@ const createProductSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z.string().min(10, "La descripción debe tener al menos 10 caracteres").optional(),
   price: z.number().positive("El precio debe ser mayor a 0"),
-  reference_number: z.string().min(1, "El número de referencia es requerido"),
   category_id: z.string().min(1, "La categoría es requerida"),
   subcategory_id: z.string().optional(),
   main_image_url: z.string().url("La imagen principal es requerida"),
@@ -69,7 +69,6 @@ export function ProductForm({ onClose }: ProductFormProps) {
       name: "",
       description: "",
       price: 0,
-      reference_number: "",
       category_id: "",
       subcategory_id: "",
       main_image_url: "",
@@ -145,22 +144,7 @@ export function ProductForm({ onClose }: ProductFormProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="reference_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número de Referencia *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ej: REF-001"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
 
             <FormField
               control={form.control}

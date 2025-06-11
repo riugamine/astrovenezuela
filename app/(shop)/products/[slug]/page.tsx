@@ -11,7 +11,7 @@ async function getProduct(slug: string) {
     .select(`
       *,
       product_images (id, product_id, image_url, order_index),
-      variants:product_variants (id, size, stock),
+              variants:product_variants (id, size, stock, reference_number),
       category:category_id (id, name, slug)
     `)
     .eq("slug", slug.toLowerCase())
@@ -29,7 +29,7 @@ async function getProduct(slug: string) {
     .select(`
       *,
       product_images (id, product_id, image_url, order_index),
-      variants:product_variants (id, size, stock)
+      variants:product_variants (id, size, stock, reference_number)
     `)
     .eq("category_id", product.category_id)
     .eq('is_active', true)

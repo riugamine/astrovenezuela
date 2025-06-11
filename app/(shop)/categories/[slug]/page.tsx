@@ -36,7 +36,7 @@ async function getCategoryWithInitialProducts(slug: string) {
     .select(`
       *,
       product_images (id, product_id, image_url, order_index),
-      variants:product_variants(id, size, stock)
+              variants:product_variants(id, size, stock, reference_number)
     `)
     .in('category_id', categoryIds)
     .eq('is_active', true)

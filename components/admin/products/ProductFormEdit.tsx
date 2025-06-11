@@ -36,6 +36,7 @@ const editVariantSchema = z.object({
   id: z.string(),
   size: z.string(),
   stock: z.number().int().min(0, "El stock no puede ser negativo"),
+  reference_number: z.string().optional(),
   product_id: z.string(),
 });
 
@@ -53,7 +54,6 @@ const editProductSchema = z.object({
     .string()
     .min(10, "La descripción debe tener al menos 10 caracteres").optional(),
   price: z.number().positive("El precio debe ser mayor a 0"),
-  reference_number: z.string().min(1, "El número de referencia es requerido"),
   category_id: z.string().min(1, "La categoría es requerida"),
   subcategory_id: z.string().optional(),
   main_image_url: z.string().url("La imagen principal es requerida"),
@@ -195,19 +195,7 @@ export function ProductFormEdit({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="reference_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número de Referencia *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ej: REF-001" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
 
             <FormField
               control={form.control}

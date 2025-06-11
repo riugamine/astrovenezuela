@@ -29,6 +29,7 @@ export function VariantFormEdit({ variants, onChange }: VariantFormProps) {
       id: crypto.randomUUID(),
       size: '', 
       stock: 0,
+      reference_number: '',
       product_id: variants[0]?.product_id || '' // Get product_id from existing variants or empty string
     }]);
   };
@@ -71,7 +72,7 @@ export function VariantFormEdit({ variants, onChange }: VariantFormProps) {
 
       {variants.map((variant, index) => (
         <Card key={variant.id || index} className="relative">
-          <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor={`size-${index}`}>Talla</Label>
               <Select
@@ -94,6 +95,17 @@ export function VariantFormEdit({ variants, onChange }: VariantFormProps) {
                   )}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`reference-${index}`}>Referencia (Opcional)</Label>
+              <Input
+                id={`reference-${index}`}
+                type="text"
+                placeholder="Ej: REF-001-L"
+                value={variant.reference_number || ''}
+                onChange={(e) => updateVariant(index, 'reference_number', e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">

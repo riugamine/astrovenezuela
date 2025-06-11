@@ -53,9 +53,7 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
                 <p className="text-xl font-bold text-primary">
                   {formatCurrency(product.price)}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Ref: {product.reference_number}
-                </p>
+
                 <div className="prose max-w-none">
                   <p>{product.description}</p>
                 </div>
@@ -94,15 +92,20 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
                       key={variant.id}
                       className="p-4 rounded-lg border bg-card"
                     >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-sm text-muted-foreground">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-medium">
                             Talla: {variant.size}
                           </p>
+                          <p className="text-sm font-medium">
+                            Stock: {variant.stock}
+                          </p>
                         </div>
-                        <p className="text-sm font-medium">
-                          Stock: {variant.stock}
-                        </p>
+                        {variant.reference_number && (
+                          <p className="text-xs text-muted-foreground">
+                            Ref: {variant.reference_number}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}

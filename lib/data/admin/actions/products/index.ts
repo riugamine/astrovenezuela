@@ -108,7 +108,10 @@ export async function updateProduct(productId: string, productData: Partial<Prod
         // Update existing variant
         const { error } = await supabaseAdmin
           .from('product_variants')
-          .update({ stock: variant.stock })
+          .update({ 
+            stock: variant.stock,
+            reference_number: variant.reference_number || null
+          })
           .eq('id', existing.id);
 
         if (error) throw error;
@@ -119,6 +122,7 @@ export async function updateProduct(productId: string, productData: Partial<Prod
           .insert({
             size: variant.size,
             stock: variant.stock,
+            reference_number: variant.reference_number || null,
             product_id: productId
           });
 
@@ -263,6 +267,83 @@ async function compressImage(buffer: Buffer, isMainImage: boolean = false): Prom
 }
 
 /**
+ * Valida si un archivo es una imagen válida usando múltiples métodos
+ * @param file - Archivo a validar
+ * @returns true si es una imagen válida
+ */
+async function isValidImageFile(file: File): Promise<boolean> {
+  // Verificar extensión del archivo
+  const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+  const fileName = file.name.toLowerCase();
+  const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+
+  // Verificar MIME type (puede fallar en iOS)
+  const hasValidMimeType = file.type.startsWith('image/');
+
+  // Si el MIME type es válido y la extensión también, aceptar
+  if (hasValidMimeType && hasValidExtension) {
+    return true;
+  }
+
+  // En iOS, el MIME type puede estar vacío o incorrecto
+  // Usar extensión como fallback pero verificar magic bytes
+  if ((!file.type || file.type === 'application/octet-stream') && hasValidExtension) {
+    return await isValidImageByMagicBytes(file);
+  }
+
+  // Si solo tiene MIME type válido, verificar magic bytes también
+  if (hasValidMimeType) {
+    return await isValidImageByMagicBytes(file);
+  }
+
+  // Rechazar si no cumple ningún criterio
+  return false;
+}
+
+/**
+ * Verifica si un archivo es una imagen válida usando magic bytes
+ * @param file - Archivo a verificar
+ * @returns true si los magic bytes indican que es una imagen válida
+ */
+async function isValidImageByMagicBytes(file: File): Promise<boolean> {
+  try {
+    const buffer = await file.slice(0, 8).arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    
+    // JPEG: FF D8 FF
+    if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+      return true;
+    }
+    
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47 &&
+        bytes[4] === 0x0D && bytes[5] === 0x0A && bytes[6] === 0x1A && bytes[7] === 0x0A) {
+      return true;
+    }
+    
+    // WebP: RIFF ... WEBP
+    if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+      // Verificar si es WebP leyendo más bytes
+      const webpBuffer = await file.slice(8, 12).arrayBuffer();
+      const webpBytes = new Uint8Array(webpBuffer);
+      if (webpBytes[0] === 0x57 && webpBytes[1] === 0x45 && webpBytes[2] === 0x42 && webpBytes[3] === 0x50) {
+        return true;
+      }
+    }
+    
+    // GIF: GIF87a o GIF89a
+    if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
+      return true;
+    }
+    
+    return false;
+  } catch {
+    // Si no se puede leer el archivo, usar solo la extensión
+    return false;
+  }
+}
+
+/**
  * Sube una imagen a Supabase Storage
  * @param formData - FormData con el archivo y la ruta
  * @returns URL pública de la imagen
@@ -276,14 +357,14 @@ export async function uploadProductImage(formData: FormData): Promise<string> {
     throw new Error('File and path are required');
   }
 
-  // Validar tamaño del archivo (5MB para imágenes principales, 3MB para detalles)
-  const maxSize = isMainImage ? 5 * 1024 * 1024 : 3 * 1024 * 1024;
+  // Validar tamaño del archivo (10MB para imágenes principales, 8MB para detalles)
+  const maxSize = isMainImage ? 10 * 1024 * 1024 : 8 * 1024 * 1024;
   if (file.size > maxSize) {
-    throw new Error(`File size exceeds ${isMainImage ? '5MB' : '3MB'} limit`);
+    throw new Error(`File size exceeds ${isMainImage ? '10MB' : '8MB'} limit`);
   }
 
-  // Validar tipo de archivo
-  if (!file.type.startsWith('image/')) {
+  // Validar tipo de archivo con múltiples métodos para mejor compatibilidad iOS
+  if (!(await isValidImageFile(file))) {
     throw new Error('Invalid file type. Only images are allowed');
   }
 

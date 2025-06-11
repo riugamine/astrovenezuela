@@ -26,7 +26,7 @@ async function getSubcategoryWithInitialProducts(slug: string) {
     .select(`
       *,
       product_images (id, product_id, image_url, order_index),
-      variants:product_variants(id, size, stock)
+      variants:product_variants(id, size, stock, reference_number)
     `)
     .eq('category_id', subcategory.id)
     .eq('is_active', true)

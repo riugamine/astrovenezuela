@@ -1,6 +1,7 @@
 export interface CreateProductVariant {
   size: string;
   stock: number;
+  reference_number?: string;
 }
 
 export interface CreateProductImage {
@@ -13,7 +14,6 @@ export interface CreateProductData {
   name: string;
   description: string;
   price: number;
-  reference_number: string;
   category_id: string;
   subcategory_id?: string;
   main_image_url: string;
@@ -27,7 +27,6 @@ export interface ProductData {
   name: string;
   description: string;
   price: number;
-  reference_number: string;
   category_id: string;
   subcategory_id?: string;
   main_image_url: string;
@@ -44,6 +43,7 @@ export interface ProductVariant {
   id: string;
   size: string;
   stock: number;
+  reference_number?: string;
   product_id: string;
 }
 

@@ -50,7 +50,6 @@ export interface Product {
   slug: string;
   description: string;
   price: number;
-  reference_number: string;
   category_id: string;
   main_image_url: string;
   stock: number;
@@ -73,6 +72,7 @@ export interface ProductVariant {
   product_id: string;
   size: string;
   stock: number;
+  reference_number?: string;
   created_at: string;
   updated_at: string;
 }
