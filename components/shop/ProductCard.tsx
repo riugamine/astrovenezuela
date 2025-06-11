@@ -120,7 +120,7 @@ const ProductCardContent = memo(function ProductCardContent({
             {product.name}
           </h3>
           <p className="font-semibold text-primary text-base">
-            ${product.price.toLocaleString('es-VE')}
+            REF {product.price.toLocaleString('es-VE')}
           </p>
           {hasStock && availableSizes.length > 0 && (
             <div className="flex flex-wrap gap-1">

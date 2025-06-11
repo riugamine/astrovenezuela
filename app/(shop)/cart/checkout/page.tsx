@@ -204,9 +204,9 @@ export default function CheckoutPage() {
         orderNotes ? orderNotes : "Sin notas especiales",
         "",
         "💰 RESUMEN",
-        `Subtotal: $${subtotal.toFixed(2)}`,
-        shipping > 0 ? `Envío: $${shipping.toFixed(2)}` : "Envío: A calcular según zona",
-        `Total: $${total.toFixed(2)}`,
+        `Subtotal: REF ${subtotal.toFixed(2)}`,
+        shipping > 0 ? `Envío: REF ${shipping.toFixed(2)}` : "Envío: A calcular según zona",
+        `Total: REF ${total.toFixed(2)}`,
         "",
         "📋 DETALLES DE ENVÍO Y PAGO",
         `Envío: ${selectedShipping}`,
@@ -228,7 +228,7 @@ export default function CheckoutPage() {
           "🛍️ RESUMEN DE PEDIDO",
           `Cliente: ${customerInfo.name} ${customerInfo.lastName}`,
           `Productos: ${totalItems}`,
-          `Total: $${total.toFixed(2)}`,
+          `Total: REF ${total.toFixed(2)}`,
           "",
           "Por favor, contáctenos para ver los detalles completos.",
           `ID de Orden: ${createdOrder.id}`
@@ -407,7 +407,7 @@ export default function CheckoutPage() {
                       </div>
                       <span className="font-medium">
                         {method.price > 0
-                          ? `$${method.price.toLocaleString("es-VE")}`
+                          ? `REF${method.price.toLocaleString("es-VE")}`
                           : "Gratis"}
                       </span>
                     </div>
@@ -486,11 +486,11 @@ export default function CheckoutPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
-              <span>${subtotal.toLocaleString("es-VE")}</span>
+              <span>REF {subtotal.toLocaleString("es-VE")}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Envío</span>
-              <span>${shipping.toLocaleString("es-VE")}</span>
+              <span>REF {shipping.toLocaleString("es-VE")}</span>
             </div>
           </div>
 
@@ -498,7 +498,7 @@ export default function CheckoutPage() {
 
           <div className="flex justify-between font-medium text-lg">
             <span>Total</span>
-            <span>${total.toLocaleString("es-VE")}</span>
+            <span>REF {total.toLocaleString("es-VE")}</span>
           </div>
 
           <Button

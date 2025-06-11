@@ -167,7 +167,7 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total Estimado</span>
-                  <span>${total.toLocaleString("es-VE")}</span>
+                  <span>REF {total.toLocaleString("es-VE")}</span>
                 </div>
               </div>
 

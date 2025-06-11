@@ -51,7 +51,7 @@ const editProductSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z
     .string()
-    .min(10, "La descripción debe tener al menos 10 caracteres"),
+    .min(10, "La descripción debe tener al menos 10 caracteres").optional(),
   price: z.number().positive("El precio debe ser mayor a 0"),
   reference_number: z.string().min(1, "El número de referencia es requerido"),
   category_id: z.string().min(1, "La categoría es requerida"),
@@ -129,6 +129,7 @@ export function ProductFormEdit({
 
       const submitData = {
         ...data,
+        description: data.description || "",
         stock: totalStock,
         updated_at: new Date().toISOString(),
       };

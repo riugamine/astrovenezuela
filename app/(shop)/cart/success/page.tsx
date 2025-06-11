@@ -112,7 +112,7 @@ function OrderContent() {
                       Talla: {item.variant.size} | Cantidad: {item.quantity}
                     </p>
                     <p className="font-medium text-green-600 mt-1">
-                      ${item.price}
+                      REF {item.price}
                     </p>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ function OrderContent() {
           <div className="pt-4 border-t">
             <p className="text-xl font-semibold text-right">
               Total:{" "}
-              <span className="text-green-600">${order.total_amount}</span>
+              <span className="text-green-600">REF {order.total_amount}</span>
             </p>
           </div>
         </div>

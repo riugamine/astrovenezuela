@@ -64,7 +64,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       <div>
         <h1 className="text-3xl font-bold">{product.name}</h1>
         <p className="text-2xl font-semibold mt-2">
-          ${product.price.toLocaleString("en-US")}
+          REF {product.price.toLocaleString("en-US")}
         </p>
       </div>
 
