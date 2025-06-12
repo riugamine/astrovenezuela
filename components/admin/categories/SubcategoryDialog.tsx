@@ -32,14 +32,13 @@ const subcategorySchema = z.object({
       message: "El nombre solo puede contener letras y espacios"
     }),
   description: z.string()
-    .min(10, "La descripción debe tener al menos 10 caracteres")
+    .min(0, "La descripción debe tener al menos 0 caracteres")
     .optional(),
     parent_id: z.string().optional(),
   is_active: z.boolean().optional(),
   banner_url: z.string()
-   .min(10, "La URL del banner debe tener al menos 10 caracteres")
+   .min(0, "La URL del banner debe tener al menos 0 caracteres")
    .optional(),
-   subcategory: z.string()
 });
 
 type CategoryFormData = z.infer<typeof subcategorySchema>;
@@ -63,7 +62,6 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
     onSubmit({
       ...data,
       parent_id: parentCategory?.id,
-      subcategory: data.name
     });
     reset();
   };
