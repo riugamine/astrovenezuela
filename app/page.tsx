@@ -39,7 +39,6 @@ export default async function Home() {
   return (
     <ShopLayout>
       {/* Hero Section */}
-      {/* Hero Section */}
       <section className="relative min-h-screen overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
@@ -60,8 +59,11 @@ export default async function Home() {
               <span className="inline-block text-purple-400 text-base md:text-lg font-medium tracking-wider uppercase bg-purple-950/50 px-4 py-2 rounded-full">
                 Nueva Colección
               </span>
-
-              <h1 className="font-exo text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white leading-tight">
+              
+              <h1 className="font-exo text-4xl font-bold text-white leading-tight md:hidden">
+                Brilla como una estrella
+              </h1>
+              <h1 className="hidden md:block font-exo text-7xl lg:text-8xl xl:text-9xl font-bold text-white leading-tight">
                 <HyperText>Brilla como una estrella</HyperText>
               </h1>
 
