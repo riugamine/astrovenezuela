@@ -2,8 +2,7 @@
 
 import { ProductFilters } from "./ProductFilters";
 import { InfiniteProductsGrid } from "./InfiniteProductsGrid";
-import { ProductGridSkeleton } from "./ProductGrid";
-import { Suspense, useEffect } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Category } from "@/lib/types/database.types";
 import { ProductWithDetails } from "@/lib/data/products";
 import { useFilterStore } from "@/lib/store/useFilterStore";
@@ -22,24 +21,39 @@ export function ProductsWrapper({
   initialURLParams 
 }: ProductsWrapperProps) {
   const setFiltersFromURL = useFilterStore((state) => state.setFiltersFromURL);
+  const [filtersReady, setFiltersReady] = useState(false);
+  const [forcedCategories, setForcedCategories] = useState<string[] | undefined>(undefined);
 
   // Initialize filters from URL parameters
   useEffect(() => {
+    let urlParams: URLSearchParams | undefined = undefined;
     if (initialURLParams) {
-      setFiltersFromURL(initialURLParams);
-    } else if (typeof window !== 'undefined') {
-      // Fallback: read from current URL if no initial params provided
-      const urlParams = new URLSearchParams(window.location.search);
+      urlParams = initialURLParams instanceof URLSearchParams
+        ? initialURLParams
+        : new URLSearchParams(initialURLParams as any);
       setFiltersFromURL(urlParams);
+      const categoriesParam = urlParams.get('categories');
+      setForcedCategories(categoriesParam ? categoriesParam.split(',') : undefined);
+      setFiltersReady(true);
+    } else if (typeof window !== 'undefined') {
+      urlParams = new URLSearchParams(window.location.search);
+      setFiltersFromURL(urlParams);
+      const categoriesParam = urlParams.get('categories');
+      setForcedCategories(categoriesParam ? categoriesParam.split(',') : undefined);
+      setFiltersReady(true);
     }
   }, [initialURLParams, setFiltersFromURL]);
+
+  if (!filtersReady) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <ProductFilters categories={categories} />
       <main>
-        <Suspense fallback={<ProductGridSkeleton />}>
-          <InfiniteProductsGrid initialProducts={initialProducts} queryKey={queryKey} />
+        <Suspense fallback={null}>
+          <InfiniteProductsGrid initialProducts={initialProducts} queryKey={queryKey} forcedCategories={forcedCategories} />
         </Suspense>
       </main>
     </div>

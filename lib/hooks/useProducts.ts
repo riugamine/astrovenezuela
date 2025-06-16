@@ -133,13 +133,16 @@ async function fetchProductsPage(page: number, options: FetchProductsOptions) {
   };
 }
 
-export function useProducts(initialData?: ProductWithDetails[], queryKey: string[] = ['products']) {
+export function useProducts(initialData?: ProductWithDetails[], queryKey: string[] = ['products'], forcedCategories?: string[]) {
   const { selectedCategories, priceRange, sortBy, selectedSizes } = useFilterStore();
 
-  const finalQueryKey = [...queryKey, { filters: { selectedCategories, priceRange, sortBy, selectedSizes } }];
+  // Si forcedCategories está presente, usarlo en vez del store
+  const categoriesToUse = forcedCategories && forcedCategories.length > 0 ? forcedCategories : selectedCategories;
+
+  const finalQueryKey = [...queryKey, { filters: { categoriesToUse, priceRange, sortBy, selectedSizes } }];
   
   // Check if any filters are applied
-  const hasFilters = selectedCategories.length > 0 || 
+  const hasFilters = categoriesToUse.length > 0 || 
                     selectedSizes.length > 0 || 
                     sortBy !== 'newest' || 
                     priceRange[0] !== 0 || 
@@ -148,7 +151,7 @@ export function useProducts(initialData?: ProductWithDetails[], queryKey: string
   return useInfiniteQuery({
     queryKey: finalQueryKey,
     queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam, {
-      categories: selectedCategories,
+      categories: categoriesToUse,
       priceRange,
       sortBy,
       sizes: selectedSizes

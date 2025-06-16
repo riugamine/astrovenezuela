@@ -13,7 +13,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   // Fetch data on the server
   const [categories, initialProducts] = await Promise.all([
     getCategories(),
-    fetchProducts(1)
+    fetchProducts(1, params.categories ? [params.categories as string] : undefined)
   ]);
 
   // Convert URL parameters to filter format

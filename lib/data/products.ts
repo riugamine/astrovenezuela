@@ -17,13 +17,14 @@ export const PRODUCTS_PER_PAGE = 12;
 /**
  * Fetches paginated products with their details
  * @param page Current page number (starts from 1)
+ * @param categoryIds Optional array of category IDs to filter by
  * @returns Promise with products and hasMore flag
  */
-export async function fetchProducts(page: number) {
+export async function fetchProducts(page: number, categoryIds?: string[]) {
   const from = (page - 1) * PRODUCTS_PER_PAGE;
   const to = from + PRODUCTS_PER_PAGE - 1;
 
-  const { data, error, count } = await supabaseClient
+  let query = supabaseClient
     .from("products")
     .select(
       `
@@ -35,6 +36,13 @@ export async function fetchProducts(page: number) {
     )
     .range(from, to)
     .eq("is_active", true);
+
+  // Apply category filter if provided
+  if (categoryIds && categoryIds.length > 0) {
+    query = query.in('category_id', categoryIds);
+  }
+
+  const { data, error, count } = await query.range(from, to);
 
   if (error) throw error;
 

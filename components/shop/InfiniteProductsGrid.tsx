@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 interface InfiniteProductsGridProps {
   initialProducts?: ProductWithDetails[];
   queryKey: string[];
+  forcedCategories?: string[];
 }
 
 const ProductList = memo(function ProductList({ products }: { products: ProductWithDetails[] }) {
@@ -47,7 +48,7 @@ const ProductGridSkeleton = memo(function ProductGridSkeleton() {
   );
 });
 
-export function InfiniteProductsGrid({ initialProducts, queryKey }: InfiniteProductsGridProps) {
+export function InfiniteProductsGrid({ initialProducts, queryKey, forcedCategories }: InfiniteProductsGridProps) {
   const queryClient = useQueryClient();
   const { ref, inView } = useInView({
     threshold: 0,
@@ -85,7 +86,8 @@ export function InfiniteProductsGrid({ initialProducts, queryKey }: InfiniteProd
   } = useProducts(
     // Only pass initialProducts when no filters are applied
     hasFilters ? undefined : initialProducts, 
-    queryKey
+    queryKey,
+    forcedCategories
   );
 
   const handleFetchNextPage = useCallback(() => {
