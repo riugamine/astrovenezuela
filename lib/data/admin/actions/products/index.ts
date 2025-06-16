@@ -277,71 +277,17 @@ async function isValidImageFile(file: File): Promise<boolean> {
   const fileName = file.name.toLowerCase();
   const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
 
-  // Verificar MIME type (puede fallar en iOS)
-  const hasValidMimeType = file.type.startsWith('image/');
 
   // Si el MIME type es válido y la extensión también, aceptar
-  if (hasValidMimeType && hasValidExtension) {
+  if (hasValidExtension) {
     return true;
   }
 
-  // En iOS, el MIME type puede estar vacío o incorrecto
-  // Usar extensión como fallback pero verificar magic bytes
-  if ((!file.type || file.type === 'application/octet-stream') && hasValidExtension) {
-    return await isValidImageByMagicBytes(file);
-  }
-
-  // Si solo tiene MIME type válido, verificar magic bytes también
-  if (hasValidMimeType) {
-    return await isValidImageByMagicBytes(file);
-  }
 
   // Rechazar si no cumple ningún criterio
   return false;
 }
 
-/**
- * Verifica si un archivo es una imagen válida usando magic bytes
- * @param file - Archivo a verificar
- * @returns true si los magic bytes indican que es una imagen válida
- */
-async function isValidImageByMagicBytes(file: File): Promise<boolean> {
-  try {
-    const buffer = await file.slice(0, 8).arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    
-    // JPEG: FF D8 FF
-    if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
-      return true;
-    }
-    
-    // PNG: 89 50 4E 47 0D 0A 1A 0A
-    if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47 &&
-        bytes[4] === 0x0D && bytes[5] === 0x0A && bytes[6] === 0x1A && bytes[7] === 0x0A) {
-      return true;
-    }
-    
-    // WebP: RIFF ... WEBP
-    if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
-      // Verificar si es WebP leyendo más bytes
-      const webpBuffer = await file.slice(8, 12).arrayBuffer();
-      const webpBytes = new Uint8Array(webpBuffer);
-      if (webpBytes[0] === 0x57 && webpBytes[1] === 0x45 && webpBytes[2] === 0x42 && webpBytes[3] === 0x50) {
-        return true;
-      }
-    }
-    
-    // GIF: GIF87a o GIF89a
-    if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
-      return true;
-    }
-    
-    return false;
-  } catch {
-    // Si no se puede leer el archivo, usar solo la extensión
-    return false;
-  }
-}
 
 /**
  * Sube una imagen a Supabase Storage
