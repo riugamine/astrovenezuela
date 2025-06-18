@@ -68,7 +68,6 @@ export async function registerUser(data: RegisterData): Promise<RegisterResponse
     };
 
   } catch (err) {
-    console.error('Authentication error:', err);
     throw err;
   }
 }

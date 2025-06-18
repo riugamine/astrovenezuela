@@ -95,7 +95,6 @@ function validateOAuthState(state: string): OAuthState | null {
     
     return validatedState;
   } catch (error) {
-    console.error('OAuth state validation failed:', error);
     return null;
   }
 }
@@ -144,7 +143,6 @@ export async function initiateOAuth({ provider, redirectTo }: OAuthInitiateParam
     });
     
     if (error) {
-      console.error(`OAuth initiation failed for ${provider}:`, error);
       throw new Error(`Failed to initiate ${provider} authentication`);
     }
     
@@ -155,7 +153,6 @@ export async function initiateOAuth({ provider, redirectTo }: OAuthInitiateParam
     
     throw new Error('No OAuth URL received');
   } catch (error) {
-    console.error('OAuth initiation error:', error);
     throw error;
   }
 }
@@ -168,7 +165,6 @@ export async function handleOAuthCallback({ code, state, error, error_descriptio
   try {
     // Handle OAuth errors first
     if (error) {
-      console.error('OAuth provider error:', error, error_description);
       throw new Error(`OAuth authentication failed: ${error_description || error}`);
     }
     
@@ -198,7 +194,6 @@ export async function handleOAuthCallback({ code, state, error, error_descriptio
     const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
     
     if (sessionError) {
-      console.error('Session exchange failed:', sessionError);
       throw new Error('Failed to create authenticated session');
     }
     
@@ -218,7 +213,6 @@ export async function handleOAuthCallback({ code, state, error, error_descriptio
     };
     
   } catch (error) {
-    console.error('OAuth callback error:', error);
     throw error;
   }
 }
@@ -272,7 +266,6 @@ export async function initiateGoogleOAuth() {
     });
     
     if (error) {
-      console.error('OAuth initiation failed:', error);
       return { success: false, error: error.message };
     }
     
@@ -283,7 +276,6 @@ export async function initiateGoogleOAuth() {
     return { success: false, error: 'No OAuth URL received' };
     
   } catch (error) {
-    console.error('OAuth initiation error:', error);
     return { success: false, error: 'Failed to initiate OAuth' };
   }
 }
@@ -303,7 +295,6 @@ export async function validateSession(): Promise<AuthSession> {
       return { user: null, session: null, isValid: false };
     }
     
-    console.log('✅ Session validation successful:', { userId: user.id, email: user.email });
     
     return {
       user,
@@ -313,7 +304,6 @@ export async function validateSession(): Promise<AuthSession> {
     };
     
   } catch (error) {
-    console.error('❌ Session validation error:', error);
     return { user: null, session: null, isValid: false };
   }
 }
@@ -326,6 +316,5 @@ export async function clearSession() {
     const supabase = await createServerSupabaseClient();
     await supabase.auth.signOut();
   } catch (error) {
-    console.error('Error clearing session:', error);
   }
 } 
