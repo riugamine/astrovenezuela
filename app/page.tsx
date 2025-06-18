@@ -100,7 +100,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
-     {/* Value Proposition Section */}
+     {/* Value Proposition Section 
      <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -178,7 +178,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
+    */}
       {/* Categories Section */}
       <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
