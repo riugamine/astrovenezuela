@@ -9,13 +9,7 @@ import { HyperText } from "@/components/magicui/hyper-text";
 import { Category } from "@/lib/types/database.types";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
-import {
-  faGem,
-  faPalette,
-  faHandHoldingHeart,
-  faShieldHalved,
-} from "@fortawesome/free-solid-svg-icons";
-import { Card } from "@/components/ui/card";
+
 import Image from 'next/image';
 // Fetch categories server-side
 async function getCategories() {
