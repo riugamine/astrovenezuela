@@ -95,6 +95,7 @@ function validateOAuthState(state: string): OAuthState | null {
     
     return validatedState;
   } catch (error) {
+    console.error('Error validating OAuth state:', error);
     return null;
   }
 }
@@ -153,6 +154,7 @@ export async function initiateOAuth({ provider, redirectTo }: OAuthInitiateParam
     
     throw new Error('No OAuth URL received');
   } catch (error) {
+    console.error('Error initiating OAuth:', error);
     throw error;
   }
 }
@@ -266,6 +268,7 @@ export async function initiateGoogleOAuth() {
     });
     
     if (error) {
+      console.error('Error initiating OAuth:', error);
       return { success: false, error: error.message };
     }
     
@@ -273,10 +276,12 @@ export async function initiateGoogleOAuth() {
       return { success: true, url: data.url };
     }
     
+    console.error('No OAuth URL received');
     return { success: false, error: 'No OAuth URL received' };
     
   } catch (error) {
-    return { success: false, error: 'Failed to initiate OAuth' };
+    console.error('Error initiating OAuth:', error);
+    return { success: false, error: 'Failed to initiate OAuth', details: error };
   }
 }
 
@@ -304,6 +309,7 @@ export async function validateSession(): Promise<AuthSession> {
     };
     
   } catch (error) {
+    console.error('Error validating session:', error);
     return { user: null, session: null, isValid: false };
   }
 }
@@ -316,5 +322,6 @@ export async function clearSession() {
     const supabase = await createServerSupabaseClient();
     await supabase.auth.signOut();
   } catch (error) {
+    console.error('Error clearing session:', error);
   }
 } 

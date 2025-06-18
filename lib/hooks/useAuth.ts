@@ -68,6 +68,7 @@ export async function registerUser(data: RegisterData): Promise<RegisterResponse
     };
 
   } catch (err) {
+    console.error('Error in registerUser:', err);
     throw err;
   }
 }
