@@ -225,74 +225,56 @@ export async function toggleProductStatus(productId: string, isActive: boolean):
   if (error) throw error;
 }
 
-/**
- * Comprime una imagen antes de subirla
- * @param buffer - Buffer de la imagen a comprimir
- * @returns Buffer comprimido
- */
-async function compressImage(buffer: Buffer, isMainImage: boolean = false): Promise<Buffer> {
-  try {
-    let imageProcessor = sharp(buffer);
-    
-    // Configuración específica según el tipo de imagen
-    if (isMainImage) {
-      imageProcessor = imageProcessor
-        .resize(800, 600, {
-          fit: 'inside',
-          withoutEnlargement: true
-        })
-        .jpeg({
-          quality: 100,
-          progressive: true,
-          mozjpeg: true // Mejor compresión
-        });
-    } else {
-      imageProcessor = imageProcessor
-        .resize(600, 500, {
-          fit: 'inside',
-          withoutEnlargement: true
-        })
-        .jpeg({
-          quality: 85,
-          progressive: true,
-          mozjpeg: true
-        });
-    }
-
-    return await imageProcessor.toBuffer();
-  } catch (error) {
-    console.error('Error compressing image:', error);
-    return buffer;
-  }
-}
+// Valid extensions and MIME types
+const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const validMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 /**
- * Valida si un archivo es una imagen válida usando múltiples métodos
- * @param file - Archivo a validar
- * @returns true si es una imagen válida
+ * Validates if a file is an allowed image (simple check for admin use)
  */
 async function isValidImageFile(file: File): Promise<boolean> {
-  // Verificar extensión del archivo
-  const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
   const fileName = file.name.toLowerCase();
   const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+  const hasValidMime = validMimeTypes.includes(file.type);
 
-
-  // Si el MIME type es válido y la extensión también, aceptar
-  if (hasValidExtension) {
-    return true;
-  }
-
-
-  // Rechazar si no cumple ningún criterio
-  return false;
+  // iOS sometimes sends empty MIME, so allow if extension is valid
+  return hasValidExtension || hasValidMime;
 }
 
+/**
+ * Compresses and converts image to JPEG or WebP with high quality
+ */
+async function compressImage(buffer: Buffer, isMainImage: boolean = false, mimeType: string = 'image/jpeg'): Promise<{ buffer: Buffer, ext: string, contentType: string }> {
+  try {
+    let imageProcessor = sharp(buffer);
+    let ext = 'jpg';
+    let contentType = 'image/jpeg';
+
+    // Detect if original is webp and keep it if possible
+    if (mimeType === 'image/webp') {
+      ext = 'webp';
+      contentType = 'image/webp';
+      imageProcessor = imageProcessor.webp({ quality: 95 });
+    } else {
+      imageProcessor = imageProcessor.jpeg({ quality: 95, progressive: true, mozjpeg: true });
+    }
+
+    // Resize
+    if (isMainImage) {
+      imageProcessor = imageProcessor.resize(1920, 1440, { fit: 'inside', withoutEnlargement: true });
+    } else {
+      imageProcessor = imageProcessor.resize(1200, 1200, { fit: 'inside', withoutEnlargement: true });
+    }
+
+    return { buffer: await imageProcessor.toBuffer(), ext, contentType };
+  } catch (error) {
+    console.error('Error compressing image:', error);
+    return { buffer, ext: 'jpg', contentType: 'image/jpeg' };
+  }
+}
 
 /**
- * Sube una imagen a Supabase Storage
- * @param formData - FormData con el archivo y la ruta
- * @returns URL pública de la imagen
+ * Uploads a product image to Supabase Storage
  */
 export async function uploadProductImage(formData: FormData): Promise<string> {
   const file = formData.get('file') as File;
@@ -303,29 +285,28 @@ export async function uploadProductImage(formData: FormData): Promise<string> {
     throw new Error('File and path are required');
   }
 
-  // Validar tamaño del archivo (10MB para imágenes principales, 8MB para detalles)
-  const maxSize = isMainImage ? 10 * 1024 * 1024 : 8 * 1024 * 1024;
+  // New general size limit: 50MB
+  const maxSize = 50 * 1024 * 1024;
   if (file.size > maxSize) {
-    throw new Error(`File size exceeds ${isMainImage ? '10MB' : '8MB'} limit`);
+    throw new Error('File size exceeds 50MB limit');
   }
 
-  // Validar tipo de archivo con múltiples métodos para mejor compatibilidad iOS
+  // Simple validation for admin context
   if (!(await isValidImageFile(file))) {
     throw new Error('Invalid file type. Only images are allowed');
   }
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const compressedBuffer = await compressImage(buffer, isMainImage);
-    
-    const fileExt = 'jpg'; // Forzar formato JPEG para mejor compresión
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const { buffer: compressedBuffer, ext, contentType } = await compressImage(buffer, isMainImage, file.type);
+
+    const fileName = `${crypto.randomUUID()}.${ext}`;
     const filePath = `${path}/${fileName}`;
 
     const { data, error } = await supabaseAdmin.storage
       .from('products')
       .upload(filePath, compressedBuffer, {
-        contentType: 'image/jpeg',
+        contentType,
         cacheControl: '3600',
         upsert: false
       });

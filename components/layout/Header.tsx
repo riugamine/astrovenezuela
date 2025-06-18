@@ -123,7 +123,17 @@ const Header = () => {
   });
 
   // Organize categories into a hierarchy
-  const mainCategories = categories.filter(cat => !cat.parent_id);
+  const categoryOrder = ['mujer', 'hombre', 'unisex', 'implementos deportivos'];
+  const mainCategories = categories
+    .filter(cat => !cat.parent_id)
+    .sort((a, b) => {
+      const aIndex = categoryOrder.findIndex(c => c.toLowerCase() === a.name.toLowerCase());
+      const bIndex = categoryOrder.findIndex(c => c.toLowerCase() === b.name.toLowerCase());
+      if (aIndex === -1 && bIndex === -1) return a.name.localeCompare(b.name);
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
   const getSubcategories = (parentId: string) => 
     categories.filter(cat => cat.parent_id === parentId);
   const hasSubcategories = (categoryId: string) => 
@@ -312,7 +322,7 @@ const Header = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-sm font-medium text-white">
+                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-sm font-medium text-white">
                       {user.email?.[0].toUpperCase()}
                     </div>
                   </Button>

@@ -46,7 +46,7 @@ export function CategoriesCarousel({ categories }: CategoriesCarouselProps) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
                   <div className="absolute bottom-0 w-full p-4">
                     <h3 className="font-exo text-lg md:text-xl font-bold text-white group-hover:translate-y-[-2px] transition-transform">
-                      {category.name}
+                      {category.name.toLocaleUpperCase()}
                     </h3>
                   </div>
                 </div>

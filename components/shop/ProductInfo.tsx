@@ -145,11 +145,13 @@ export function ProductInfo({ product }: ProductInfoProps) {
             <FontAwesomeIcon icon={faPlus} />
           </Button>
         </div>
+        {/*
         {selectedSize && (
           <p className="text-sm text-muted-foreground">
             Stock disponible: {sizeVariants[selectedSize]?.stock}
           </p>
         )}
+        */}
       </div>
 
       <Button
