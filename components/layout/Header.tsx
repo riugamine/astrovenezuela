@@ -179,7 +179,7 @@ const Header = () => {
                           key={category.id}
                           item={{
                             title: category.name,
-                            href: `/products?categories=${category.id}`,
+                            href: `/categories/${category.slug}`,
                             description: category.description,
                           }}
                         >
@@ -187,7 +187,7 @@ const Header = () => {
                             {getSubcategories(category.id).map(subcat => (
                               <Link
                                 key={subcat.id}
-                                href={`/products?categories=${subcat.id}`}
+                                href={`/categories/${category.slug}/${subcat.slug}`}
                                 className="block py-2 hover:text-primary transition-colors"
                               >
                                 {subcat.name}
@@ -198,7 +198,7 @@ const Header = () => {
                       ) : (
                         <AccordionItem key={category.id} value={category.id} className="border-none">
                           <Link 
-                            href={`/products?categories=${category.id}`}
+                            href={`/categories/${category.slug}`}
                             className="flex items-center gap-2 py-2 hover:text-primary transition-colors"
                           >
                             <span>{category.name}</span>
@@ -257,7 +257,7 @@ const Header = () => {
                           <NavigationItemCard
                             item={{
                               title: category.name,
-                              href: `/products?categories=${category.id}`,
+                              href: `/categories/${category.slug}`,
                               description: category.description,
                               
                             }}
@@ -266,7 +266,7 @@ const Header = () => {
                             {getSubcategories(category.id).map(subcat => (
                               <Link
                                 key={subcat.id}
-                                href={`/products?categories=${subcat.id}`}
+                                href={`/categories/${category.slug}/${subcat.slug}`}
                                 className="p-3 hover:bg-secondary/10 rounded-lg transition-colors"
                               >
                                 {subcat.name}
@@ -281,7 +281,7 @@ const Header = () => {
                       <NavigationLink
                         item={{
                           title: category.name,
-                          href: `/products?categories=${category.id}`,
+                          href: `/categories/${category.slug}`,
                           description: category.description,
                           
                         }}

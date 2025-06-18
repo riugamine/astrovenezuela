@@ -12,17 +12,19 @@ interface ProductsWrapperProps {
   initialProducts: ProductWithDetails[];
   queryKey: string[];
   initialURLParams?: URLSearchParams;
+  forcedCategories?: string[];
 }
 
 export function ProductsWrapper({ 
   categories, 
   initialProducts, 
   queryKey, 
-  initialURLParams 
+  initialURLParams,
+  forcedCategories: propForcedCategories
 }: ProductsWrapperProps) {
   const setFiltersFromURL = useFilterStore((state) => state.setFiltersFromURL);
   const [filtersReady, setFiltersReady] = useState(false);
-  const [forcedCategories, setForcedCategories] = useState<string[] | undefined>(undefined);
+  const [forcedCategories, setForcedCategories] = useState<string[] | undefined>(propForcedCategories);
 
   // Initialize filters from URL parameters
   useEffect(() => {
@@ -33,16 +35,26 @@ export function ProductsWrapper({
         : new URLSearchParams(initialURLParams as any);
       setFiltersFromURL(urlParams);
       const categoriesParam = urlParams.get('categories');
-      setForcedCategories(categoriesParam ? categoriesParam.split(',') : undefined);
+      // Use prop forcedCategories if provided, otherwise use URL param
+      const finalForcedCategories = propForcedCategories || (categoriesParam ? categoriesParam.split(',') : undefined);
+      setForcedCategories(finalForcedCategories);
       setFiltersReady(true);
     } else if (typeof window !== 'undefined') {
       urlParams = new URLSearchParams(window.location.search);
       setFiltersFromURL(urlParams);
       const categoriesParam = urlParams.get('categories');
-      setForcedCategories(categoriesParam ? categoriesParam.split(',') : undefined);
+      // Use prop forcedCategories if provided, otherwise use URL param
+      const finalForcedCategories = propForcedCategories || (categoriesParam ? categoriesParam.split(',') : undefined);
+      setForcedCategories(finalForcedCategories);
+      setFiltersReady(true);
+    } else if (propForcedCategories) {
+      // If no URL params but we have prop forcedCategories, set them directly
+      setForcedCategories(propForcedCategories);
+      setFiltersReady(true);
+    } else {
       setFiltersReady(true);
     }
-  }, [initialURLParams, setFiltersFromURL]);
+  }, [initialURLParams, setFiltersFromURL, propForcedCategories]);
 
   if (!filtersReady) {
     return null;

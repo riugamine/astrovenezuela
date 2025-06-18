@@ -20,17 +20,14 @@ async function getCategoryWithInitialProducts(slug: string) {
 
   let categoryIds = [category.id];
 
-  if (category.parent_id === null) {
-    const { data: subcategories } = await supabaseClient
-      .from('categories')
-      .select('id')
-      .eq('parent_id', category.id)
-      .eq('is_active', true);
-    
-    if (subcategories?.length) {
-      categoryIds = [...categoryIds, ...subcategories.map(sub => sub.id)];
-    }
+  // Check if this category has subcategories (is a parent category)
+  // We check if subcategories array exists and has items
+  if (category.subcategories && category.subcategories.length > 0) {
+    // Add all subcategory IDs to the filter
+    const subcategoryIds = category.subcategories.map((sub: any) => sub.id);
+    categoryIds = [...categoryIds, ...subcategoryIds];
   }
+
   const { data: products, error: productsError } = await supabaseClient
     .from('products')
     .select(`
@@ -63,6 +60,14 @@ export default async function CategoryPage({ params }: PageParams) {
 
   const { category, products } = data;
 
+  // Prepare forcedCategories array for infinite scroll
+  // Include the parent category and all its subcategories
+  const forcedCategories = [category.id];
+  if (category.subcategories && category.subcategories.length > 0) {
+    const subcategoryIds = category.subcategories.map((sub: any) => sub.id);
+    forcedCategories.push(...subcategoryIds);
+  }
+
   // Obtener todas las categorías para los filtros
   const categories = await getCategories();
 
@@ -73,11 +78,6 @@ export default async function CategoryPage({ params }: PageParams) {
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
           {category.name}
         </h1>
-        {category.description && (
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            {category.description}
-          </p>
-        )}
       </div>
 
       {/* ProductsWrapper con filtros y grid infinito */}
@@ -85,6 +85,7 @@ export default async function CategoryPage({ params }: PageParams) {
         categories={categories} 
         initialProducts={products}
         queryKey={[`category-${category.id}-products`]}
+        forcedCategories={forcedCategories}
       />
     </div>
   );

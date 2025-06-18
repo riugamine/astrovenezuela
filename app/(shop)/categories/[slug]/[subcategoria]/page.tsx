@@ -9,9 +9,6 @@ async function getSubcategoryWithProducts(
   categorySlug: string,
   subcategorySlug: string
 ) {
-  // Primero, veamos qué valores estamos recibiendo
-  console.log("Buscando:", { categorySlug, subcategorySlug });
-
   // Intentemos primero encontrar la categoría padre
   const { data: parentCategory, error: parentError } = await supabaseClient
     .from("categories")
@@ -20,9 +17,7 @@ async function getSubcategoryWithProducts(
     .eq("is_active", true)
     .single();
 
-  console.log("Categoría padre encontrada:", parentCategory);
   if (parentError || !parentCategory) {
-    console.log("Error o no se encontró la categoría padre:", parentError);
     return null;
   }
 
@@ -40,9 +35,7 @@ async function getSubcategoryWithProducts(
     .eq("is_active", true)
     .single();
 
-  console.log("Subcategoría encontrada:", subcategory);
   if (subcategoryError || !subcategory) {
-    console.log("Error o no se encontró la subcategoría:", subcategoryError);
     return null;
   }
 
@@ -60,9 +53,7 @@ async function getSubcategoryWithProducts(
     .eq("is_active", true)
     .range(0, PRODUCTS_PER_PAGE - 1);
 
-  console.log("Productos encontrados:", products?.length || 0);
   if (productsError) {
-    console.log("Error al buscar productos:", productsError);
     return null;
   }
 
@@ -88,29 +79,26 @@ export default async function SubcategoryPage({ params }: PageParams) {
   }
 
   const { subcategory, products } = data;
+  
+  // Prepare forcedCategories array for infinite scroll
+  // Only include the subcategory ID since we only want products from this specific subcategory
+  const forcedCategories = [subcategory.id];
+
   const categories = await getCategories();
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center space-y-4">
-        <div className="text-sm text-muted-foreground">
-          <span>{subcategory.parent?.name}</span> /{" "}
-          <span className="text-foreground">{subcategory.name}</span>
-        </div>
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
-          {subcategory.name}
+          {subcategory.name.toLocaleUpperCase()}
         </h1>
-        {subcategory.description && (
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            {subcategory.description}
-          </p>
-        )}
       </div>
 
       <ProductsWrapper
         categories={categories}
         initialProducts={products}
         queryKey={[`subcategory-${subcategory.id}-products`]}
+        forcedCategories={forcedCategories}
       />
     </div>
   );
