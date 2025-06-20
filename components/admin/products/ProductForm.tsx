@@ -86,7 +86,13 @@ export function ProductForm({ onClose }: ProductFormProps) {
         ...data,
         description: data.description || "",
         stock: totalStock,
-        slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+        slug: data.name
+          .trim() // Remove leading/trailing spaces
+          .toLowerCase() // Convert to lowercase
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents/diacritics
+          .replace(/[^a-z0-9\s-]/g, '') // Remove special chars except spaces and hyphens
+          .replace(/\s+/g, '-') // Replace spaces with hyphens
+          .replace(/-+/g, '-'), // Replace multiple hyphens with single hyphen
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };

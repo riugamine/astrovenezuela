@@ -131,6 +131,16 @@ export function ProductFormEdit({
         ...data,
         description: data.description || "",
         stock: totalStock,
+        // Update slug if name has changed
+        ...(data.name !== initialData.name && {
+          slug: data.name
+            .trim() // Remove leading/trailing spaces
+            .toLowerCase() // Convert to lowercase
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents/diacritics
+            .replace(/[^a-z0-9\s-]/g, '') // Remove special chars except spaces and hyphens
+            .replace(/\s+/g, '-') // Replace spaces with hyphens
+            .replace(/-+/g, '-'), // Replace multiple hyphens with single hyphen
+        }),
         updated_at: new Date().toISOString(),
       };
 
