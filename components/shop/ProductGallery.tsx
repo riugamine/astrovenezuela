@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Product, ProductDetailImage } from "@/lib/types/database.types";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface ProductGalleryProps {
@@ -85,6 +85,8 @@ export function ProductGallery({ product }: ProductGalleryProps) {
               </button>
             ))}
           </div>
+          <ScrollBar orientation="horizontal" className="md:hidden" />
+          <ScrollBar orientation="vertical" className="hidden md:block" />
         </ScrollArea>
       </div>
     </div>
