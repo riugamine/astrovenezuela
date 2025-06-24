@@ -29,8 +29,6 @@ export function ProductFilters({ categories, disableCategoryFilter = false }: Pr
   const setTempPriceRange = useFilterStore(state => state.setTempPriceRange);
   const priceRange = useFilterStore(state => state.priceRange);
 
-  const showResetButton = isDirty;
-
   const handleApplyFilters = useCallback(() => {
     applyFilters();
   }, [applyFilters]);

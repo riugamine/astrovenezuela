@@ -82,7 +82,6 @@ export function InfiniteProductsGrid({ initialProducts, queryKey, forcedCategori
     status,
     error,
     isLoading,
-    isFetching,
   } = useProducts(
     // Only pass initialProducts when no filters are applied
     hasFilters ? undefined : initialProducts, 

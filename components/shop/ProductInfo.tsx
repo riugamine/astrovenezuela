@@ -59,7 +59,8 @@ export function ProductInfo({ product }: ProductInfoProps) {
       toast.success("Producto agregado al carrito", {
         id: `add-to-cart-${product.id}-${selectedSize}`,
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error(error);
       toast.error("Error al agregar al carrito");
     }
   };
