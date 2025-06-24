@@ -7,15 +7,11 @@ import { Category } from "@/lib/types/database.types";
 import { useFilterStore } from "@/lib/store/useFilterStore";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CategoryFilterProps {
   categories: Category[];
 }
-
-// Available sizes for filtering
-const SIZES = ['Única', 'XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
 
 // Helper function to organize categories by parent
 function organizeCategories(categories: Category[]) {
@@ -36,13 +32,8 @@ function organizeCategories(categories: Category[]) {
 export function CategoryFilter({ categories }: CategoryFilterProps) {
   const { 
     tempSelectedCategories,
-    tempSelectedSizes, 
     toggleCategory,
-    toggleSize, 
     resetFilters, 
-    tempPriceRange, 
-    setTempPriceRange,
-    priceRange,
     isDirty
   } = useFilterStore();
   
