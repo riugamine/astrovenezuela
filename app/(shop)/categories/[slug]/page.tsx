@@ -86,6 +86,7 @@ export default async function CategoryPage({ params }: PageParams) {
         initialProducts={products}
         queryKey={[`category-${category.id}-products`]}
         forcedCategories={forcedCategories}
+        disableCategoryFilter={true}
       />
     </div>
   );

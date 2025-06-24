@@ -12,7 +12,7 @@ interface RelatedProductsProps {
 export function RelatedProducts({ products }: RelatedProductsProps) {
   return (
     <div className="mt-16">
-      <h2 className="text-2xl font-bold mb-6">Quizás te interese</h2>
+      <h2 className="text-2xl font-bold mb-6 text-primary dark:text-accent">Quizás te interese</h2>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {products.map((product) => (

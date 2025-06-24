@@ -44,13 +44,13 @@ export default function CartPage() {
 
       {items.length === 0 ? (
         // Empty cart state remains unchanged
-        <div className="relative min-h-[60vh] flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-black via-purple-950 to-black">
+        <div className="relative min-h-[60vh] flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-black via-primary to-black">
           <div className="absolute inset-0">
             <Meteors className="opacity-40" />
           </div>
           <div className="relative z-10 text-center space-y-6 max-w-md mx-auto px-4">
-            <div className="w-24 h-24 mx-auto bg-purple-600/20 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faShoppingCart} className="h-12 w-12 text-purple-400" />
+            <div className="w-24 h-24 mx-auto bg-accent/20 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon icon={faShoppingCart} className="h-12 w-12 text-accent" />
             </div>
             <div className="space-y-3">
               <h2 className="text-2xl font-semibold text-white">Tu carrito está vacío</h2>
@@ -62,7 +62,7 @@ export default function CartPage() {
               <Button
                 asChild
                 size="lg"
-                className="bg-purple-600 hover:bg-purple-700 transition-all group text-base"
+                className="bg-accent text-primary hover:bg-primary-foreground hover:text-primary transition-all group text-base"
               >
                 <Link href="/products" className="inline-flex items-center gap-2">
                   Explorar Productos

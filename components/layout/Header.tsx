@@ -139,9 +139,6 @@ const Header = () => {
   const hasSubcategories = (categoryId: string) => 
     categories.some(cat => cat.parent_id === categoryId);
 
-  // Handle theme-dependent logo
-  const logoSrc = theme === 'dark' ? getBrandLogo('blanco') : getBrandLogo('azul-marino');
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto">
@@ -230,12 +227,23 @@ const Header = () => {
 
             {/* Logo */}
             <Link href="/" className="flex items-center justify-center">
-              <Image 
-                src={logoSrc}
-                alt="Astro" 
+              {/* Light theme logo */}
+              <Image
+                src={getBrandLogo('azul-marino')}
+                alt="Astro"
                 width={120}
                 height={40}
-                className="object-contain"
+                className="object-contain block dark:hidden"
+                priority
+                sizes="(100vw - 32px) 400px, 120px"
+              />
+              {/* Dark theme logo */}
+              <Image
+                src={getBrandLogo('blanco')}
+                alt="Astro"
+                width={120}
+                height={40}
+                className="object-contain hidden dark:block"
                 priority
                 sizes="(100vw - 32px) 400px, 120px"
               />
@@ -299,7 +307,7 @@ const Header = () => {
               <Button variant="ghost" size="icon" className="relative">
                 <FontAwesomeIcon icon={faShoppingCart} className="h-5 w-5" />
                 {totalItems > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
+                  <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
                     {totalItems}
                   </Badge>
                 )}

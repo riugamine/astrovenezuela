@@ -102,7 +102,9 @@ export function InfiniteProductsGrid({ initialProducts, queryKey, forcedCategori
     }
   }, [inView, handleFetchNextPage]);
 
-  if (isLoading) {
+  const products = data?.pages.flatMap((page) => page.products) || [];
+
+  if (isLoading && !products.length) {
     return <ProductGridSkeleton />;
   }
 
@@ -114,8 +116,6 @@ export function InfiniteProductsGrid({ initialProducts, queryKey, forcedCategori
     );
   }
 
-  const products = data?.pages.flatMap((page) => page.products) || [];
-
   if (!products.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -126,10 +126,7 @@ export function InfiniteProductsGrid({ initialProducts, queryKey, forcedCategori
 
   return (
     <div className="space-y-8 relative">
-      {isFetching && !isFetchingNextPage && <ProductGridSkeleton />}
-      
-      {!isFetching && <ProductList products={products} />}
-      
+      <ProductList products={products} />
       <div ref={ref} className="w-full py-8">
         {isFetchingNextPage && <ProductGridSkeleton />}
       </div>

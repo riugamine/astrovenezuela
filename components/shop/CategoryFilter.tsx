@@ -68,7 +68,7 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
       </div>
 
       <ScrollArea className="h-[calc(100vh-200px)] pr-4">
-        <Accordion type="multiple" className="space-y-4" defaultValue={["categories", "sizes", "price"]}>
+        <Accordion type="multiple" className="space-y-4" defaultValue={["categories"]}>
           <AccordionItem value="categories">
             <AccordionTrigger className="text-sm font-medium">
               Categorías
@@ -110,56 +110,6 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
                     )}
                   </div>
                 ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="sizes">
-            <AccordionTrigger className="text-sm font-medium">
-              Tallas
-              {tempSelectedSizes.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {tempSelectedSizes.length}
-                </Badge>
-              )}
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid grid-cols-3 gap-2 pt-2">
-                {SIZES.map((size) => (
-                  <Button
-                    key={size}
-                    variant={tempSelectedSizes.includes(size) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleSize(size)}
-                    className="w-full"
-                  >
-                    {size}
-                  </Button>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="price">
-            <AccordionTrigger className="text-sm font-medium">
-              Precio
-              {tempPriceRange.some((v, i) => v !== priceRange[i]) && (
-                <Badge variant="secondary" className="ml-2">1</Badge>
-              )}
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4 pt-4 px-2">
-                <Slider
-                  value={tempPriceRange}
-                  min={0}
-                  max={500}
-                  step={10}
-                  onValueChange={setTempPriceRange}
-                />
-                <div className="flex items-center justify-between text-sm">
-                  <span>${tempPriceRange[0]}</span>
-                  <span>${tempPriceRange[1]}</span>
-                </div>
               </div>
             </AccordionContent>
           </AccordionItem>

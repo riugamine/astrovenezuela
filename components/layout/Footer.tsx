@@ -11,14 +11,24 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo */}
           <div>
-            {/* Logo */}
             <Link href="/" className="flex items-center justify-center">
-              <Image 
-                src={getBrandLogo("blanco")} 
-                alt="Astro" 
+              {/* Light theme logo */}
+              <Image
+                src={getBrandLogo('blanco')}
+                alt="Astro"
                 width={120}
                 height={40}
-                className="object-contain"
+                className="object-contain block dark:hidden"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              />
+              {/* Dark theme logo */}
+              <Image
+                src={getBrandLogo('blanco')}
+                alt="Astro"
+                width={120}
+                height={40}
+                className="object-contain hidden dark:block"
                 priority
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
               />

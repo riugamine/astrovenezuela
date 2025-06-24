@@ -44,32 +44,37 @@ export function ProductInfo({ product }: ProductInfoProps) {
       return;
     }
 
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      quantity,
-      size: selectedSize,
-      variant_id: variant.id,
-      image_url: product.main_image_url,
-      max_stock: variant.stock,
-      slug: product.slug, // Añadimos el slug para la navegación
-    });
-
-    toast.success("Producto agregado al carrito");
+    try {
+      addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity,
+        size: selectedSize,
+        variant_id: variant.id,
+        image_url: product.main_image_url,
+        max_stock: variant.stock,
+        slug: product.slug,
+      });
+      toast.success("Producto agregado al carrito", {
+        id: `add-to-cart-${product.id}-${selectedSize}`,
+      });
+    } catch (error) {
+      toast.error("Error al agregar al carrito");
+    }
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{product.name}</h1>
-        <p className="text-2xl font-semibold mt-2">
+        <p className="text-2xl font-semibold mt-2 text-primary dark:text-accent">
           REF {product.price.toLocaleString("en-US")}
         </p>
       </div>
 
       <div className="space-y-2">
-        <p className="font-medium">Talla</p>
+        <p className="font-medium text-primary dark:text-accent">Talla</p>
         <div className="flex gap-2 flex-wrap">
           {Object.entries(sizeVariants).map(([size, variant]) => {
             const isOutOfStock = variant.stock === 0;
@@ -103,7 +108,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       </div>
 
       <div className="space-y-2">
-        <p className="font-medium">Cantidad</p>
+        <p className="font-medium text-primary dark:text-accent">Cantidad</p>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -163,7 +168,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       </Button>
 
       <div className="space-y-4 pt-6 border-t">
-        <h2 className="font-semibold text-lg">Descripción</h2>
+        <h2 className="font-semibold text-lg text-primary dark:text-accent">Descripción</h2>
         <p className="text-muted-foreground">{product.description}</p>
       </div>
     </div>

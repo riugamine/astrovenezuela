@@ -29,9 +29,13 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
     ? product.product_images[0].image_url
     : product.main_image_url;
 
-  const availableSizes = product.variants
-    ?.filter(variant => variant.stock > 0)
-    .map(variant => variant.size) ?? [];
+  const availableSizes = Array.from(
+    new Set(
+      product.variants
+        ?.filter(variant => variant.stock > 0)
+        .map(variant => variant.size) ?? []
+    )
+  );
 
   const hasStock = availableSizes.length > 0;
 
@@ -115,11 +119,11 @@ const ProductCardContent = memo(function ProductCardContent({
         <div className="p-3 space-y-2">
           <h3 className={cn(
             'font-medium line-clamp-2 text-sm transition-colors',
-            hasStock && 'group-hover:text-primary'
+            hasStock && 'group-hover:text-primary dark:group-hover:text-accent'
           )}>
             {product.name}
           </h3>
-          <p className="font-semibold text-primary text-base">
+          <p className="font-semibold text-primary dark:text-accent text-base">
             REF {product.price.toLocaleString('es-VE')}
           </p>
           {hasStock && availableSizes.length > 0 && (

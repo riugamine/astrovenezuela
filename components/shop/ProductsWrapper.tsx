@@ -13,6 +13,7 @@ interface ProductsWrapperProps {
   queryKey: string[];
   initialURLParams?: URLSearchParams;
   forcedCategories?: string[];
+  disableCategoryFilter?: boolean;
 }
 
 export function ProductsWrapper({ 
@@ -20,9 +21,11 @@ export function ProductsWrapper({
   initialProducts, 
   queryKey, 
   initialURLParams,
-  forcedCategories: propForcedCategories
+  forcedCategories: propForcedCategories,
+  disableCategoryFilter = false
 }: ProductsWrapperProps) {
   const setFiltersFromURL = useFilterStore((state) => state.setFiltersFromURL);
+  const applyFilters = useFilterStore((state) => state.applyFilters);
   const [filtersReady, setFiltersReady] = useState(false);
   const [forcedCategories, setForcedCategories] = useState<string[] | undefined>(propForcedCategories);
 
@@ -34,6 +37,7 @@ export function ProductsWrapper({
         ? initialURLParams
         : new URLSearchParams(initialURLParams as any);
       setFiltersFromURL(urlParams);
+      applyFilters();
       const categoriesParam = urlParams.get('categories');
       // Use prop forcedCategories if provided, otherwise use URL param
       const finalForcedCategories = propForcedCategories || (categoriesParam ? categoriesParam.split(',') : undefined);
@@ -42,6 +46,7 @@ export function ProductsWrapper({
     } else if (typeof window !== 'undefined') {
       urlParams = new URLSearchParams(window.location.search);
       setFiltersFromURL(urlParams);
+      applyFilters();
       const categoriesParam = urlParams.get('categories');
       // Use prop forcedCategories if provided, otherwise use URL param
       const finalForcedCategories = propForcedCategories || (categoriesParam ? categoriesParam.split(',') : undefined);
@@ -54,7 +59,7 @@ export function ProductsWrapper({
     } else {
       setFiltersReady(true);
     }
-  }, [initialURLParams, setFiltersFromURL, propForcedCategories]);
+  }, [initialURLParams, setFiltersFromURL, applyFilters, propForcedCategories]);
 
   if (!filtersReady) {
     return null;
@@ -62,7 +67,7 @@ export function ProductsWrapper({
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <ProductFilters categories={categories} />
+      <ProductFilters categories={categories} disableCategoryFilter={disableCategoryFilter} />
       <main>
         <Suspense fallback={null}>
           <InfiniteProductsGrid initialProducts={initialProducts} queryKey={queryKey} forcedCategories={forcedCategories} />
