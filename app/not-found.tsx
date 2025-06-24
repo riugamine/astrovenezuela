@@ -6,7 +6,15 @@ import { faHome } from '@fortawesome/free-solid-svg-icons';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-black via-primary to-black">
+    <div 
+      className="min-h-screen w-full flex items-center justify-center relative overflow-hidden"
+      style={{
+        backgroundImage: `url('https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/public/brand-assets/brand-images/Degradado%20-02.jpg')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       {/* Efecto de meteoros */}
       <div className="absolute inset-0">
         <Meteors className="opacity-40" />
