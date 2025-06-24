@@ -50,7 +50,7 @@ export default async function Home() {
         <div className="container relative mx-auto px-4 py-12 min-h-screen flex items-center justify-center">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <div className="space-y-6">
-              <span className="inline-block text-purple-400 text-base md:text-lg font-medium tracking-wider uppercase bg-purple-950/50 px-4 py-2 rounded-full">
+              <span className="inline-block text-accent text-base md:text-lg font-medium tracking-wider uppercase bg-primary/50 px-4 py-2 rounded-full">
                 Nueva Colección
               </span>
               
@@ -71,7 +71,7 @@ export default async function Home() {
               <Button
                 asChild
                 size="lg"
-                className="bg-purple-600 hover:bg-purple-700 transition-all group text-base"
+                className="bg-primary hover:bg-primary-foreground hover:text-primary transition-all group text-base"
               >
                 <Link href="/products" className="inline-flex items-center">
                   Explorar Colección
@@ -85,10 +85,10 @@ export default async function Home() {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-white/20 hover:bg-secondary transition-all text-base"
+                className="border-accent/20 hover:bg-accent hover:text-accent-foreground transition-all text-base"
                 asChild
               >
-                <Link href="/categories" className="text-primary hover:text-white">Ver Categorías</Link>
+                <Link href="/categories">Ver Categorías</Link>
               </Button>
             </div>
           </div>

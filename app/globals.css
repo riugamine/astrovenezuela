@@ -116,12 +116,12 @@
     --primary-900: 212 100% 15%;
 
     /* Color secundario - Morado más oscuro */
-    --secondary: 255 72% 50%; /* #291A64 */
+    --secondary: 220, 41%, 64%; /* #291A64 */
     --secondary-foreground: 0 0% 100%;
 
     /* Color de acento - Beige más oscuro para mejor contraste */
     --accent: 39 100% 88%; /* #FFE9C2 */
-    --accent-foreground: 212 100% 10%;
+    --accent-foreground: 0 0% 0%;
     /* Color de acento - Beige más oscuro para mejor contraste */
     --success: 138 45% 40%
 
@@ -158,7 +158,7 @@
     --popover-foreground: 0 0% 98%;
 
     /* Color primario más claro en modo oscuro */
-    --primary: 219 35% 50%; /* #A5B8DC */
+    --primary: 212 100% 15%; /* #A5B8DC */
     --primary-foreground: 0 0% 95%;
 
     /* Color secundario más brillante */
@@ -167,7 +167,7 @@
 
     /* Color de acento más suave */
     --accent: 39 100% 85%; /* #FFE0A8 */
-    --accent-foreground: 212 100% 5%;
+    --accent-foreground: 0 0% 0%;
 
     /* Color muted con mejor contraste */
     --muted: 212 100% 20%;
