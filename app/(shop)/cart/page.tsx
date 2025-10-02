@@ -28,12 +28,6 @@ export default function CartPage() {
   );
 
   const handleCheckout = () => {
-    if (!user) {
-      toast.error("Necesitas iniciar sesión para realizar un pedido");
-      router.push("/auth");
-      return;
-    }
-
     setIsLoading(true);
     router.push("/cart/checkout");
   };

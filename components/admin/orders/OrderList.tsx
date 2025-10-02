@@ -35,9 +35,15 @@ export function OrderList({ onSelectOrder }: OrderListProps) {
   });
 
   const filteredOrders = orders.filter(
-    (order: OrderWithProfile) =>
-      order.whatsapp_number.includes(searchTerm) ||
-      order.profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    (order: OrderWithProfile) => {
+      const customerName = order.user_id 
+        ? order.profiles?.full_name || ''
+        : `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim();
+      
+      return order.whatsapp_number.includes(searchTerm) ||
+        customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.customer_email && order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
   );
 
   return (
@@ -97,30 +103,45 @@ export function OrderList({ onSelectOrder }: OrderListProps) {
                       </TableCell>
                     </TableRow>
                   ))
-                : filteredOrders.map((order: OrderWithProfile) => (
-                    <TableRow key={order.id}>
-                      <TableCell>{order.id}</TableCell>
-                      <TableCell>{order.profiles.full_name}</TableCell>
-                      <TableCell>{order.whatsapp_number}</TableCell>
-                      <TableCell>
-                        <OrderStatusComponent order={order} />
-                      </TableCell>
-                      <TableCell>${order.total_amount}</TableCell>
-                      <TableCell>
-                        {new Date(order.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onSelectOrder(order.id)}
-                        >
-                          <FontAwesomeIcon icon={faEye} className="mr-2" />
-                          Ver Detalles
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                : filteredOrders.map((order: OrderWithProfile) => {
+                    const customerName = order.user_id 
+                      ? order.profiles?.full_name || 'Usuario no encontrado'
+                      : `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Cliente invitado';
+                    
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell>{order.id}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{customerName}</div>
+                            {!order.user_id && (
+                              <div className="text-xs text-muted-foreground">
+                                Cliente invitado
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{order.whatsapp_number}</TableCell>
+                        <TableCell>
+                          <OrderStatusComponent order={order} />
+                        </TableCell>
+                        <TableCell>${order.total_amount}</TableCell>
+                        <TableCell>
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onSelectOrder(order.id)}
+                          >
+                            <FontAwesomeIcon icon={faEye} className="mr-2" />
+                            Ver Detalles
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
             </TableBody>
           </Table>
         </div>

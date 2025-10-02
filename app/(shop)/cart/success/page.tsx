@@ -11,7 +11,7 @@ import { Database } from "@/lib/types/database.types";
 import { useEffect } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useQuery } from "@tanstack/react-query";
-import { getOrderWithItems } from "@/lib/data/orders";
+import { getOrderWithItemsByToken } from "@/lib/data/orders";
 import { toast } from "sonner";
 import Image from "next/image";
 import { Suspense } from "react";
@@ -27,23 +27,23 @@ function OrderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
-  const { user } = useAuthStore();
+  const token = searchParams.get("token");
 
   useEffect(() => {
-    if (!orderId) {
-      toast.error("ID de orden no proporcionado");
+    if (!orderId || !token) {
+      toast.error("ID de orden o token no proporcionado");
       router.push("/");
     }
-  }, [orderId, router]);
+  }, [orderId, token, router]);
 
   const { data: order, isLoading } = useQuery({
-    queryKey: ["order", orderId],
+    queryKey: ["order", orderId, token],
     queryFn: async () => {
-      if (!user?.id || !orderId) {
+      if (!orderId || !token) {
         router.push("/");
         return null;
       }
-      const data = await getOrderWithItems(orderId, user.id);
+      const data = await getOrderWithItemsByToken(orderId, token);
       if (!data) {
         toast.error("Orden no encontrada");
         router.push("/");
@@ -51,7 +51,7 @@ function OrderContent() {
       }
       return data;
     },
-    enabled: !!orderId && !!user?.id,
+    enabled: !!orderId && !!token,
     retry: 1,
   });
 
@@ -89,27 +89,21 @@ function OrderContent() {
             Detalles del pedido:
           </h2>
           <div className="space-y-4">
-            {order.order_items.map(
-              (item: OrderWithItems["order_items"][number]) => (
+            {order.items && Array.isArray(order.items) && order.items.map(
+              (item: any, index: number) => (
                 <div
-                  key={item.id}
+                  key={item.id || index}
                   className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted/80 transition-colors"
                 >
-                  <Image
-                    src={item.product.main_image_url}
-                    alt={item.product.name}
-                    className="w-24 h-24 object-cover rounded-md shadow-sm"
-                    width={200}
-                    height={200}
-                    priority
-                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 200px"
-                  />
+                  <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center">
+                    <span className="text-muted-foreground text-sm">Imagen</span>
+                  </div>
                   <div className="flex-1">
                     <h3 className="font-medium text-lg">
-                      {item.product.name}
+                      {item.product_name}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Talla: {item.variant.size} | Cantidad: {item.quantity}
+                      {item.variant_size ? `Talla: ${item.variant_size}` : ''} | Cantidad: {item.quantity}
                     </p>
                     <p className="font-medium text-green-600 mt-1">
                       REF {item.price}

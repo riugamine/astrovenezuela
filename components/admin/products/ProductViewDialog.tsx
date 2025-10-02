@@ -40,7 +40,7 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
           <div className="space-y-6 p-1">
             {/* Imagen Principal y Detalles Básicos */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="relative aspect-square rounded-lg overflow-hidden">
+              <div className="relative aspect-[4/5] rounded-lg overflow-hidden">
                 <Image
                   src={product.main_image_url}
                   alt={product.name}
@@ -68,7 +68,7 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
                   {product.product_images.map((image, index) => (
                     <div
                       key={`${image.image_url}-${index}`}
-                      className="relative aspect-square rounded-lg overflow-hidden"
+                      className="relative aspect-[4/5] rounded-lg overflow-hidden"
                     >
                       <Image
                         src={image.image_url}

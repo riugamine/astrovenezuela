@@ -92,16 +92,32 @@ export function OrderDetails({ orderId, onClose }: OrderDetailsProps) {
             <dl className="space-y-2">
               <div>
                 <dt className="font-medium">Nombre:</dt>
-                <dd>{order.profiles.full_name}</dd>
+                <dd>
+                  {order.user_id 
+                    ? order.profiles?.full_name || 'Usuario no encontrado'
+                    : `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Cliente invitado'
+                  }
+                  {!order.user_id && (
+                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      Cliente invitado
+                    </span>
+                  )}
+                </dd>
               </div>
               <div>
                 <dt className="font-medium">Email:</dt>
-                <dd>{order.profiles.email}</dd>
+                <dd>{order.user_id ? order.profiles?.email : order.customer_email}</dd>
               </div>
               <div>
                 <dt className="font-medium">WhatsApp:</dt>
                 <dd>{order.whatsapp_number}</dd>
               </div>
+              {!order.user_id && order.customer_dni && (
+                <div>
+                  <dt className="font-medium">DNI:</dt>
+                  <dd>{order.customer_dni}</dd>
+                </div>
+              )}
             </dl>
           </CardContent>
         </Card>
@@ -116,10 +132,28 @@ export function OrderDetails({ orderId, onClose }: OrderDetailsProps) {
                 <dt className="font-medium">Dirección:</dt>
                 <dd>{order.shipping_address}</dd>
               </div>
+              {!order.user_id && order.shipping_method && (
+                <div>
+                  <dt className="font-medium">Método de Envío:</dt>
+                  <dd>{order.shipping_method}</dd>
+                </div>
+              )}
+              {!order.user_id && order.agency_address && (
+                <div>
+                  <dt className="font-medium">Dirección de Agencia:</dt>
+                  <dd>{order.agency_address}</dd>
+                </div>
+              )}
               <div>
                 <dt className="font-medium">Método de Pago:</dt>
                 <dd>{order.payment_method}</dd>
               </div>
+              {!order.user_id && order.order_notes && (
+                <div>
+                  <dt className="font-medium">Notas del Pedido:</dt>
+                  <dd className="text-sm text-muted-foreground">{order.order_notes}</dd>
+                </div>
+              )}
             </dl>
           </CardContent>
         </Card>

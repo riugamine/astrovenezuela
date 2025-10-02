@@ -88,7 +88,7 @@ const ProductCardContent = memo(function ProductCardContent({
     <Card className="overflow-hidden border-0 h-full transition-all duration-300 hover:shadow-sm bg-white dark:bg-gray-900">
       <CardContent className="p-0">
         <div 
-          className="relative aspect-square bg-muted overflow-hidden"
+          className="relative aspect-[4/5] bg-muted overflow-hidden"
           onMouseEnter={() => onHover(true)}
           onMouseLeave={() => onHover(false)}
         >
@@ -118,7 +118,7 @@ const ProductCardContent = memo(function ProductCardContent({
         
         <div className="p-3 space-y-2">
           <h3 className={cn(
-            'font-medium line-clamp-2 text-sm transition-colors',
+            'font-gabarito line-clamp-2 text-sm transition-colors',
             hasStock && 'group-hover:text-primary dark:group-hover:text-accent'
           )}>
             {product.name}

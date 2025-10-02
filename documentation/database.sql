@@ -115,17 +115,32 @@ CREATE TABLE IF NOT EXISTS product_variants (
 -- ORDERS TABLE
 -- =====================================================
 -- Stores customer orders
--- Each order belongs to a user (from Supabase Auth)
+-- Each order belongs to a user (from Supabase Auth) OR is a guest order
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     status order_status DEFAULT 'pending',
     total_amount NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
     shipping_address TEXT NOT NULL,
     payment_method TEXT NOT NULL,
     whatsapp_number TEXT NOT NULL,
+    -- Guest order fields
+    customer_email TEXT,
+    customer_first_name TEXT,
+    customer_last_name TEXT,
+    customer_dni TEXT,
+    customer_phone TEXT,
+    shipping_method TEXT,
+    order_notes TEXT,
+    agency_address TEXT,
+    order_access_token UUID NOT NULL DEFAULT uuid_generate_v4(),
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    -- Constraints
+    CONSTRAINT orders_user_or_guest_check CHECK (
+        (user_id IS NOT NULL) OR 
+        (user_id IS NULL AND customer_email IS NOT NULL AND customer_first_name IS NOT NULL AND customer_last_name IS NOT NULL AND customer_phone IS NOT NULL AND shipping_method IS NOT NULL)
+    )
 );
 
 -- =====================================================
@@ -171,6 +186,7 @@ CREATE INDEX IF NOT EXISTS idx_product_variants_size ON product_variants(size);
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_access_token ON orders(order_access_token);
 
 -- Order items indexes
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
@@ -259,12 +275,13 @@ CREATE POLICY "Only admins can delete product variants" ON product_variants FOR 
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- Orders policies (users can only see their own orders, admins can see all)
+-- Orders policies (users can only see their own orders, admins can see all, guests can only create via RPC)
 CREATE POLICY "Users can view their own orders" ON orders FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Admins can view all orders" ON orders FOR SELECT USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
 );
 CREATE POLICY "Users can create their own orders" ON orders FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Note: Guest orders are created via RPC functions with SECURITY DEFINER, no direct INSERT policy for anon
 CREATE POLICY "Admins can update orders" ON orders FOR UPDATE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
 );
@@ -272,7 +289,7 @@ CREATE POLICY "Admins can delete orders" ON orders FOR DELETE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- Order items policies (users can see items from their orders, admins can see all)
+-- Order items policies (users can see items from their orders, admins can see all, guests access via RPC)
 CREATE POLICY "Users can view items from their own orders" ON order_items FOR SELECT USING (
     EXISTS (SELECT 1 FROM orders WHERE id = order_items.order_id AND user_id = auth.uid())
 );
@@ -282,6 +299,7 @@ CREATE POLICY "Admins can view all order items" ON order_items FOR SELECT USING 
 CREATE POLICY "Users can create items for their own orders" ON order_items FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM orders WHERE id = order_items.order_id AND user_id = auth.uid())
 );
+-- Note: Guest order items are created via RPC functions with SECURITY DEFINER, no direct INSERT policy for anon
 CREATE POLICY "Admins can update order items" ON order_items FOR UPDATE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
 );
@@ -319,8 +337,8 @@ DECLARE
     new_order orders;
     item JSONB;
 BEGIN
-    -- Validate user exists
-    IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = p_user_id) THEN
+    -- Validate user exists (only if user_id is provided)
+    IF p_user_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM auth.users WHERE id = p_user_id) THEN
         RAISE EXCEPTION 'User not found';
     END IF;
 
@@ -371,6 +389,174 @@ BEGIN
     END LOOP;
 
     RETURN new_order;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to create guest order with items in a transaction
+CREATE OR REPLACE FUNCTION create_guest_order_with_items(
+    p_status order_status DEFAULT 'pending',
+    p_total_amount NUMERIC,
+    p_shipping_address TEXT,
+    p_payment_method TEXT,
+    p_whatsapp_number TEXT,
+    p_customer_email TEXT,
+    p_customer_first_name TEXT,
+    p_customer_last_name TEXT,
+    p_customer_dni TEXT,
+    p_customer_phone TEXT,
+    p_shipping_method TEXT,
+    p_order_notes TEXT,
+    p_agency_address TEXT,
+    p_items JSONB
+)
+RETURNS TABLE (
+    id UUID,
+    order_access_token UUID,
+    total_amount NUMERIC,
+    status order_status,
+    created_at TIMESTAMPTZ
+) AS $$
+DECLARE
+    new_order orders;
+    item JSONB;
+BEGIN
+    -- Create the guest order
+    INSERT INTO orders (
+        user_id,
+        status,
+        total_amount,
+        shipping_address,
+        payment_method,
+        whatsapp_number,
+        customer_email,
+        customer_first_name,
+        customer_last_name,
+        customer_dni,
+        customer_phone,
+        shipping_method,
+        order_notes,
+        agency_address
+    ) VALUES (
+        NULL,
+        p_status,
+        p_total_amount,
+        p_shipping_address,
+        p_payment_method,
+        p_whatsapp_number,
+        p_customer_email,
+        p_customer_first_name,
+        p_customer_last_name,
+        p_customer_dni,
+        p_customer_phone,
+        p_shipping_method,
+        p_order_notes,
+        p_agency_address
+    ) RETURNING * INTO new_order;
+
+    -- Insert order items
+    FOR item IN SELECT * FROM jsonb_array_elements(p_items)
+    LOOP
+        -- Validate product and variant exist
+        IF NOT EXISTS (SELECT 1 FROM products WHERE id = (item->>'product_id')::UUID) THEN
+            RAISE EXCEPTION 'Product not found: %', item->>'product_id';
+        END IF;
+
+        IF item->>'variant_id' IS NOT NULL AND 
+           NOT EXISTS (SELECT 1 FROM product_variants WHERE id = (item->>'variant_id')::UUID) THEN
+            RAISE EXCEPTION 'Product variant not found: %', item->>'variant_id';
+        END IF;
+
+        -- Insert order item
+        INSERT INTO order_items (
+            order_id,
+            product_id,
+            variant_id,
+            quantity,
+            price
+        ) VALUES (
+            new_order.id,
+            (item->>'product_id')::UUID,
+            (item->>'variant_id')::UUID,
+            (item->>'quantity')::INTEGER,
+            (item->>'price')::NUMERIC
+        );
+    END LOOP;
+
+    -- Return the order details
+    RETURN QUERY SELECT 
+        new_order.id,
+        new_order.order_access_token,
+        new_order.total_amount,
+        new_order.status,
+        new_order.created_at;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get order with items by access token
+CREATE OR REPLACE FUNCTION get_order_with_items_by_token(
+    p_order_id UUID,
+    p_access_token UUID
+)
+RETURNS TABLE (
+    order_id UUID,
+    status order_status,
+    total_amount NUMERIC,
+    shipping_address TEXT,
+    payment_method TEXT,
+    whatsapp_number TEXT,
+    customer_email TEXT,
+    customer_first_name TEXT,
+    customer_last_name TEXT,
+    customer_dni TEXT,
+    customer_phone TEXT,
+    shipping_method TEXT,
+    order_notes TEXT,
+    agency_address TEXT,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    items JSONB
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        o.id,
+        o.status,
+        o.total_amount,
+        o.shipping_address,
+        o.payment_method,
+        o.whatsapp_number,
+        o.customer_email,
+        o.customer_first_name,
+        o.customer_last_name,
+        o.customer_dni,
+        o.customer_phone,
+        o.shipping_method,
+        o.order_notes,
+        o.agency_address,
+        o.created_at,
+        o.updated_at,
+        COALESCE(
+            (SELECT jsonb_agg(
+                jsonb_build_object(
+                    'id', oi.id,
+                    'product_id', oi.product_id,
+                    'variant_id', oi.variant_id,
+                    'quantity', oi.quantity,
+                    'price', oi.price,
+                    'product_name', p.name,
+                    'product_slug', p.slug,
+                    'variant_size', pv.size,
+                    'variant_reference', pv.reference_number
+                )
+            ) FROM order_items oi
+            LEFT JOIN products p ON oi.product_id = p.id
+            LEFT JOIN product_variants pv ON oi.variant_id = pv.id
+            WHERE oi.order_id = o.id),
+            '[]'::jsonb
+        ) as items
+    FROM orders o
+    WHERE o.id = p_order_id 
+    AND o.order_access_token = p_access_token;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -499,13 +685,22 @@ COMMENT ON TABLE profiles IS 'User profiles linked to Supabase Auth users';
 COMMENT ON TABLE products IS 'Main products catalog with pricing and inventory';
 COMMENT ON TABLE product_detail_images IS 'Multiple images per product with ordering support';
 COMMENT ON TABLE product_variants IS 'Product variants like sizes, colors, etc.';
-COMMENT ON TABLE orders IS 'Customer orders with shipping and payment information';
+COMMENT ON TABLE orders IS 'Customer orders with shipping and payment information. Supports both authenticated users and guest orders';
 COMMENT ON TABLE order_items IS 'Individual items within orders linking to products and variants';
 
 COMMENT ON COLUMN categories.parent_id IS 'Self-referencing foreign key for subcategories (NULL for main categories)';
 COMMENT ON COLUMN products.reference_number IS 'Internal product reference number';
 COMMENT ON COLUMN product_variants.size IS 'Variant size or specification';
 COMMENT ON COLUMN orders.whatsapp_number IS 'Customer WhatsApp number for order communication';
+COMMENT ON COLUMN orders.customer_email IS 'Guest customer email address (required for guest orders)';
+COMMENT ON COLUMN orders.customer_first_name IS 'Guest customer first name (required for guest orders)';
+COMMENT ON COLUMN orders.customer_last_name IS 'Guest customer last name (required for guest orders)';
+COMMENT ON COLUMN orders.customer_dni IS 'Guest customer DNI/ID number';
+COMMENT ON COLUMN orders.customer_phone IS 'Guest customer phone number (required for guest orders)';
+COMMENT ON COLUMN orders.shipping_method IS 'Selected shipping method (required for guest orders)';
+COMMENT ON COLUMN orders.order_notes IS 'Additional notes from customer';
+COMMENT ON COLUMN orders.agency_address IS 'Agency address for MRW/Zoom shipping';
+COMMENT ON COLUMN orders.order_access_token IS 'Unique token for guest order access';
 COMMENT ON COLUMN order_items.variant_id IS 'Optional reference to product variant (NULL if product has no variants)';
 
 -- =====================================================

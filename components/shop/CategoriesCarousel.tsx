@@ -32,20 +32,20 @@ export function CategoriesCarousel({ categories }: CategoriesCarouselProps) {
     >
       <CarouselContent className="-ml-1 md:-ml-2">
         {categories.map((category) => (
-          <CarouselItem key={category.id} className="pl-1 md:pl-2 basis-full md:basis-1/2 lg:basis-1/3">
+          <CarouselItem key={category.id} className="pl-1 md:pl-2 basis-1/2 md:basis-1/3 lg:basis-1/4">
             <Link href={`/categories/${category.slug}`}>
               <Card className="overflow-hidden group relative border-0">
-                <div className="relative aspect-[4/3] overflow-hidden">
+                <div className="relative aspect-[3/2] overflow-hidden">
                   <Image
                     src={category.banner_url || "https://placehold.co/600x400.jpg?text=Categoría"}
                     alt={category.name}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
-                  <div className="absolute bottom-0 w-full p-4">
-                    <h3 className="font-exo text-lg md:text-xl font-bold text-white group-hover:translate-y-[-2px] transition-transform">
+                  <div className="absolute bottom-0 w-full p-3">
+                    <h3 className="font-exo text-sm md:text-base font-bold text-white group-hover:translate-y-[-2px] transition-transform">
                       {category.name.toLocaleUpperCase()}
                     </h3>
                   </div>

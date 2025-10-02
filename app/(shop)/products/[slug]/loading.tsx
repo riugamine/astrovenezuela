@@ -36,7 +36,7 @@ export default function ProductDetailLoading() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-4">
-              <Skeleton className="h-48 w-full" />
+              <Skeleton className="aspect-[4/5] w-full" />
               <div className="space-y-2">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/4" />

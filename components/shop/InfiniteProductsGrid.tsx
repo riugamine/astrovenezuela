@@ -31,7 +31,7 @@ const ProductGridSkeleton = memo(function ProductGridSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <Card key={i} className="overflow-hidden border-none h-full">
           <CardContent className="p-0">
-            <Skeleton className="aspect-square bg-muted" />
+            <Skeleton className="aspect-[4/5] bg-muted" />
             <div className="p-3 space-y-2">
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-5 w-1/3" />

@@ -202,7 +202,7 @@ export function ImageUploaderEdit({
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {detailImages.map((image, index) => (
-            <div key={`Detail ${index + 1}`} className="relative aspect-square">
+            <div key={`Detail ${index + 1}`} className="relative aspect-[4/5]">
               <Image
                 src={image.image_url}
                 alt={`Detail ${index + 1}`}
@@ -225,7 +225,7 @@ export function ImageUploaderEdit({
           ))}
           {detailImages.length < 10 && (
             <div
-              className={`border-2 border-dashed rounded-lg aspect-square flex items-center justify-center transition-colors ${
+              className={`border-2 border-dashed rounded-lg aspect-[4/5] flex items-center justify-center transition-colors ${
                 dragOver ? "border-primary bg-primary/5" : "border-border"
               }`}
               onDragOver={(e) => {

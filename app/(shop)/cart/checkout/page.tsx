@@ -17,7 +17,7 @@ import {
 import Image from "next/image";
 import { useCustomerStore } from "@/lib/store/useCustomerStore";
 import { PlacesAutocomplete } from "@/components/ui/places-autocomplete";
-import { createOrder } from "@/lib/data/orders";
+import { createGuestOrder } from "@/lib/data/orders";
 import {
   ShippingMethod,
 } from "@/lib/types/database.types";
@@ -152,14 +152,20 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Create order with proper error handling
-      // Update the order creation part in handleSubmit function
-      createdOrder = await createOrder({
-        user_id: user?.id || "",
+      // Create guest order with proper error handling
+      createdOrder = await createGuestOrder({
         total_amount: total,
         shipping_address: customerInfo.address || customerInfo.agencyAddress || "retiro en tienda",
         payment_method: paymentMethod,
         whatsapp_number: customerInfo.phone,
+        customer_email: customerInfo.email,
+        customer_first_name: customerInfo.name,
+        customer_last_name: customerInfo.lastName,
+        customer_dni: customerInfo.dni,
+        customer_phone: customerInfo.phone,
+        shipping_method: shippingMethod,
+        order_notes: orderNotes,
+        agency_address: customerInfo.agencyAddress,
         items: items.map((item) => ({
           product_id: item.id,
           variant_id: item.variant_id,
@@ -248,8 +254,15 @@ export default function CheckoutPage() {
       toast.error("Error al crear el pedido. Por favor intente nuevamente." + error);
     }
     finally{
-      // Redirect to success page
-      redirect(`/cart/success?order_id=${createdOrder?.id}`);
+      // Redirect to success page with order ID and access token
+      if (createdOrder) {
+        // Store order details in localStorage for the success page
+        localStorage.setItem('order_details', JSON.stringify({
+          order_id: createdOrder.id,
+          access_token: createdOrder.order_access_token
+        }));
+        redirect(`/cart/success?order_id=${createdOrder.id}&token=${createdOrder.order_access_token}`);
+      }
     }
   };
   return (
