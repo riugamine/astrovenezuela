@@ -74,7 +74,14 @@ export const useAuthStore = create<AuthState>()(
           const { data: { session } } = await supabase.auth.getSession();
 
           if (error) {
-            console.error('Auth check error:', error);
+            // Treat missing session as a normal unauthenticated state without noisy console errors
+            const isMissingSession =
+              (error as any)?.name === 'AuthSessionMissingError' ||
+              (typeof (error as any)?.message === 'string' && (error as any).message.toLowerCase().includes('auth session missing'));
+
+            if (!isMissingSession) {
+              console.warn('Auth check non-critical error:', error);
+            }
             get().clearAuth();
             return;
           }
@@ -92,7 +99,12 @@ export const useAuthStore = create<AuthState>()(
             get().clearAuth();
           }
         } catch (error) {
-          console.error('Error checking auth:', error);
+          // Swallow expected errors silently; warn for unexpected ones
+          const message = (error as any)?.message || '';
+          const isMissingSession = typeof message === 'string' && message.toLowerCase().includes('auth session missing');
+          if (!isMissingSession) {
+            console.warn('Error checking auth:', error);
+          }
           get().clearAuth();
         }
       },

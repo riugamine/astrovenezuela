@@ -88,7 +88,7 @@ const ProductCardContent = memo(function ProductCardContent({
     <Card className="overflow-hidden border-0 h-full transition-all duration-300 hover:shadow-sm bg-white dark:bg-gray-900">
       <CardContent className="p-0">
         <div 
-          className="relative aspect-[4/5] bg-muted overflow-hidden"
+          className="relative aspect-[9/12] bg-muted overflow-hidden"
           onMouseEnter={() => onHover(true)}
           onMouseLeave={() => onHover(false)}
         >

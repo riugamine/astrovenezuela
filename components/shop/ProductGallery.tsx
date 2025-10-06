@@ -57,10 +57,10 @@ export function ProductGallery({ product }: ProductGalleryProps) {
 
   return (
     <div className="flex flex-col md:flex-row gap-4">
-      {/* Imagen Principal */}
+      {/* Imagen Principal - relación 9:16 tipo historias, imagen completa */}
       <div className="relative flex-1 order-1 md:order-2">
         <AspectRatio 
-          ratio={1} 
+          ratio={9/12} 
           className="bg-muted/10 rounded-lg overflow-hidden"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -70,7 +70,7 @@ export function ProductGallery({ product }: ProductGalleryProps) {
             src={images[selectedImage].url}
             alt={images[selectedImage].alt}
             fill
-            className="object-cover rounded-lg select-none"
+            className="object-contain rounded-lg select-none bg-background"
             priority
             quality={100}
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, (max-width: 1024px) 60vw, 50vw"
@@ -100,7 +100,7 @@ export function ProductGallery({ product }: ProductGalleryProps) {
         )}
       </div>
 
-      {/* Miniaturas */}
+      {/* Miniaturas - mantener 9:16 y mostrar imagen completa */}
       <div className="order-2 md:order-1 md:w-24">
         <ScrollArea className="h-24 md:h-[500px] w-full">
           <div className="flex md:flex-col gap-2 p-1">
@@ -109,7 +109,7 @@ export function ProductGallery({ product }: ProductGalleryProps) {
                 key={`thumb-${index}`}
                 onClick={() => setSelectedImage(index)}
                 className={cn(
-                  "relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden",
+                  "relative flex-shrink-0 w-16 h-28 rounded-md overflow-hidden",
                   "border-2 transition-all duration-200 ease-in-out",
                   "hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary",
                   selectedImage === index 
@@ -118,21 +118,23 @@ export function ProductGallery({ product }: ProductGalleryProps) {
                 )}
                 aria-label={`Ver ${image.alt}`}
               >
-                <Image
-                  src={image.url}
-                  alt={image.alt}
-                  fill
-                  className={cn(
-                    "object-cover transition-transform duration-300",
-                    "group-hover:scale-105",
-                    selectedImage === index && "scale-105"
-                  )}
-                  sizes="80px"
-                  quality={100}
-                  loading={index === 0 ? "eager" : "lazy"}
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qLjgyPj4+ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg7/2wBDAR4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                />
+                <AspectRatio ratio={9/16} className="bg-muted/10">
+                  <Image
+                    src={image.url}
+                    alt={image.alt}
+                    fill
+                    className={cn(
+                      "object-contain transition-transform duration-300 bg-background",
+                      "group-hover:scale-105",
+                      selectedImage === index && "scale-105"
+                    )}
+                    sizes="64px"
+                    quality={100}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qLjgyPj4+ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg7/2wBDAR4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                  />
+                </AspectRatio>
               </button>
             ))}
           </div>
