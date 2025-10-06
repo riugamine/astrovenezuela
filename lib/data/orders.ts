@@ -10,7 +10,8 @@ type Order = Database['public']['Tables']['orders']['Row'];
 // Validation schema for order items
 const OrderItemSchema = z.object({
   product_id: z.string().uuid(),
-  variant_id: z.string().uuid(),
+  // Some products may not have a variant; allow null and empty string normalization later
+  variant_id: z.string().uuid().nullable().optional(),
   quantity: z.number().positive(),
   price: z.number().positive()
 });
@@ -60,6 +61,90 @@ type GuestOrderResponse = {
   created_at: string;
 };
 
+// Internal helper to validate product and variant existence before RPC
+async function validateGuestOrderInputs(items: Array<{ product_id: string; variant_id: string | null }>) {
+  try {
+    const productIds = Array.from(new Set(items.map(i => i.product_id)));
+    const variantIds = Array.from(new Set(items.map(i => i.variant_id).filter(Boolean))) as string[];
+
+    if (productIds.length) {
+      const { data: products, error: pErr } = await supabaseClient
+        .from('products')
+        .select('id')
+        .in('id', productIds);
+      if (pErr) {
+        console.warn('[orders] products existence check failed', pErr);
+      } else {
+        const found = new Set((products || []).map(p => p.id));
+        const missing = productIds.filter(id => !found.has(id));
+        if (missing.length) throw new Error(`Productos inexistentes: ${missing.join(', ')}`);
+      }
+    }
+
+    if (variantIds.length) {
+      const { data: variants, error: vErr } = await supabaseClient
+        .from('product_variants')
+        .select('id')
+        .in('id', variantIds);
+      if (vErr) {
+        console.warn('[orders] variants existence check failed', vErr);
+      } else {
+        const found = new Set((variants || []).map(v => v.id));
+        const missing = variantIds.filter(id => !found.has(id));
+        if (missing.length) throw new Error(`Variantes inexistentes: ${missing.join(', ')}`);
+      }
+    }
+
+    return true;
+  } catch (e) {
+    console.error('[orders] preflight validation failed', e);
+    throw e;
+  }
+}
+
+// Internal helper to resolve missing variant ids by product
+async function resolveMissingVariantIds(
+  items: Array<{ product_id: string; variant_id: string | null; quantity: number; price: number }>
+): Promise<Array<{ product_id: string; variant_id: string; quantity: number; price: number }>> {
+  const itemsNeedingVariant = items.filter(i => !i.variant_id);
+  if (itemsNeedingVariant.length === 0) {
+    return items as Array<{ product_id: string; variant_id: string; quantity: number; price: number }>;
+  }
+
+  const productIds = Array.from(new Set(itemsNeedingVariant.map(i => i.product_id)));
+  const { data: variants, error } = await supabaseClient
+    .from('product_variants')
+    .select('id, product_id, stock')
+    .in('product_id', productIds);
+
+  if (error) {
+    console.error('[orders] resolveMissingVariantIds failed fetching variants', error);
+    throw new Error('No se pudieron obtener variantes para los productos seleccionados');
+  }
+
+  const productIdToVariantId: Record<string, string | undefined> = {};
+  (variants || []).forEach(v => {
+    // Prefer a variant with stock > 0; otherwise keep the first seen
+    const existing = productIdToVariantId[v.product_id as unknown as string];
+    if (!existing) {
+      productIdToVariantId[v.product_id as unknown as string] = v.id as unknown as string;
+    }
+    if ((v as any).stock > 0) {
+      productIdToVariantId[v.product_id as unknown as string] = v.id as unknown as string;
+    }
+  });
+
+  const resolved = items.map(i => {
+    const variantId = i.variant_id || productIdToVariantId[i.product_id];
+    if (!variantId) {
+      throw new Error(`No se encontró una variante para el producto ${i.product_id}`);
+    }
+    return { ...i, variant_id: variantId } as { product_id: string; variant_id: string; quantity: number; price: number };
+  });
+
+  return resolved;
+}
+
 /**
  * Creates an order and its items in a single transaction
  * @param params Order parameters including user, items, and shipping details
@@ -68,10 +153,15 @@ type GuestOrderResponse = {
  */
 export async function createOrder(params: CreateOrderParams): Promise<Order> {
   try {
+    const requestId = Math.random().toString(36).slice(2, 8);
+    console.groupCollapsed(`[orders] createOrder start ${requestId}`);
+    console.log('raw params', params);
+
     // Validate input parameters
     const validatedParams = await CreateOrderSchema.parseAsync(params).catch((error) => {
       throw new Error(`Validation error: ${error.errors[0].message}`);
     });
+    console.log('validated params', validatedParams);
 
     // Get current user from auth store
     const { user } = useAuthStore.getState();
@@ -84,21 +174,49 @@ export async function createOrder(params: CreateOrderParams): Promise<Order> {
     }
 
     // Create order with items
-    const { data, error } = await supabaseClient.rpc('create_order_with_items', {
+    const normalizedItems = validatedParams.items.map((i) => ({
+      product_id: i.product_id,
+      variant_id: (i as any).variant_id ? (i as any).variant_id : null,
+      quantity: i.quantity,
+      price: i.price,
+    }));
+
+    // Ensure variant_id exists for all items (inventory tracked per variant)
+    const withVariants = await resolveMissingVariantIds(normalizedItems);
+
+    const rpcPayload = {
       p_user_id: validatedParams.user_id,
       p_status: validatedParams.status || 'pending',
       p_total_amount: validatedParams.total_amount,
       p_shipping_address: validatedParams.shipping_address,
       p_payment_method: validatedParams.payment_method,
       p_whatsapp_number: validatedParams.whatsapp_number,
-      p_items: validatedParams.items
-    });
+      p_items: withVariants
+    };
+    console.log('rpc payload create_order_with_items', rpcPayload);
+    const { data, error } = await supabaseClient.rpc('create_order_with_items', rpcPayload);
+    console.log('rpc response data', data);
+    if (error) {
+      const safeErr = JSON.parse(JSON.stringify(error ?? {}));
+      console.error('rpc response error', {
+        code: (error as any)?.code,
+        message: (error as any)?.message,
+        details: (error as any)?.details,
+        hint: (error as any)?.hint,
+        status: (error as any)?.status,
+        safeErr,
+      });
+    }
 
     // Handle database errors
     if (error) {
-      const errorMessage = error.code === '23505' ? 'Ya existe una orden con estos datos' :
-                          error.code === '23503' ? 'Uno o más productos no existen' :
-                          'Error al crear la orden';
+      const detailedMessage = (error as any)?.message || (error as any)?.details;
+      const errorMessage =
+        (error as any)?.code === '23505'
+          ? 'Ya existe una orden con estos datos'
+          : (error as any)?.code === '23503'
+          ? 'Uno o más productos no existen'
+          : detailedMessage || 'Error al crear la orden';
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }
@@ -108,11 +226,14 @@ export async function createOrder(params: CreateOrderParams): Promise<Order> {
     }
 
     toast.success('Orden creada exitosamente');
+    console.groupEnd();
     return data as Order;
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Error al procesar la orden';
     toast.error(errorMessage);
+    console.error('[orders] createOrder failed', { error });
+    console.groupEnd?.();
     throw error;
   }
 }
@@ -125,13 +246,30 @@ export async function createOrder(params: CreateOrderParams): Promise<Order> {
  */
 export async function createGuestOrder(params: CreateGuestOrderParams): Promise<GuestOrderResponse> {
   try {
+    const requestId = Math.random().toString(36).slice(2, 8);
+    console.groupCollapsed(`[orders] createGuestOrder start ${requestId}`);
+    console.log('raw params', params);
     // Validate input parameters
     const validatedParams = await CreateGuestOrderSchema.parseAsync(params).catch((error) => {
       throw new Error(`Validation error: ${error.errors[0].message}`);
     });
+    console.log('validated params', validatedParams);
+
+    // Preflight: verify products/variants exist to surface clearer errors
+    await validateGuestOrderInputs(validatedParams.items.map(i => ({ product_id: i.product_id, variant_id: (i as any).variant_id ?? null })));
 
     // Create guest order with items
-    const { data, error } = await supabaseClient.rpc('create_guest_order_with_items', {
+    const normalizedItems = validatedParams.items.map((i) => ({
+      product_id: i.product_id,
+      variant_id: (i as any).variant_id ? (i as any).variant_id : null,
+      quantity: i.quantity,
+      price: i.price,
+    }));
+
+    // Ensure variant_id exists for all items (inventory tracked per variant)
+    const withVariants = await resolveMissingVariantIds(normalizedItems);
+
+    const rpcPayload = {
       p_status: validatedParams.status || 'pending',
       p_total_amount: validatedParams.total_amount,
       p_shipping_address: validatedParams.shipping_address,
@@ -145,14 +283,33 @@ export async function createGuestOrder(params: CreateGuestOrderParams): Promise<
       p_shipping_method: validatedParams.shipping_method,
       p_order_notes: validatedParams.order_notes || null,
       p_agency_address: validatedParams.agency_address || null,
-      p_items: validatedParams.items
-    });
+      p_items: withVariants
+    };
+    console.log('rpc payload create_guest_order_with_items', rpcPayload);
+    console.table(Array.isArray(validatedParams.items) ? validatedParams.items : []);
+    const { data, error } = await supabaseClient.rpc('create_guest_order_with_items', rpcPayload);
+    console.log('rpc response data', data);
+    if (error) {
+      const safeErr = JSON.parse(JSON.stringify(error ?? {}));
+      console.error('rpc response error', {
+        code: (error as any)?.code,
+        message: (error as any)?.message,
+        details: (error as any)?.details,
+        hint: (error as any)?.hint,
+        status: (error as any)?.status,
+        safeErr,
+      });
+    }
 
     // Handle database errors
     if (error) {
-      const errorMessage = error.code === '23505' ? 'Ya existe una orden con estos datos' :
-                          error.code === '23503' ? 'Uno o más productos no existen' :
-                          'Error al crear la orden';
+      const detailedMessage = (error as any)?.message || (error as any)?.details;
+      const errorMessage =
+        (error as any)?.code === '23505'
+          ? 'Ya existe una orden con estos datos'
+          : (error as any)?.code === '23503'
+          ? 'Uno o más productos no existen'
+          : detailedMessage || 'Error al crear la orden';
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }
@@ -163,11 +320,14 @@ export async function createGuestOrder(params: CreateGuestOrderParams): Promise<
 
     const orderData = data[0];
     toast.success('Orden creada exitosamente');
+    console.groupEnd();
     return orderData as GuestOrderResponse;
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Error al procesar la orden';
     toast.error(errorMessage);
+    console.error('[orders] createGuestOrder failed', { error });
+    console.groupEnd?.();
     throw error;
   }
 }

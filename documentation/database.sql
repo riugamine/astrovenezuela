@@ -325,7 +325,7 @@ CREATE POLICY "Admins can update profiles" ON profiles FOR UPDATE USING (
 -- Function to create order with items in a transaction
 CREATE OR REPLACE FUNCTION create_order_with_items(
     p_user_id UUID,
-    p_status order_status DEFAULT 'pending',
+    p_status TEXT,
     p_total_amount NUMERIC,
     p_shipping_address TEXT,
     p_payment_method TEXT,
@@ -382,7 +382,7 @@ BEGIN
         ) VALUES (
             new_order.id,
             (item->>'product_id')::UUID,
-            (item->>'variant_id')::UUID,
+            NULLIF(item->>'variant_id','')::UUID,
             (item->>'quantity')::INTEGER,
             (item->>'price')::NUMERIC
         );
@@ -394,7 +394,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to create guest order with items in a transaction
 CREATE OR REPLACE FUNCTION create_guest_order_with_items(
-    p_status order_status DEFAULT 'pending',
+    p_status TEXT,
     p_total_amount NUMERIC,
     p_shipping_address TEXT,
     p_payment_method TEXT,
@@ -413,7 +413,7 @@ RETURNS TABLE (
     id UUID,
     order_access_token UUID,
     total_amount NUMERIC,
-    status order_status,
+    status TEXT,
     created_at TIMESTAMPTZ
 ) AS $$
 DECLARE
@@ -456,13 +456,13 @@ BEGIN
     -- Insert order items
     FOR item IN SELECT * FROM jsonb_array_elements(p_items)
     LOOP
-        -- Validate product and variant exist
-        IF NOT EXISTS (SELECT 1 FROM products WHERE id = (item->>'product_id')::UUID) THEN
+        -- Validate product and variant exist (qualify column names to avoid ambiguity)
+        IF NOT EXISTS (SELECT 1 FROM products p WHERE p.id = (item->>'product_id')::UUID) THEN
             RAISE EXCEPTION 'Product not found: %', item->>'product_id';
         END IF;
 
         IF item->>'variant_id' IS NOT NULL AND 
-           NOT EXISTS (SELECT 1 FROM product_variants WHERE id = (item->>'variant_id')::UUID) THEN
+           NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.id = (item->>'variant_id')::UUID) THEN
             RAISE EXCEPTION 'Product variant not found: %', item->>'variant_id';
         END IF;
 
@@ -476,7 +476,7 @@ BEGIN
         ) VALUES (
             new_order.id,
             (item->>'product_id')::UUID,
-            (item->>'variant_id')::UUID,
+            NULLIF(item->>'variant_id','')::UUID,
             (item->>'quantity')::INTEGER,
             (item->>'price')::NUMERIC
         );
@@ -499,7 +499,7 @@ CREATE OR REPLACE FUNCTION get_order_with_items_by_token(
 )
 RETURNS TABLE (
     order_id UUID,
-    status order_status,
+    status TEXT,
     total_amount NUMERIC,
     shipping_address TEXT,
     payment_method TEXT,
@@ -546,7 +546,8 @@ BEGIN
                     'product_name', p.name,
                     'product_slug', p.slug,
                     'variant_size', pv.size,
-                    'variant_reference', pv.reference_number
+                    'variant_reference', pv.reference_number,
+                    'image_url', COALESCE(pv.image_url, p.main_image_url, '')
                 )
             ) FROM order_items oi
             LEFT JOIN products p ON oi.product_id = p.id

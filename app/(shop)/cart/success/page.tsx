@@ -95,8 +95,18 @@ function OrderContent() {
                   key={item.id || index}
                   className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted/80 transition-colors"
                 >
-                  <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center">
-                    <span className="text-muted-foreground text-sm">Imagen</span>
+                  <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                    {item.image_url ? (
+                      <Image
+                        src={item.image_url}
+                        alt={item.product_name || 'Producto'}
+                        width={96}
+                        height={96}
+                        className="object-cover w-full h-full"
+                      />
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Imagen</span>
+                    )}
                   </div>
                   <div className="flex-1">
                     <h3 className="font-medium text-lg">
