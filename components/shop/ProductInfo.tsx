@@ -170,7 +170,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       <div className="space-y-4 pt-6 border-t">
         <h2 className="font-semibold text-lg text-primary dark:text-accent">Descripción</h2>
-        <p className="text-muted-foreground">{product.description}</p>
+        <p className="text-muted-foreground ">{product.description}</p>
       </div>
     </div>
   );
