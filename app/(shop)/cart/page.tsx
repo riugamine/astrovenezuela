@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/lib/store/useCartStore";
-import { useAuthStore } from "@/lib/store/useAuthStore";
+// import { useAuthStore } from "@/lib/store/useAuthStore"; // Removed unused import
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faMinus, faPlus, faShoppingCart } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
@@ -13,12 +13,12 @@ import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
-import { toast } from "sonner";
+// import { toast } from "sonner"; // Removed unused import
 import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, orderNotes, setOrderNotes } = useCartStore();
-  const { user } = useAuthStore();
+  // const { user } = useAuthStore(); // Removed unused variable
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 

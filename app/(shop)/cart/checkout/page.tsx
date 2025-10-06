@@ -24,7 +24,7 @@ import {
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { toast } from "sonner";
-import { useAuthStore } from "@/lib/store/useAuthStore";
+// import { useAuthStore } from "@/lib/store/useAuthStore"; // Removed unused import
 import { redirect } from "next/navigation";
 import { CustomerInfo } from "@/lib/types/database.types";
 // Importar el tipo de método de pago desde constants
@@ -91,7 +91,7 @@ const initialFormFields = {
   orderNotes: ""
 };
 export default function CheckoutPage() {
-  const { user }= useAuthStore();
+  // const { user } = useAuthStore(); // Removed unused variable
   const { orderNotes, setOrderNotes } = useCartStore();
   const { items, totalItems, clearCart } = useCartStore();
   const [shippingMethod, setShippingMethod] = useState<string>(initialFormFields.shippingMethod);

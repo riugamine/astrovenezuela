@@ -7,21 +7,16 @@ import { Card } from "@/components/ui/card";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
-import { Database } from "@/lib/types/database.types";
+// import { Database } from "@/lib/types/database.types"; // Removed unused import
 import { useEffect } from "react";
-import { useAuthStore } from "@/lib/store/useAuthStore";
+// import { useAuthStore } from "@/lib/store/useAuthStore"; // Removed unused import
 import { useQuery } from "@tanstack/react-query";
 import { getOrderWithItemsByToken } from "@/lib/data/orders";
 import { toast } from "sonner";
 import Image from "next/image";
 import { Suspense } from "react";
 
-type OrderWithItems = Database["public"]["Tables"]["orders"]["Row"] & {
-  order_items: (Database["public"]["Tables"]["order_items"]["Row"] & {
-    product: Database["public"]["Tables"]["products"]["Row"];
-    variant: Database["public"]["Tables"]["product_variants"]["Row"];
-  })[];
-};
+// Removed unused type OrderWithItems
 
 function OrderContent() {
   const router = useRouter();
