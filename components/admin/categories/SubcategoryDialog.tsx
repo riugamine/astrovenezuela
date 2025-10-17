@@ -33,12 +33,14 @@ const subcategorySchema = z.object({
     }),
   description: z.string()
     .min(0, "La descripción debe tener al menos 0 caracteres")
-    .optional(),
-    parent_id: z.string().optional(),
+    .optional()
+    .or(z.literal("")),
+  parent_id: z.string().optional(),
   is_active: z.boolean().optional(),
   banner_url: z.string()
    .min(0, "La URL del banner debe tener al menos 0 caracteres")
-   .optional(),
+   .optional()
+   .or(z.literal("")),
 });
 
 type CategoryFormData = z.infer<typeof subcategorySchema>;

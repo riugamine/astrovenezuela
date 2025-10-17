@@ -40,12 +40,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCategories, createCategory, updateCategory, toggleCategoryStatus } from "@/lib/data/admin/actions/categories";
+import { getCategories, createCategory, updateCategory, toggleCategoryStatus, deleteCategory } from "@/lib/data/admin/actions/categories";
 import { Category, CategoryData, CategoryWithSubcategories } from '@/lib/data/admin/actions/categories/types';
 import CategoryActions from "./CategoryActions";
 import { cn } from "@/lib/utils";
 import { SubcategoryDialog } from "./SubcategoryDialog";
 import { CategoryImageUploader } from "./CategoryImageUploader";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 // Schema para validación de categorías
 const categorySchema = z.object({
   name: z
@@ -56,13 +64,11 @@ const categorySchema = z.object({
     }),
   description: z
     .string()
-    .min(10, "La descripción debe tener al menos 10 caracteres")
-    .nullable()
+    .min(0, "La descripción debe tener al menos 0 caracteres")
     .optional(),
   banner_url: z
     .string()
-    .url("Debe ser una URL válida")
-    .nullable()
+    .min(0, "La URL del banner debe tener al menos 0 caracteres")
     .optional(),
   is_active: z.boolean(),
   parent_id: z.string().nullable().optional(),
@@ -77,6 +83,7 @@ const CategoriesManagement: FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isPermanentDeleteOpen, setIsPermanentDeleteOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
@@ -128,6 +135,10 @@ const CategoriesManagement: FC = () => {
             setSelectedCategory(category);
             setIsSubcategoryOpen(true);
           }}
+          onDelete={(category) => {
+            setSelectedCategory(category);
+            setIsPermanentDeleteOpen(true);
+          }}
         />
       ),
     },
@@ -167,22 +178,22 @@ const CategoriesManagement: FC = () => {
   ];
   const queryClient = useQueryClient();
 
-  const{
-    register,
+  const form = useForm<CategoryFormData>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      is_active: true,
+      description: "",
+      banner_url: "",
+      parent_id: null
+    }
+  });
+
+  const {
     handleSubmit,
     reset,
     watch,
     setValue,
-    formState: { errors },
-  } = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema),
-    defaultValues: {
-      is_active: true,
-      description: null,
-      banner_url: null,
-      parent_id: null
-    }
-  });
+  } = form;
   useEffect(() => {
     if (selectedCategory && isEditOpen) {
       reset({
@@ -266,6 +277,21 @@ const CategoriesManagement: FC = () => {
     },
   });
 
+  // Eliminar categoría permanentemente
+  const deleteMutation = useMutation({
+    mutationFn: (categoryId: string) => deleteCategory(categoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Categoría eliminada permanentemente");
+      setIsPermanentDeleteOpen(false);
+      setSelectedCategory(null);
+      reset();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al eliminar la categoría");
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -284,60 +310,70 @@ const CategoriesManagement: FC = () => {
                 Añade una nueva categoría o subcategoría para los productos
               </DialogDescription>
             </DialogHeader>
-            <form
-              onSubmit={handleSubmit((data) => createMutation.mutate(data))}
-            >
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input id="name" {...register("name")} />
-                  {errors.name && (
-                    <p className="text-sm text-red-500">
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="slug">Slug (URL)</Label>
-                  <Input
-                    id="slug"
-                    disabled
-                    value={
-                      watch("name")?.toLowerCase().replace(/\s+/g, "-") || ""
-                    }
-                    className="bg-muted"
+            <Form {...form}>
+              <form
+                onSubmit={handleSubmit((data: CategoryFormData) => createMutation.mutate(data))}
+              >
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Este será el identificador único en la URL
-                  </p>
-                </div>
 
-                <div>
-                  <Label htmlFor="description">Descripción</Label>
-                  <Textarea id="description" {...register("description")} />
-                  {errors.description && (
-                    <p className="text-sm text-red-500">
-                      {errors.description.message}
+                  <div>
+                    <Label htmlFor="slug">Slug (URL)</Label>
+                    <Input
+                      id="slug"
+                      disabled
+                      value={
+                        watch("name")?.toLowerCase().replace(/\s+/g, "-") || ""
+                      }
+                      className="bg-muted"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Este será el identificador único en la URL
                     </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="banner">Banner</Label>
-                  <CategoryImageUploader
-                    bannerUrl={watch("banner_url") || ""}
-                    onBannerChange={(url) => {
-                      setValue("banner_url", url);
-                    }}
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descripción</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
+                  <div>
+                    <Label htmlFor="banner">Banner</Label>
+                    <CategoryImageUploader
+                      bannerUrl={watch("banner_url") || ""}
+                      onBannerChange={(url) => {
+                        setValue("banner_url", url);
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <DialogFooter className="mt-6">
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creando..." : "Crear Categoría"}
-                </Button>
-              </DialogFooter>
-            </form>
+                <DialogFooter className="mt-6">
+                  <Button type="submit" disabled={createMutation.isPending}>
+                    {createMutation.isPending ? "Creando..." : "Crear Categoría"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -452,51 +488,60 @@ const CategoriesManagement: FC = () => {
               Modifica los detalles de la categoría
             </DialogDescription>
           </DialogHeader>
-          <form
-            onSubmit={handleSubmit(
-              (data) =>
-                selectedCategory &&
-                updateMutation.mutate({ id: selectedCategory.id, data })
-            )}
-          >
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-name">Nombre</Label>
-                <Input
-                  id="edit-name"
-                  defaultValue={selectedCategory?.name}
-                  {...register("name")}
+          <Form {...form}>
+            <form
+              onSubmit={handleSubmit(
+                (data: CategoryFormData) =>
+                  selectedCategory &&
+                  updateMutation.mutate({ id: selectedCategory.id, data })
+              )}
+            >
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="edit-description">Descripción</Label>
-                <Textarea
-                  id="edit-description"
-                  defaultValue={selectedCategory?.description || ""}
-                  {...register("description")}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
+                <div>
+                  <Label htmlFor="banner">Banner</Label>
+                  <CategoryImageUploader
+                    bannerUrl={watch("banner_url") || ""}
+                    onBannerChange={(url) => {
+                      setValue("banner_url", url);
+                    }}
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="banner">Banner</Label>
-                <CategoryImageUploader
-                  bannerUrl={watch("banner_url") || ""}
-                  onBannerChange={(url) => {
-                    setValue("banner_url", url);
-                  }}
-                />
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending
-                  ? "Actualizando..."
-                  : "Actualizar Categoría"}
-              </Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter className="mt-6">
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending
+                    ? "Actualizando..."
+                    : "Actualizar Categoría"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
@@ -513,13 +558,13 @@ const CategoriesManagement: FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Eliminar
-              {selectedCategory?.parent_id ? "Subcategoría" : "Categoría"}
+              {selectedCategory?.is_active ? "Desactivar" : "Activar"}
+              {selectedCategory?.parent_id ? " Subcategoría" : " Categoría"}
             </DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que deseas eliminar 
-              {selectedCategory?.parent_id ? "la subcategoría" : "la categoría"}{" "}
-              {selectedCategory?.name}? Esta acción no se puede deshacer.
+              ¿Estás seguro de que deseas {selectedCategory?.is_active ? "desactivar" : "activar"} 
+              {selectedCategory?.parent_id ? " la subcategoría" : " la categoría"}{" "}
+              {selectedCategory?.name}? Esta acción es reversible.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -533,7 +578,7 @@ const CategoriesManagement: FC = () => {
               Cancelar
             </Button>
             <Button
-              variant="destructive"
+              variant={selectedCategory?.is_active ? "destructive" : "default"}
               onClick={() => {
                 if (selectedCategory) {
                   toggleStatusMutation.mutate(selectedCategory.id);
@@ -541,11 +586,62 @@ const CategoriesManagement: FC = () => {
               }}
               disabled={toggleStatusMutation.isPending}
             >
-              {toggleStatusMutation.isPending ? "Eliminando..." : "Eliminar"}
+              {toggleStatusMutation.isPending 
+                ? (selectedCategory?.is_active ? "Desactivando..." : "Activando...") 
+                : (selectedCategory?.is_active ? "Desactivar" : "Activar")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Confirmación de Eliminación Permanente */}
+      <Dialog
+        open={isPermanentDeleteOpen}
+        onOpenChange={(open) => {
+          setIsPermanentDeleteOpen(open);
+          if (!open) {
+            setSelectedCategory(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600">
+              Eliminar Permanentemente
+              {selectedCategory?.parent_id ? " Subcategoría" : " Categoría"}
+            </DialogTitle>
+            <DialogDescription>
+              ⚠️ <strong>ADVERTENCIA:</strong> Esta acción eliminará permanentemente 
+              {selectedCategory?.parent_id ? " la subcategoría" : " la categoría"}{" "}
+              <strong>{selectedCategory?.name}</strong> de la base de datos. 
+              Esta acción NO se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsPermanentDeleteOpen(false);
+                setSelectedCategory(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedCategory) {
+                  deleteMutation.mutate(selectedCategory.id);
+                }
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Eliminando..." : "Eliminar Permanentemente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal de Creación de Subcategoría */}
       <SubcategoryDialog
         isOpen={isSubcategoryOpen}

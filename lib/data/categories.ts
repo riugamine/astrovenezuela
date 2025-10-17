@@ -20,6 +20,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     .from('categories')
     .select('*')
     .eq('slug', slug)
+    .eq('is_active', true)
     .single();
 
   if (error) throw error;

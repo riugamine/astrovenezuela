@@ -6,7 +6,8 @@ import {
   faPencilAlt,
   faToggleOn,
   faToggleOff,
-  faPlus 
+  faPlus,
+  faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import type { Category } from '@/lib/data/admin/actions/categories/types';
 import {
@@ -21,13 +22,15 @@ interface CategoryActionsProps {
   onEdit: (category: Category) => void;
   onToggleActive: (category: Category) => void;
   onAddSubcategory: (category: Category) => void;
+  onDelete: (category: Category) => void;
 }
 
 const CategoryActions: FC<CategoryActionsProps> = ({
   category,
   onEdit,
   onToggleActive,
-  onAddSubcategory
+  onAddSubcategory,
+  onDelete
 }) => {
   return (
     <DropdownMenu>
@@ -62,6 +65,13 @@ const CategoryActions: FC<CategoryActionsProps> = ({
             className="mr-2 h-4 w-4" 
           />
           {category.is_active ? 'Desactivar' : 'Activar'}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => onDelete(category)}
+          className="cursor-pointer text-red-600"
+        >
+          <FontAwesomeIcon icon={faTrash} className="mr-2 h-4 w-4" />
+          Eliminar Permanentemente
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

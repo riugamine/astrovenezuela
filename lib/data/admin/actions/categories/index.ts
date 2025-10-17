@@ -4,23 +4,31 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Category, CategoryData, CategoryWithSubcategories } from "./types";
 import { generateSlug } from "@/lib/utils";
 import sharp from "sharp";
-async function compressImage(buffer: Buffer): Promise<Buffer> {
+/**
+ * Compresses and converts image to JPEG or WebP with high quality
+ */
+async function compressImage(buffer: Buffer, mimeType: string = 'image/jpeg'): Promise<{ buffer: Buffer, ext: string, contentType: string }> {
   try {
-    const compressed = await sharp(buffer)
-      .resize(800, 600, {
-        fit: 'inside',
-        withoutEnlargement: true
-      })
-      .jpeg({
-        quality: 80,
-        progressive: true
-      })
-      .toBuffer();
+    let imageProcessor = sharp(buffer);
+    let ext = 'jpg';
+    let contentType = 'image/jpeg';
 
-    return compressed;
+    // Detect if original is webp and keep it if possible
+    if (mimeType === 'image/webp') {
+      ext = 'webp';
+      contentType = 'image/webp';
+      imageProcessor = imageProcessor.webp({ quality: 95 });
+    } else {
+      imageProcessor = imageProcessor.jpeg({ quality: 95, progressive: true, mozjpeg: true });
+    }
+
+    // Resize for category banners
+    imageProcessor = imageProcessor.resize(800, 600, { fit: 'inside', withoutEnlargement: true });
+
+    return { buffer: await imageProcessor.toBuffer(), ext, contentType };
   } catch (error) {
     console.error('Error compressing image:', error);
-    throw new Error('Failed to compress image');
+    return { buffer, ext: 'jpg', contentType: 'image/jpeg' };
   }
 }
 // Helper function to generate category slug
@@ -201,6 +209,45 @@ export async function toggleCategoryStatus(categoryId: string): Promise<void> {
     if (subError) throw subError;
   }
 }
+
+/**
+ * Deletes a category permanently from the database
+ * Only allows deletion if category has no associated products and no subcategories
+ */
+export async function deleteCategory(categoryId: string): Promise<void> {
+  // 1. Check if category has products
+  const { data: products, error: productsError } = await supabaseAdmin
+    .from('products')
+    .select('id')
+    .eq('category_id', categoryId)
+    .limit(1);
+
+  if (productsError) throw productsError;
+  if (products && products.length > 0) {
+    throw new Error('No se puede eliminar una categoría con productos asociados');
+  }
+
+  // 2. Check if category has subcategories
+  const { data: subcategories, error: subcategoriesError } = await supabaseAdmin
+    .from('categories')
+    .select('id')
+    .eq('parent_id', categoryId)
+    .limit(1);
+
+  if (subcategoriesError) throw subcategoriesError;
+  if (subcategories && subcategories.length > 0) {
+    throw new Error('No se puede eliminar una categoría con subcategorías');
+  }
+
+  // 3. Delete the category
+  const { error: deleteError } = await supabaseAdmin
+    .from('categories')
+    .delete()
+    .eq('id', categoryId);
+
+  if (deleteError) throw deleteError;
+}
+
 // Helper function to upload category banner
 export async function uploadCategoryBanner(file: File): Promise<string> {
   if (file.size > 10 * 1024 * 1024) {
@@ -210,15 +257,15 @@ export async function uploadCategoryBanner(file: File): Promise<string> {
   try {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const compressedBuffer = await compressImage(buffer);
+    const { buffer: compressedBuffer, ext, contentType } = await compressImage(buffer, file.type);
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const fileName = `${crypto.randomUUID()}.${ext}`;
     const filePath = `banners/${fileName}`;
 
     const { data, error } = await supabaseAdmin.storage
       .from('categories')
       .upload(filePath, compressedBuffer, {
+        contentType,
         cacheControl: '3600',
         upsert: false
       });
