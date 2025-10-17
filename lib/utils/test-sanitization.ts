@@ -56,7 +56,7 @@ export function testSanitization() {
 
   // Ejecutar pruebas
   let passedTests = 0;
-  let totalTests = testCases.length;
+  const totalTests = testCases.length;
 
   testCases.forEach((testCase, index) => {
     try {

@@ -15,7 +15,7 @@ import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
 import { ProductData, ProductVariant, ProductImage } from "@/lib/data/admin/actions/products/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExternalLinkAlt, faToggleOn, faToggleOff } from "@fortawesome/free-solid-svg-icons";
+import { faExternalLinkAlt } from "@fortawesome/free-solid-svg-icons";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toggleProductStatus } from "@/lib/data/admin/actions/products";
@@ -25,6 +25,7 @@ interface ProductViewDialogProps {
   product: ProductData & {
     variants?: ProductVariant[];
     product_images?: ProductImage[];
+    created_at?: string;
   };
   isOpen: boolean;
   onClose: () => void;
@@ -105,9 +106,9 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
                       <div className="flex gap-3 pb-2">
                         {product.product_images
                           .sort((a, b) => a.order_index - b.order_index)
-                          .map((image) => (
+                          .map((image, index) => (
                             <div
-                              key={image.id}
+                              key={`${image.image_url}-${image.order_index}-${index}`}
                               className="relative aspect-square w-20 h-20 lg:w-24 lg:h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-gray-200 hover:border-primary transition-colors cursor-pointer"
                             >
                               <Image
@@ -300,7 +301,9 @@ export function ProductViewDialog({ product, isOpen, onClose }: ProductViewDialo
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-gray-600">Fechas</h4>
                 <div className="space-y-1 text-sm">
-                  <p><span className="font-medium">Creado:</span> {new Date(product.created_at).toLocaleDateString()}</p>
+                  {product.created_at && (
+                    <p><span className="font-medium">Creado:</span> {new Date(product.created_at).toLocaleDateString()}</p>
+                  )}
                   <p><span className="font-medium">Actualizado:</span> {new Date(product.updated_at).toLocaleDateString()}</p>
                 </div>
               </div>
