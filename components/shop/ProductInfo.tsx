@@ -13,6 +13,7 @@ import {
   ProductVariant,
 } from "@/lib/types/database.types";
 import { Badge } from "@/components/ui/badge";
+import { sanitizeHtml } from "@/lib/utils/sanitize-html";
 
 interface ProductInfoProps {
   product: Product & {
@@ -170,7 +171,28 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       <div className="space-y-4 pt-6 border-t">
         <h2 className="font-semibold text-lg text-primary dark:text-accent">Descripción</h2>
-        <p className="text-muted-foreground ">{product.description}</p>
+        <div 
+          className="text-muted-foreground space-y-3
+                     [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mb-4
+                     [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-gray-900 [&_h2]:mb-3
+                     [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-gray-900 [&_h3]:mb-2
+                     [&_h4]:text-base [&_h4]:font-semibold [&_h4]:text-gray-900 [&_h4]:mb-2
+                     [&_h5]:text-sm [&_h5]:font-semibold [&_h5]:text-gray-900 [&_h5]:mb-1
+                     [&_h6]:text-xs [&_h6]:font-semibold [&_h6]:text-gray-900 [&_h6]:mb-1
+                     [&_p]:text-gray-700 [&_p]:leading-relaxed [&_p]:mb-3
+                     [&_strong]:font-semibold [&_strong]:text-gray-900
+                     [&_em]:italic [&_em]:text-gray-800
+                     [&_u]:underline
+                     [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-3
+                     [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-3
+                     [&_li]:mb-1 [&_li]:text-gray-700
+                     [&_a]:text-blue-600 [&_a]:underline [&_a]:hover:text-blue-800 [&_a]:font-medium
+                     [&_div]:mb-2
+                     [&_span]:text-gray-700"
+          dangerouslySetInnerHTML={{ 
+            __html: sanitizeHtml(product.description || '') 
+          }}
+        />
       </div>
     </div>
   );

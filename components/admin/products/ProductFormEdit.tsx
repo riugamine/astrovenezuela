@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Form,
   FormControl,
@@ -22,6 +23,8 @@ import { ImageUploaderEdit } from "./ImageUploaderEdit";
 import { VariantFormEdit } from "./VariantFormEdit";
 import { CategorySelect } from "./CategorySelect";
 import { SubcategorySelect } from "./SubcategorySelect";
+import { RichTextEditor } from "./RichTextEditor";
+import { RichTextPreview } from "./RichTextPreview";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,6 +33,7 @@ import {
 } from "@/lib/data/admin/actions/products";
 import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
 import { type ProductData } from "@/lib/data/admin/actions/products/types";
+import { sanitizeHtml } from '@/lib/utils/sanitize-html';
 
 // Define the schemas for editing
 const editVariantSchema = z.object({
@@ -127,9 +131,12 @@ export function ProductFormEdit({
         0
       );
 
+      // Sanitizar la descripción HTML antes de guardar
+      const sanitizedDescription = data.description ? sanitizeHtml(data.description) : "";
+
       const submitData = {
         ...data,
-        description: data.description || "",
+        description: sanitizedDescription,
         stock: totalStock,
         // Update slug if name has changed
         ...(data.name !== initialData.name && {
@@ -256,11 +263,22 @@ export function ProductFormEdit({
               <FormItem>
                 <FormLabel>Descripción *</FormLabel>
                 <FormControl>
-                  <Textarea
-                    placeholder="Describe las características principales del producto..."
-                    className="min-h-[120px]"
-                    {...field}
-                  />
+                  <Tabs defaultValue="editor" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="editor">Editor</TabsTrigger>
+                      <TabsTrigger value="preview">Vista Previa</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="editor" className="mt-2">
+                      <RichTextEditor
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Describe las características principales del producto..."
+                      />
+                    </TabsContent>
+                    <TabsContent value="preview" className="mt-2">
+                      <RichTextPreview content={field.value || ""} />
+                    </TabsContent>
+                  </Tabs>
                 </FormControl>
                 <FormMessage />
               </FormItem>
