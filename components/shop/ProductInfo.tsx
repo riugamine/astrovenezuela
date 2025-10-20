@@ -14,6 +14,8 @@ import {
 } from "@/lib/types/database.types";
 import { Badge } from "@/components/ui/badge";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
+import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
+import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
 
 interface ProductInfoProps {
   product: Product & {
@@ -26,6 +28,22 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const addItem = useCartStore((state) => state.addItem);
+  const activeRate = useActiveExchangeRate();
+
+  // Calculate dual prices if exchange rate is available
+  const getPriceDisplay = () => {
+    if (!activeRate) {
+      return `REF ${product.price.toLocaleString("en-US")}`;
+    }
+    
+    try {
+      const { usdPrice, vesPrice } = calculateDualPrices(product.price, activeRate);
+      return formatDualPrice(usdPrice, vesPrice);
+    } catch (error) {
+      console.error('Error calculating dual prices:', error);
+      return `REF ${product.price.toLocaleString("en-US")}`;
+    }
+  };
 
   // Get available sizes from variants
   const sizeVariants = product.variants?.reduce((acc, variant) => {
@@ -71,7 +89,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       <div>
         <h1 className="text-3xl font-bold">{product.name}</h1>
         <p className="text-2xl font-semibold mt-2 text-primary dark:text-accent">
-          REF {product.price.toLocaleString("en-US")}
+          {getPriceDisplay()}
         </p>
       </div>
 

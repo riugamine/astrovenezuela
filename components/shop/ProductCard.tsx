@@ -7,6 +7,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { useState, memo } from "react";
 import { cn } from "@/lib/utils";
+import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
+import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
 
 type Tables = Database['public']['Tables'];
 type ProductRow = Tables['products']['Row'];
@@ -84,6 +86,23 @@ const ProductCardContent = memo(function ProductCardContent({
   hasStock,
   onHover
 }: ProductCardContentProps) {
+  const activeRate = useActiveExchangeRate();
+  
+  // Calculate dual prices if exchange rate is available
+  const getPriceDisplay = () => {
+    if (!activeRate) {
+      return `REF ${product.price.toLocaleString('es-VE')}`;
+    }
+    
+    try {
+      const { usdPrice, vesPrice } = calculateDualPrices(product.price, activeRate);
+      return formatDualPrice(usdPrice, vesPrice);
+    } catch (error) {
+      console.error('Error calculating dual prices:', error);
+      return `REF ${product.price.toLocaleString('es-VE')}`;
+    }
+  };
+
   return (
     <Card className="overflow-hidden border-0 h-full transition-all duration-300 hover:shadow-sm bg-white dark:bg-gray-900">
       <CardContent className="p-0">
@@ -123,8 +142,8 @@ const ProductCardContent = memo(function ProductCardContent({
           )}>
             {product.name}
           </h3>
-          <p className="font-semibold text-primary dark:text-accent text-base">
-            REF {product.price.toLocaleString('es-VE')}
+          <p className="font-semibold text-primary dark:text-accent text-sm leading-tight">
+            {getPriceDisplay()}
           </p>
           {hasStock && availableSizes.length > 0 && (
             <div className="flex flex-wrap gap-1">

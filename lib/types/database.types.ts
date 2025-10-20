@@ -82,6 +82,16 @@ export interface Profile {
   role: 'admin' | 'customer';
   created_at: string;
 }
+
+export interface ExchangeRate {
+  id: string;
+  bcv_rate: number;
+  black_market_rate: number;
+  is_active: boolean;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
 export interface ProductRow extends Product {
   detail_images: ProductDetailImage[];
   variants: ProductVariant[];
@@ -96,6 +106,11 @@ export type Database = {
         Row: Category;
         Insert: Omit<Category, 'created_at'>;
         Update: Partial<Omit<Category, 'created_at'>>;
+      };
+      exchange_rates: {
+        Row: ExchangeRate;
+        Insert: Omit<ExchangeRate, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<ExchangeRate, 'id' | 'created_at' | 'updated_at'>>;
       };
       products: {
         Row: Product;

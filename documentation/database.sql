@@ -213,6 +213,7 @@ CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW
 CREATE TRIGGER update_product_detail_images_updated_at BEFORE UPDATE ON product_detail_images FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_product_variants_updated_at BEFORE UPDATE ON product_variants FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_exchange_rates_updated_at BEFORE UPDATE ON exchange_rates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -703,6 +704,118 @@ COMMENT ON COLUMN orders.order_notes IS 'Additional notes from customer';
 COMMENT ON COLUMN orders.agency_address IS 'Agency address for MRW/Zoom shipping';
 COMMENT ON COLUMN orders.order_access_token IS 'Unique token for guest order access';
 COMMENT ON COLUMN order_items.variant_id IS 'Optional reference to product variant (NULL if product has no variants)';
+
+-- =====================================================
+-- EXCHANGE RATES TABLE
+-- =====================================================
+-- Stores BCV and black market exchange rates for price calculations
+-- Only one rate can be active at a time
+CREATE TABLE IF NOT EXISTS exchange_rates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    bcv_rate NUMERIC(10,2) NOT NULL CHECK (bcv_rate > 0),
+    black_market_rate NUMERIC(10,2) NOT NULL CHECK (black_market_rate > 0),
+    is_active BOOLEAN DEFAULT false,
+    updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Ensure only one active exchange rate at a time
+CREATE UNIQUE INDEX IF NOT EXISTS idx_exchange_rates_active ON exchange_rates(is_active) WHERE is_active = true;
+
+-- Index for performance
+CREATE INDEX IF NOT EXISTS idx_exchange_rates_created_at ON exchange_rates(created_at);
+
+
+-- =====================================================
+-- EXCHANGE RATES RLS POLICIES
+-- =====================================================
+
+-- Enable RLS
+ALTER TABLE exchange_rates ENABLE ROW LEVEL SECURITY;
+
+-- Public read access for active rate
+CREATE POLICY "Exchange rates are viewable by everyone" ON exchange_rates FOR SELECT USING (true);
+
+-- Admin write access
+CREATE POLICY "Only admins can insert exchange rates" ON exchange_rates FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+CREATE POLICY "Only admins can update exchange rates" ON exchange_rates FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+CREATE POLICY "Only admins can delete exchange rates" ON exchange_rates FOR DELETE USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- =====================================================
+-- EXCHANGE RATES FUNCTIONS
+-- =====================================================
+
+-- Function to get active exchange rate
+CREATE OR REPLACE FUNCTION get_active_exchange_rate()
+RETURNS TABLE (
+    id UUID,
+    bcv_rate NUMERIC,
+    black_market_rate NUMERIC,
+    is_active BOOLEAN,
+    updated_by UUID,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        er.id,
+        er.bcv_rate,
+        er.black_market_rate,
+        er.is_active,
+        er.updated_by,
+        er.created_at,
+        er.updated_at
+    FROM exchange_rates er
+    WHERE er.is_active = true
+    ORDER BY er.created_at DESC
+    LIMIT 1;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to create new exchange rate and deactivate previous ones
+CREATE OR REPLACE FUNCTION create_exchange_rate(
+    p_bcv_rate NUMERIC,
+    p_black_market_rate NUMERIC,
+    p_updated_by UUID
+)
+RETURNS exchange_rates AS $$
+DECLARE
+    new_rate exchange_rates;
+BEGIN
+    -- Deactivate all existing rates
+    UPDATE exchange_rates SET is_active = false WHERE is_active = true;
+    
+    -- Create new active rate
+    INSERT INTO exchange_rates (
+        bcv_rate,
+        black_market_rate,
+        is_active,
+        updated_by
+    ) VALUES (
+        p_bcv_rate,
+        p_black_market_rate,
+        true,
+        p_updated_by
+    ) RETURNING * INTO new_rate;
+    
+    RETURN new_rate;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Comments
+COMMENT ON TABLE exchange_rates IS 'Exchange rates for BCV and black market used in price calculations';
+COMMENT ON COLUMN exchange_rates.bcv_rate IS 'Official Banco Central de Venezuela exchange rate';
+COMMENT ON COLUMN exchange_rates.black_market_rate IS 'Black market exchange rate for pricing calculations';
+COMMENT ON COLUMN exchange_rates.is_active IS 'Only one exchange rate can be active at a time';
+COMMENT ON COLUMN exchange_rates.updated_by IS 'Admin user who created/updated this rate';
 
 -- =====================================================
 -- END OF SCHEMA

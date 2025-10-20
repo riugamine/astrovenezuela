@@ -15,17 +15,50 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 // import { toast } from "sonner"; // Removed unused import
 import { useRouter } from "next/navigation";
+import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
+import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, orderNotes, setOrderNotes } = useCartStore();
   // const { user } = useAuthStore(); // Removed unused variable
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const activeRate = useActiveExchangeRate();
 
   const total = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
   );
+
+  // Calculate dual prices for total if exchange rate is available
+  const getTotalDisplay = () => {
+    if (!activeRate) {
+      return `REF ${total.toLocaleString("es-VE")}`;
+    }
+    
+    try {
+      const { usdPrice, vesPrice } = calculateDualPrices(total, activeRate);
+      return formatDualPrice(usdPrice, vesPrice);
+    } catch (error) {
+      console.error('Error calculating dual prices:', error);
+      return `REF ${total.toLocaleString("es-VE")}`;
+    }
+  };
+
+  // Calculate dual prices for individual items
+  const getItemPriceDisplay = (price: number) => {
+    if (!activeRate) {
+      return `$${price.toLocaleString('es-VE')}`;
+    }
+    
+    try {
+      const { usdPrice, vesPrice } = calculateDualPrices(price, activeRate);
+      return formatDualPrice(usdPrice, vesPrice);
+    } catch (error) {
+      console.error('Error calculating dual prices:', error);
+      return `$${price.toLocaleString('es-VE')}`;
+    }
+  };
 
   const handleCheckout = () => {
     setIsLoading(true);
@@ -94,7 +127,7 @@ export default function CartPage() {
                     <div className="flex-1 min-w-0 space-y-2 sm:space-y-0">
                       <h3 className="font-medium text-base truncate">{item.name}</h3>
                       <p className="text-sm text-muted-foreground">Talla: {item.size}</p>
-                      <p className="font-semibold">${item.price.toLocaleString('es-VE')}</p>
+                      <p className="font-semibold text-sm">{getItemPriceDisplay(item.price)}</p>
                     </div>
                     <div className="flex items-center gap-2 self-center sm:self-auto">
                       <Button
@@ -161,7 +194,7 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total Estimado</span>
-                  <span>REF {total.toLocaleString("es-VE")}</span>
+                  <span className="text-sm">{getTotalDisplay()}</span>
                 </div>
               </div>
 

@@ -29,6 +29,8 @@ import { redirect } from "next/navigation";
 import { CustomerInfo } from "@/lib/types/database.types";
 // Importar el tipo de método de pago desde constants
 import { VALID_PAYMENT_METHODS } from "@/lib/constants";
+import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
+import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
 
 // Actualizar la interfaz para usar el tipo literal
 type PaymentMethod = typeof VALID_PAYMENT_METHODS[number];
@@ -97,6 +99,7 @@ export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState<string>(initialFormFields.shippingMethod);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">(initialFormFields.paymentMethod);
   const { customerInfo, setCustomerInfo } = useCustomerStore();
+  const activeRate = useActiveExchangeRate();
 
   const subtotal = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -105,6 +108,21 @@ export default function CheckoutPage() {
   const shipping =
     shippingMethods.find((m) => m.id === shippingMethod)?.price || 0;
   const total = subtotal + shipping;
+
+  // Calculate dual prices for display
+  const getPriceDisplay = (price: number) => {
+    if (!activeRate) {
+      return `REF ${price.toFixed(2)}`;
+    }
+    
+    try {
+      const { usdPrice, vesPrice } = calculateDualPrices(price, activeRate);
+      return formatDualPrice(usdPrice, vesPrice);
+    } catch (error) {
+      console.error('Error calculating dual prices:', error);
+      return `REF ${price.toFixed(2)}`;
+    }
+  };
   const cleanupForm = () => {
     setCustomerInfo({
       ...customerInfo,
@@ -210,9 +228,9 @@ export default function CheckoutPage() {
         orderNotes ? orderNotes : "Sin notas especiales",
         "",
         "💰 RESUMEN",
-        `Subtotal: REF ${subtotal.toFixed(2)}`,
-        shipping > 0 ? `Envío: REF ${shipping.toFixed(2)}` : "Envío: A calcular según zona",
-        `Total: REF ${total.toFixed(2)}`,
+        `Subtotal: ${getPriceDisplay(subtotal)}`,
+        shipping > 0 ? `Envío: ${getPriceDisplay(shipping)}` : "Envío: A calcular según zona",
+        `Total: ${getPriceDisplay(total)}`,
         "",
         "📋 DETALLES DE ENVÍO Y PAGO",
         `Envío: ${selectedShipping}`,
@@ -487,8 +505,8 @@ export default function CheckoutPage() {
                     Talla: {item.size}
                   </p>
                 </div>
-                <p className="font-medium">
-                  ${(item.price * item.quantity).toLocaleString("es-VE")}
+                <p className="font-medium text-sm">
+                  {getPriceDisplay(item.price * item.quantity)}
                 </p>
               </div>
             ))}
@@ -499,11 +517,11 @@ export default function CheckoutPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
-              <span>REF {subtotal.toLocaleString("es-VE")}</span>
+              <span className="text-xs">{getPriceDisplay(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Envío</span>
-              <span>REF {shipping.toLocaleString("es-VE")}</span>
+              <span className="text-xs">{shipping > 0 ? getPriceDisplay(shipping) : "A calcular según zona"}</span>
             </div>
           </div>
 
@@ -511,7 +529,7 @@ export default function CheckoutPage() {
 
           <div className="flex justify-between font-medium text-lg">
             <span>Total</span>
-            <span>REF {total.toLocaleString("es-VE")}</span>
+            <span className="text-sm">{getPriceDisplay(total)}</span>
           </div>
 
           <Button

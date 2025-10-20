@@ -112,4 +112,12 @@ export const createMiddlewareSupabaseClient = (
   );
 
   return { supabase, response };
+};
+
+/**
+ * Creates a Supabase client for server-side operations
+ * This is a convenience function that returns the client directly
+ */
+export const supabaseServer = async () => {
+  return await createServerSupabaseClient();
 }; 
