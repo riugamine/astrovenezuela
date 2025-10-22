@@ -109,6 +109,65 @@ export function formatPrice(price: number, currency: "USD" | "VES"): string {
 }
 
 /**
+ * Calculate prices based on payment method
+ * @param referencePrice - Original product price
+ * @param paymentMethod - Payment method selected
+ * @param exchangeRate - Current exchange rate
+ * @returns Object with pricing information including discounts
+ */
+export function calculatePriceByPaymentMethod(
+  referencePrice: number,
+  paymentMethod: string,
+  exchangeRate: ExchangeRate
+): {
+  usdPrice: number;
+  vesPrice: number;
+  hasDiscount: boolean;
+  discountPercentage: number;
+  originalUsdPrice: number;
+  originalVesPrice: number;
+} {
+  // Calculate original price with margin (current formula)
+  const originalUsdPrice = calculateUSDPrice(
+    referencePrice,
+    exchangeRate.bcv_rate,
+    exchangeRate.black_market_rate
+  );
+  const originalVesPrice = calculateVESPrice(originalUsdPrice, exchangeRate.bcv_rate);
+
+  // Check if payment method gets discount (no margin)
+  const discountedPaymentMethods = ['efectivo', 'zelle', 'binance'];
+  const hasDiscount = discountedPaymentMethods.includes(paymentMethod.toLowerCase());
+
+  let usdPrice: number;
+  let vesPrice: number;
+
+  if (hasDiscount) {
+    // Direct price without margin
+    usdPrice = referencePrice;
+    vesPrice = calculateVESPrice(referencePrice, exchangeRate.bcv_rate);
+  } else {
+    // Price with margin (current calculation)
+    usdPrice = originalUsdPrice;
+    vesPrice = originalVesPrice;
+  }
+
+  // Calculate discount percentage
+  const discountPercentage = hasDiscount 
+    ? Math.round(((originalUsdPrice - usdPrice) / originalUsdPrice) * 100)
+    : 0;
+
+  return {
+    usdPrice,
+    vesPrice,
+    hasDiscount,
+    discountPercentage,
+    originalUsdPrice,
+    originalVesPrice,
+  };
+}
+
+/**
  * Get calculation example for admin display
  * Shows how prices are calculated with current rates
  * 

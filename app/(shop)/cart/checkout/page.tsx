@@ -25,12 +25,11 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { toast } from "sonner";
 // import { useAuthStore } from "@/lib/store/useAuthStore"; // Removed unused import
-import { redirect } from "next/navigation";
 import { CustomerInfo } from "@/lib/types/database.types";
 // Importar el tipo de método de pago desde constants
 import { VALID_PAYMENT_METHODS } from "@/lib/constants";
 import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
-import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
+import { calculateDualPrices, formatDualPrice, calculatePriceByPaymentMethod } from "@/lib/utils/currency-converter";
 
 // Actualizar la interfaz para usar el tipo literal
 type PaymentMethod = typeof VALID_PAYMENT_METHODS[number];
@@ -76,7 +75,6 @@ const paymentMethods: PaymentMethodUI[] = [
   { id: "zelle", name: "Zelle", description: "Pago con Zelle" },
   { id: "binance", name: "Binance", description: "Pago con criptomonedas" },
   { id: "efectivo", name: "Efectivo $", description: "Pago en efectivo (USD)" },
-  { id: "paypal", name: "PayPal", description: "Pago con PayPal" },
 ];
 const initialFormFields = {
   customerInfo: {
@@ -95,7 +93,7 @@ const initialFormFields = {
 export default function CheckoutPage() {
   // const { user } = useAuthStore(); // Removed unused variable
   const { orderNotes, setOrderNotes } = useCartStore();
-  const { items, totalItems, clearCart } = useCartStore();
+  const { items, clearCart } = useCartStore();
   const [shippingMethod, setShippingMethod] = useState<string>(initialFormFields.shippingMethod);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">(initialFormFields.paymentMethod);
   const { customerInfo, setCustomerInfo } = useCustomerStore();
@@ -109,18 +107,35 @@ export default function CheckoutPage() {
     shippingMethods.find((m) => m.id === shippingMethod)?.price || 0;
   const total = subtotal + shipping;
 
-  // Calculate dual prices for display
-  const getPriceDisplay = (price: number) => {
+  // Calculate dual prices for display based on payment method
+  const getPriceDisplay = (price: number, usePaymentMethod: boolean = false) => {
     if (!activeRate) {
       return `REF ${price.toFixed(2)}`;
     }
     
     try {
-      const { usdPrice, vesPrice } = calculateDualPrices(price, activeRate);
-      return formatDualPrice(usdPrice, vesPrice);
+      if (usePaymentMethod && paymentMethod) {
+        const pricing = calculatePriceByPaymentMethod(price, paymentMethod, activeRate);
+        return formatDualPrice(pricing.usdPrice, pricing.vesPrice);
+      } else {
+        const { usdPrice, vesPrice } = calculateDualPrices(price, activeRate);
+        return formatDualPrice(usdPrice, vesPrice);
+      }
     } catch (error) {
       console.error('Error calculating dual prices:', error);
       return `REF ${price.toFixed(2)}`;
+    }
+  };
+
+  // Get discount information for current payment method
+  const getDiscountInfo = (price: number) => {
+    if (!activeRate || !paymentMethod) return null;
+    
+    try {
+      return calculatePriceByPaymentMethod(price, paymentMethod, activeRate);
+    } catch (error) {
+      console.error('Error calculating discount info:', error);
+      return null;
     }
   };
   const cleanupForm = () => {
@@ -192,13 +207,13 @@ export default function CheckoutPage() {
         }))
       });
 
-      // Format WhatsApp message
+      // Format WhatsApp message with payment method pricing
       const formattedItems = items
         .map(
           (item) =>
             `• ${item.quantity}x ${item.name}\n` +
             `  Talla: ${item.size}\n` +
-            `  Precio: $${item.price.toFixed(2)}`
+            `  Precio: ${getPriceDisplay(item.price, true)}`
         )
         .join("\n\n");
 
@@ -208,9 +223,10 @@ export default function CheckoutPage() {
       // Store phone number in environment variable or configuration
       const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
       
+      // Get discount information
+      const discountInfo = getDiscountInfo(subtotal);
+      
       // Create a more structured message
-      // In the handleSubmit function, update the message formatting:
-
       const message = [
         "🛍️ NUEVO PEDIDO",
         "",
@@ -228,9 +244,10 @@ export default function CheckoutPage() {
         orderNotes ? orderNotes : "Sin notas especiales",
         "",
         "💰 RESUMEN",
-        `Subtotal: ${getPriceDisplay(subtotal)}`,
-        shipping > 0 ? `Envío: ${getPriceDisplay(shipping)}` : "Envío: A calcular según zona",
-        `Total: ${getPriceDisplay(total)}`,
+        `Subtotal: ${getPriceDisplay(subtotal, true)}`,
+        shipping > 0 ? `Envío: ${getPriceDisplay(shipping, true)}` : "Envío: A calcular según zona",
+        discountInfo?.hasDiscount ? `✨ Descuento aplicado: ${discountInfo.discountPercentage}%` : "",
+        `Total: ${getPriceDisplay(total, true)}`,
         "",
         "📋 DETALLES DE ENVÍO Y PAGO",
         `Envío: ${selectedShipping}`,
@@ -245,42 +262,17 @@ export default function CheckoutPage() {
       // Show success message
       toast.success("Pedido creado exitosamente");
       
-      // Handle long messages
-      const encodedMessage = encodeURIComponent(message);
-      if (encodedMessage.length > 4000) {
-        const summaryMessage = [
-          "🛍️ RESUMEN DE PEDIDO",
-          `Cliente: ${customerInfo.name} ${customerInfo.lastName}`,
-          `Productos: ${totalItems}`,
-          `Total: REF ${total.toFixed(2)}`,
-          "",
-          "Por favor, contáctenos para ver los detalles completos.",
-          `ID de Orden: ${createdOrder.id}`
-        ].join("\n");
-
-        window.open(
-          `https://wa.me/${phoneNumber}?text=${encodeURIComponent(summaryMessage)}`,
-          "_blank"
-        );
-      } else {
-        window.open(
-          `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
-          "_blank"
-        );
-      }
+      // Store WhatsApp data for iOS-compatible redirect
+      localStorage.setItem('pending_whatsapp', JSON.stringify({
+        phoneNumber,
+        message,
+        orderId: createdOrder.id
+      }));
+      
+      // Navigate to success page first (maintains user context for iOS)
+      window.location.href = `/cart/success?order_id=${createdOrder.id}&auto_whatsapp=true`;
     } catch (error) {
       toast.error("Error al crear el pedido. Por favor intente nuevamente." + error);
-    }
-    finally{
-      // Redirect to success page with order ID and access token
-      if (createdOrder) {
-        // Store order details in localStorage for the success page
-        localStorage.setItem('order_details', JSON.stringify({
-          order_id: createdOrder.id,
-          access_token: createdOrder.order_access_token
-        }));
-        redirect(`/cart/success?order_id=${createdOrder.id}&token=${createdOrder.order_access_token}`);
-      }
     }
   };
   return (
@@ -506,7 +498,7 @@ export default function CheckoutPage() {
                   </p>
                 </div>
                 <p className="font-medium text-sm">
-                  {getPriceDisplay(item.price * item.quantity)}
+                  {getPriceDisplay(item.price * item.quantity, true)}
                 </p>
               </div>
             ))}
@@ -517,19 +509,25 @@ export default function CheckoutPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
-              <span className="text-xs">{getPriceDisplay(subtotal)}</span>
+              <span className="text-xs">{getPriceDisplay(subtotal, true)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Envío</span>
-              <span className="text-xs">{shipping > 0 ? getPriceDisplay(shipping) : "A calcular según zona"}</span>
+              <span className="text-xs">{shipping > 0 ? getPriceDisplay(shipping, true) : "A calcular según zona"}</span>
             </div>
+            {getDiscountInfo(subtotal)?.hasDiscount && (
+              <div className="flex justify-between text-sm text-green-600 font-semibold">
+                <span>✨ Descuento aplicado</span>
+                <span className="text-xs">{getDiscountInfo(subtotal)?.discountPercentage}%</span>
+              </div>
+            )}
           </div>
 
           <Separator />
 
           <div className="flex justify-between font-medium text-lg">
             <span>Total</span>
-            <span className="text-sm">{getPriceDisplay(total)}</span>
+            <span className="text-sm">{getPriceDisplay(total, true)}</span>
           </div>
 
           <Button

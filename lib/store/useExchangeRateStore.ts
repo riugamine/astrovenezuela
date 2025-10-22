@@ -11,6 +11,7 @@ interface ExchangeRateState {
 
 interface ExchangeRateActions {
   fetchActiveRate: () => Promise<void>;
+  refreshRate: () => Promise<void>;
   setActiveRate: (rate: ExchangeRate | null) => void;
   clearError: () => void;
 }
@@ -30,14 +31,6 @@ export const useExchangeRateStore = create<ExchangeRateStore>((set, get) => ({
 
   // Actions
   fetchActiveRate: async () => {
-    const { lastFetched } = get();
-    
-    // Prevent unnecessary refetches within 5 minutes
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    if (lastFetched && lastFetched > fiveMinutesAgo && get().activeRate) {
-      return;
-    }
-
     set({ isLoading: true, error: null });
 
     try {
@@ -57,6 +50,11 @@ export const useExchangeRateStore = create<ExchangeRateStore>((set, get) => ({
         lastFetched: new Date(),
       });
     }
+  },
+
+  refreshRate: async () => {
+    // Force refresh without any cache checks
+    await get().fetchActiveRate();
   },
 
   setActiveRate: (rate) => {

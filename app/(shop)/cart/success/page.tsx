@@ -23,6 +23,7 @@ function OrderContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
   const token = searchParams.get("token");
+  const autoWhatsapp = searchParams.get("auto_whatsapp");
 
   useEffect(() => {
     if (!orderId || !token) {
@@ -30,6 +31,28 @@ function OrderContent() {
       router.push("/");
     }
   }, [orderId, token, router]);
+
+  // iOS WhatsApp redirect functionality
+  useEffect(() => {
+    if (autoWhatsapp === "true") {
+      const pendingWhatsapp = localStorage.getItem('pending_whatsapp');
+      
+      if (pendingWhatsapp) {
+        try {
+          const { phoneNumber, message } = JSON.parse(pendingWhatsapp);
+          localStorage.removeItem('pending_whatsapp');
+          
+          // Navigate directly to WhatsApp (iOS-compatible)
+          setTimeout(() => {
+            window.location.href = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+          }, 1000); // Small delay to ensure page is loaded
+          
+        } catch (error) {
+          console.error('Error parsing WhatsApp data:', error);
+        }
+      }
+    }
+  }, [autoWhatsapp]);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", orderId, token],

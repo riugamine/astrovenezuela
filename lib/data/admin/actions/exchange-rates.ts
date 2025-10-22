@@ -64,9 +64,12 @@ export async function createExchangeRateAction(formData: FormData) {
     // Create new exchange rate
     await createExchangeRate(bcvRate, blackMarketRate, user.id);
 
-    // Revalidate admin pages to show updated rates
+    // Revalidate all pages to show updated rates globally
+    revalidatePath("/", "layout");
     revalidatePath("/admin/settings");
     revalidatePath("/admin");
+    revalidatePath("/products", "page");
+    revalidatePath("/cart", "page");
 
     return {
       success: true,
