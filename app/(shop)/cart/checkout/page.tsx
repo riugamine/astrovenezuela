@@ -49,8 +49,8 @@ const shippingMethods: ShippingMethod[] = [
   {
     id: "delivery_maracay",
     name: "Delivery en Maracay",
-    description: "Entrega a domicilio solo en Maracay",
-    price: 5,
+    description: "Entrega a domicilio solo en Maracay (Costo por definir)",
+    price: 0, // Mantener en 0 para el cálculo
   },
   {
     id: "mrw",
@@ -245,7 +245,11 @@ export default function CheckoutPage() {
         "",
         "💰 RESUMEN",
         `Subtotal: ${getPriceDisplay(subtotal, true)}`,
-        shipping > 0 ? `Envío: ${getPriceDisplay(shipping, true)}` : "Envío: A calcular según zona",
+        shippingMethod === "delivery_maracay"
+          ? "Envío: Por definir"
+          : shipping > 0
+          ? `Envío: ${getPriceDisplay(shipping, true)}`
+          : "Envío: A calcular según zona",
         discountInfo?.hasDiscount ? `✨ Descuento aplicado: ${discountInfo.discountPercentage}%` : "",
         `Total: ${getPriceDisplay(total, true)}`,
         "",
@@ -429,7 +433,9 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <span className="font-medium">
-                        {method.price > 0
+                        {method.id === "delivery_maracay"
+                          ? "Por definir"
+                          : method.price > 0
                           ? `REF${method.price.toLocaleString("es-VE")}`
                           : "Gratis"}
                       </span>
@@ -513,7 +519,13 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span>Envío</span>
-              <span className="text-xs">{shipping > 0 ? getPriceDisplay(shipping, true) : "A calcular según zona"}</span>
+              <span className="text-xs">
+                {shippingMethod === "delivery_maracay"
+                  ? "Por definir"
+                  : shipping > 0
+                  ? getPriceDisplay(shipping, true)
+                  : "A calcular según zona"}
+              </span>
             </div>
             {getDiscountInfo(subtotal)?.hasDiscount && (
               <div className="flex justify-between text-sm text-green-600 font-semibold">

@@ -46,22 +46,24 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     lastMonth.setMonth(lastMonth.getMonth() - 1);
 
     // Consultas paralelas para órdenes y stock
+    // Solo incluir órdenes entregadas (delivered) para las métricas
     const [currentMonthOrdersResult, lastMonthOrdersResult, lowStockResult, outOfStockResult] = await Promise.all([
-      supabaseAdmin.from('orders').select('*').gte('created_at', startOfMonth.toISOString()),
-      supabaseAdmin.from('orders').select('*').gte('created_at', lastMonth.toISOString()).lt('created_at', startOfMonth.toISOString()),
+      supabaseAdmin.from('orders').select('*').gte('created_at', startOfMonth.toISOString()).eq('status', 'delivered'),
+      supabaseAdmin.from('orders').select('*').gte('created_at', lastMonth.toISOString()).lt('created_at', startOfMonth.toISOString()).eq('status', 'delivered'),
       supabaseAdmin.from('products').select('*', { count: 'exact' }).lt('stock', 10).gt('stock', 0),
       supabaseAdmin.from('products').select('*', { count: 'exact' }).eq('stock', 0)
     ]);
 
-    // Cálculo de métricas
+    // Cálculo de métricas - solo órdenes entregadas (delivered)
     const currentRevenue = currentMonthOrdersResult.data?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
     const lastRevenue = lastMonthOrdersResult.data?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
     const salesGrowth = lastRevenue ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
 
-    // Productos más vendidos
+    // Productos más vendidos - solo de órdenes entregadas
     const { data: topProducts } = await supabaseAdmin
     .from('order_items')
-    .select('quantity, products(name)')
+    .select('quantity, products(name), orders!inner(status)')
+    .eq('orders.status', 'delivered')
     .order('quantity', { ascending: false })
     .limit(5) as { data: TopProduct[] | null };
 
@@ -73,6 +75,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .from('orders')
       .select('created_at, total_amount')
       .gte('created_at', thirtyDaysAgo.toISOString())
+      .eq('status', 'delivered')
       .order('created_at');
 
     const salesOverTime = processSalesData(salesData || []);
