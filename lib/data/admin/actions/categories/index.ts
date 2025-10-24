@@ -13,8 +13,15 @@ async function compressImage(buffer: Buffer, mimeType: string = 'image/jpeg'): P
     let ext = 'jpg';
     let contentType = 'image/jpeg';
 
-    // Detect if original is webp and keep it if possible
-    if (mimeType === 'image/webp') {
+    if (mimeType === 'image/png') {
+      ext = 'png';
+      contentType = 'image/png';
+      imageProcessor = imageProcessor.png({ 
+        quality: 95, 
+        compressionLevel: 9,
+        palette: true
+      });
+    } else if (mimeType === 'image/webp') {
       ext = 'webp';
       contentType = 'image/webp';
       imageProcessor = imageProcessor.webp({ quality: 95 });

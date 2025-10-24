@@ -250,16 +250,25 @@ async function compressImage(buffer: Buffer, isMainImage: boolean = false, mimeT
     let ext = 'jpg';
     let contentType = 'image/jpeg';
 
-    // Detect if original is webp and keep it if possible
-    if (mimeType === 'image/webp') {
+    // Detect and preserve image format
+    if (mimeType === 'image/png') {
+      ext = 'png';
+      contentType = 'image/png';
+      imageProcessor = imageProcessor.png({ 
+        quality: 95, 
+        compressionLevel: 9,
+        palette: true // Optimize for web
+      });
+    } else if (mimeType === 'image/webp') {
       ext = 'webp';
       contentType = 'image/webp';
       imageProcessor = imageProcessor.webp({ quality: 95 });
     } else {
+      // JPEG for all others
       imageProcessor = imageProcessor.jpeg({ quality: 95, progressive: true, mozjpeg: true });
     }
 
-    // Resize
+    // Resize logic remains the same
     if (isMainImage) {
       imageProcessor = imageProcessor.resize(1920, 1440, { fit: 'inside', withoutEnlargement: true });
     } else {
@@ -285,10 +294,10 @@ export async function uploadProductImage(formData: FormData): Promise<string> {
     throw new Error('File and path are required');
   }
 
-  // New general size limit: 50MB
-  const maxSize = 50 * 1024 * 1024;
+  // Consistent size limit: 10MB
+  const maxSize = 10 * 1024 * 1024;
   if (file.size > maxSize) {
-    throw new Error('File size exceeds 50MB limit');
+    throw new Error('File size exceeds 10MB limit');
   }
 
   // Simple validation for admin context

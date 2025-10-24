@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import AdminHeader from '@/components/layout/admin/AdminHeader';
 import AdminSidebar from '@/components/layout/admin/AdminSidebar';
-import { Toaster } from 'sonner';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -20,7 +19,6 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         <main className="flex-1 p-6">
           {children}
         </main>
-        <Toaster position="top-right" />
       </div>
     </div>
   );
