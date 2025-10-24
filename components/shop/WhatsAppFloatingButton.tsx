@@ -38,8 +38,14 @@ export function WhatsAppFloatingButton({ product }: WhatsAppFloatingButtonProps)
       `🔗 Ver producto: ${typeof window !== 'undefined' ? window.location.href : ''}`
     ].join("\n");
 
-    // Número de WhatsApp (puedes cambiarlo por el número real)
-    const phoneNumber = "584121234567"; // Reemplaza con el número real
+    // Número de WhatsApp desde variables de entorno
+    const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
+    
+    if (!phoneNumber) {
+      console.error('Número de WhatsApp no configurado en NEXT_PUBLIC_WHATSAPP_NUMBER');
+      alert('Error: Número de WhatsApp no configurado. Por favor contacta al administrador.');
+      return;
+    }
     
     // Crear URL de WhatsApp
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
