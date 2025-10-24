@@ -65,7 +65,7 @@ export default function RootLayout({
             </AuthProvider>
           </Providers>
         </QueryProvider>
-        <Toaster position="top-right" />
+        <Toaster position="bottom-right" />
         <CookieConsent />
       </body>
     </html>

@@ -3,33 +3,16 @@ import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
-import { supabaseClient } from "@/lib/supabase/client";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
-import { Category } from "@/lib/types/database.types";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
+import { getSubcategories } from "@/lib/data/categories";
 
 import Image from 'next/image';
 
-// Fetch categories server-side
-async function getCategories() {
-  const { data: categoriesData, error: categoriesError } = await supabaseClient
-    .from("categories")
-    .select("*")
-    .eq("is_active", true)
-    .limit(20);
-
-  if (categoriesError) {
-    console.error("Error fetching categories:", categoriesError);
-    return [];
-  }
-
-  return categoriesData as Category[];
-}
-
 export default async function Home() {
-  const categories = await getCategories();
+  const subcategories = await getSubcategories();
 
   return (
     <ShopLayout>
@@ -88,10 +71,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
+      {/* Subcategories Section */}
       <section className="py-4 sm:py-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
-          <CategoriesCarousel categories={categories} />
+          <CategoriesCarousel categories={subcategories} />
         </div>
       </section>
 

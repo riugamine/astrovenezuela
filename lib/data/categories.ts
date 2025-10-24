@@ -26,3 +26,19 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
   if (error) throw error;
   return data;
 }
+
+/**
+ * Fetches all active subcategories from the database
+ * Subcategories are categories that have a parent_id (not null)
+ * @returns Promise<Category[]> Array of active subcategories
+ */
+export async function getSubcategories() {
+  const { data, error } = await supabaseClient
+    .from("categories")
+    .select("*")
+    .eq("is_active", true)
+    .not("parent_id", "is", null);
+
+  if (error) throw error;
+  return data as Category[];
+}
