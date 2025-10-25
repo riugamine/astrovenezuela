@@ -51,3 +51,63 @@ export async function fetchProducts(page: number, categoryIds?: string[]) {
     hasMore: count ? from + PRODUCTS_PER_PAGE < count : false,
   };
 }
+
+/**
+ * Searches for products by name only
+ * @param query Search query string
+ * @param page Current page number (starts from 1)
+ * @returns Promise with products and hasMore flag
+ */
+export async function searchProducts(query: string, page: number = 1) {
+  const from = (page - 1) * PRODUCTS_PER_PAGE;
+  const to = from + PRODUCTS_PER_PAGE - 1;
+
+  // Validate pagination parameters
+  if (from < 0 || to < from) {
+    return {
+      products: [],
+      hasMore: false,
+      totalCount: 0,
+    };
+  }
+
+  // Create search pattern for case-insensitive search
+  const searchPattern = `%${query}%`;
+
+  try {
+    // Simple search by product name only
+    const { data, error, count } = await supabaseClient
+      .from("products")
+      .select(
+        `
+        *,
+        product_images (*),
+        variants:product_variants (*),
+        category:categories (*)
+      `,
+        { count: "exact" }
+      )
+      .eq("is_active", true)
+      .ilike("name", searchPattern)
+      .range(from, to);
+
+    if (error) {
+      console.error('Search error:', error);
+      throw error;
+    }
+
+    return {
+      products: data as (ProductWithDetails & { category: any })[],
+      hasMore: count ? from + PRODUCTS_PER_PAGE < count : false,
+      totalCount: count || 0,
+    };
+  } catch (error) {
+    console.error('Search error:', error);
+    // Return empty results on error
+    return {
+      products: [],
+      hasMore: false,
+      totalCount: 0,
+    };
+  }
+}

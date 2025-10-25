@@ -52,6 +52,7 @@ import { Badge } from "@/components/ui/badge";
 import { getBrandLogo } from "@/lib/utils";
 import Image from 'next/image';
 import { getCategories } from '@/lib/data/categories';
+import { SearchBar } from '@/components/shop/SearchBar';
 
 // Interface for navigation items
 interface NavigationItem {
@@ -300,6 +301,9 @@ const Header = () => {
               </NavigationMenuList>
             </NavigationMenu>
           </div>
+
+          {/* Search Bar */}
+          <SearchBar className="flex-1 max-w-md mx-4" />
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
