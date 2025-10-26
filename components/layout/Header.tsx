@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShoppingCart,
@@ -113,7 +113,7 @@ const NavigationLink = ({ item }: { item: NavigationItem }) => (
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { theme, setTheme, mounted } = useTheme();
+  const { theme, setTheme } = useTheme();
   const totalItems = useCartStore((state) => state.totalItems);
   const { user ,signOut } = useAuthStore();
 
