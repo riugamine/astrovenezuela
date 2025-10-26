@@ -120,14 +120,13 @@ const Header = () => {
   // Use React Query for categories with error handling
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: async () => {
-      try {
-        return await getCategories();
-      } catch (error) {
-        console.error("Error fetching categories in header:", error);
-        return []; // Return empty array on error
-      }
-    },
+        queryFn: async () => {
+          try {
+            return await getCategories();
+          } catch {
+            return []; // Return empty array on error
+          }
+        },
   });
 
   // Organize categories into a hierarchy

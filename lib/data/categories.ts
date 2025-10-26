@@ -13,12 +13,10 @@ export async function getCategories() {
       .eq("is_active", true);
 
     if (error) {
-      console.error("Error fetching categories:", error);
       return []; // Return empty array instead of throwing
     }
     return data as Category[];
-  } catch (error) {
-    console.error("Error fetching categories:", error);
+  } catch {
     return []; // Return empty array instead of throwing
   }
 }
@@ -33,12 +31,10 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
       .single();
 
     if (error) {
-      console.error("Error fetching category by slug:", error);
       return null; // Return null instead of throwing
     }
     return data;
-  } catch (error) {
-    console.error("Error fetching category by slug:", error);
+  } catch {
     return null; // Return null instead of throwing
   }
 }
@@ -57,12 +53,10 @@ export async function getSubcategories() {
       .not("parent_id", "is", null);
 
     if (error) {
-      console.error("Error fetching subcategories:", error);
       return []; // Return empty array instead of throwing
     }
     return data as Category[];
-  } catch (error) {
-    console.error("Error fetching subcategories:", error);
+  } catch {
     return []; // Return empty array instead of throwing
   }
 }

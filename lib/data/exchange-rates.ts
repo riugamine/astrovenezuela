@@ -15,16 +15,13 @@ export async function getActiveExchangeRate(): Promise<ExchangeRate | null> {
 
     if (error) {
       if (error.code === "PGRST116") {
-        // No rows found - no active rate exists
         return null;
       }
-      console.error("Error fetching active exchange rate:", error);
       return null; // Return null instead of throwing
     }
 
     return data;
-  } catch (error) {
-    console.error("Error fetching active exchange rate:", error);
+  } catch {
     return null; // Return null instead of throwing
   }
 }
@@ -42,13 +39,11 @@ export async function getExchangeRateHistory(): Promise<ExchangeRate[]> {
       .limit(10);
 
     if (error) {
-      console.error("Error fetching exchange rate history:", error);
       return []; // Return empty array instead of throwing
     }
 
     return data || [];
-  } catch (error) {
-    console.error("Error fetching exchange rate history:", error);
+  } catch {
     return []; // Return empty array instead of throwing
   }
 }
@@ -73,11 +68,12 @@ export async function createExchangeRate(
       p_updated_by: updatedBy,
     });
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
     return data;
   } catch (error) {
-    console.error("Error creating exchange rate:", error);
     throw error;
   }
 }

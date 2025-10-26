@@ -62,14 +62,29 @@ export async function createExchangeRateAction(formData: FormData) {
     }
 
     // Create new exchange rate
-    await createExchangeRate(bcvRate, blackMarketRate, user.id);
+    try {
+      await createExchangeRate(bcvRate, blackMarketRate, user.id);
+    } catch {
+      return {
+        success: false,
+        error: "Failed to create exchange rate. Please try again.",
+      };
+    }
 
-    // Revalidate all pages to show updated rates globally
-    revalidatePath("/", "layout");
-    revalidatePath("/admin/settings");
-    revalidatePath("/admin");
-    revalidatePath("/products", "page");
-    revalidatePath("/cart", "page");
+    // Revalidate specific pages to show updated rates
+    // Don't revalidate the root layout as it can cause issues
+    try {
+      revalidatePath("/admin/settings");
+      revalidatePath("/admin");
+      revalidatePath("/products", "page");
+      revalidatePath("/cart", "page");
+      revalidatePath("/checkout", "page");
+      
+      // Revalidate specific product pages that might be cached
+      revalidatePath("/products", "layout");
+    } catch {
+      // Don't fail the entire operation if revalidation fails
+    }
 
     return {
       success: true,

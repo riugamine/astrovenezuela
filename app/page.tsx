@@ -5,13 +5,21 @@ import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
+import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
+import { getSubcategories } from "@/lib/data/categories";
+import { Category } from "@/lib/types/database.types";
 import Image from 'next/image';
 
-/**
- * Minimal home page that doesn't depend on database
- * This is a fallback version for when database queries fail
- */
-export default function Home() {
+export default async function Home() {
+  // Safely fetch subcategories with error handling
+  let subcategories: Category[] = [];
+  try {
+    subcategories = await getSubcategories();
+  } catch (error) {
+    console.error("Error fetching subcategories for home page:", error);
+    // Continue with empty array - page will still load
+  }
+
   return (
     <ShopLayout>
       {/* Hero Section */}
@@ -65,6 +73,13 @@ export default function Home() {
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Subcategories Section */}
+      <section className="py-4 sm:py-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="container mx-auto px-4">
+          <CategoriesCarousel categories={subcategories} />
         </div>
       </section>
 
