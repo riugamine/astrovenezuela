@@ -3,20 +3,32 @@
 import { useEffect, useRef } from "react";
 import { useExchangeRateStore } from "@/lib/store/useExchangeRateStore";
 import { toast } from "sonner";
+import { ExchangeRate } from "@/lib/types/database.types";
+
+interface ExchangeRateProviderProps {
+  children: React.ReactNode;
+  initialRate?: ExchangeRate | null;
+}
 
 /**
  * Provider component to initialize exchange rates on app load
  * This ensures exchange rates are available globally across the application
  * Includes polling every 30 seconds to detect rate changes
+ * Can accept an initial rate from server-side rendering to prevent hydration issues
  */
-export function ExchangeRateProvider({ children }: { children: React.ReactNode }) {
-  const { fetchActiveRate, activeRate } = useExchangeRateStore();
+export function ExchangeRateProvider({ children, initialRate }: ExchangeRateProviderProps) {
+  const { fetchActiveRate, activeRate, setActiveRate } = useExchangeRateStore();
   const previousRateRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Initialize exchange rates when the app loads
+    // If we have an initial rate from server, set it first
+    if (initialRate) {
+      setActiveRate(initialRate);
+    }
+    
+    // Then fetch the latest rate (this will update if there are changes)
     fetchActiveRate();
-  }, [fetchActiveRate]);
+  }, [fetchActiveRate, setActiveRate, initialRate]);
 
   useEffect(() => {
     // Poll for exchange rate changes every 30 seconds

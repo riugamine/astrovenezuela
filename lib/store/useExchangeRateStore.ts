@@ -91,7 +91,8 @@ export const useExchangeRate = () => {
 export const useActiveExchangeRate = (): ExchangeRate | null => {
   const { activeRate, fetchActiveRate, isLoading } = useExchangeRateStore();
   
-  // Auto-fetch if no rate is loaded and not currently loading
+  // Only auto-fetch if no rate is loaded and not currently loading
+  // This prevents unnecessary fetching when server-provided rate exists
   if (!activeRate && !isLoading) {
     fetchActiveRate();
   }
