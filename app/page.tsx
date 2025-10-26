@@ -8,15 +8,12 @@ import { HyperText } from "@/components/magicui/hyper-text";
 //import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
 import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
 import { getSubcategories } from "@/lib/data/categories";
-import { fetchProducts } from "@/lib/data/products";
+
 
 import Image from 'next/image';
 
 export default async function Home() {
-  const [subcategories] = await Promise.all([
-    getSubcategories(),
-    fetchProducts(1) // Fetch first page of products
-  ]);
+  const subcategories = await getSubcategories();
 
   return (
     <ShopLayout>
