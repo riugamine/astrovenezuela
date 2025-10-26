@@ -117,10 +117,17 @@ const Header = () => {
   const totalItems = useCartStore((state) => state.totalItems);
   const { user ,signOut } = useAuthStore();
 
-  // Use React Query for categories
+  // Use React Query for categories with error handling
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: getCategories,
+    queryFn: async () => {
+      try {
+        return await getCategories();
+      } catch (error) {
+        console.error("Error fetching categories in header:", error);
+        return []; // Return empty array on error
+      }
+    },
   });
 
   // Organize categories into a hierarchy
