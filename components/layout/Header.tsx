@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShoppingCart,
@@ -34,7 +34,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Link from "next/link";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/lib/hooks/useTheme";
 import { useCartStore } from "@/lib/store/useCartStore";
 import {
   DropdownMenu,
@@ -113,7 +113,7 @@ const NavigationLink = ({ item }: { item: NavigationItem }) => (
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, mounted } = useTheme();
   const totalItems = useCartStore((state) => state.totalItems);
   const { user ,signOut } = useAuthStore();
 
