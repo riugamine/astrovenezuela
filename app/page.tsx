@@ -5,28 +5,13 @@ import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
-//import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
-import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
-import { getSubcategories } from "@/lib/data/categories";
-import { logEnvironmentStatus } from "@/lib/debug/env-check";
-import { Category } from "@/lib/types/database.types";
-
-
 import Image from 'next/image';
 
-export default async function Home() {
-  // Log environment status for debugging
-  logEnvironmentStatus();
-
-  // Safely fetch subcategories with error handling
-  let subcategories: Category[] = [];
-  try {
-    subcategories = await getSubcategories();
-  } catch (error) {
-    console.error("Error fetching subcategories for home page:", error);
-    // Continue with empty array - page will still load
-  }
-
+/**
+ * Minimal home page that doesn't depend on database
+ * This is a fallback version for when database queries fail
+ */
+export default function Home() {
   return (
     <ShopLayout>
       {/* Hero Section */}
@@ -78,16 +63,8 @@ export default async function Home() {
                   />
                 </Link>
               </Button>
-
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Subcategories Section */}
-      <section className="py-4 sm:py-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4">
-          <CategoriesCarousel categories={subcategories} />
         </div>
       </section>
 
@@ -144,41 +121,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* Moon Drops Section 
-      <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="font-exo text-3xl sm:text-4xl font-bold mb-4">Moon Drops</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
-          </div>
-          
-          {/* Use ProductsWrapper exactly like /products page 
-          <ProductsWrapper 
-            categories={[]} // Empty categories for home page
-            initialProducts={initialProducts.products} 
-            queryKey={['home-products']}
-            disableCategoryFilter={true}
-          />
-          
-          <div className="text-center mt-12">
-            <Link href="/products">
-              <Button
-                variant="outline"
-                size="lg"
-                className="group hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-              >
-                Explorar Catálogo Completo
-                <FontAwesomeIcon
-                  icon={faArrowRight}
-                  className="ml-2 transition-transform duration-300 group-hover:translate-x-2"
-                />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-      */}
     </ShopLayout>
   );
 }
