@@ -5,14 +5,18 @@ import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
-import { ProductGrid } from "@/components/shop/ProductGrid";
+import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
 import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
 import { getSubcategories } from "@/lib/data/categories";
+import { fetchProducts } from "@/lib/data/products";
 
 import Image from 'next/image';
 
 export default async function Home() {
-  const subcategories = await getSubcategories();
+  const [subcategories, initialProducts] = await Promise.all([
+    getSubcategories(),
+    fetchProducts(1) // Fetch first page of products
+  ]);
 
   return (
     <ShopLayout>
@@ -139,7 +143,15 @@ export default async function Home() {
             <h2 className="font-exo text-3xl sm:text-4xl font-bold mb-4">Moon Drops</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
           </div>
-          <ProductGrid />
+          
+          {/* Use ProductsWrapper exactly like /products page */}
+          <ProductsWrapper 
+            categories={[]} // Empty categories for home page
+            initialProducts={initialProducts.products} 
+            queryKey={['home-products']}
+            disableCategoryFilter={true}
+          />
+          
           <div className="text-center mt-12">
             <Link href="/products">
               <Button

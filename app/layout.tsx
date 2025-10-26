@@ -7,7 +7,6 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { CookieConsent } from '@/components/CookieConsent';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { ExchangeRateProvider } from '@/components/providers/ExchangeRateProvider';
-import { getActiveExchangeRateServer } from '@/lib/data/exchange-rates-server';
 
 // Configuración de la fuente Exo para títulos y texto destacado
 const exo = Exo({
@@ -49,27 +48,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Fetch exchange rate on the server to prevent hydration issues
-  let initialExchangeRate = null;
-  try {
-    initialExchangeRate = await getActiveExchangeRateServer();
-  } catch (error) {
-    console.error("Failed to fetch exchange rate on server:", error);
-    // Continue without initial rate - client will fetch it
-  }
-
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${exo.variable} ${gabarito.variable} antialiased`}>
         <QueryProvider>
           <Providers>
             <AuthProvider>
-              <ExchangeRateProvider initialRate={initialExchangeRate}>
+              <ExchangeRateProvider>
                 {children}
               </ExchangeRateProvider>
             </AuthProvider>

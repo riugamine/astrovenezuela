@@ -99,3 +99,13 @@ export const useActiveExchangeRate = (): ExchangeRate | null => {
 
   return activeRate;
 };
+
+/**
+ * Hook to get active exchange rate without auto-fetching
+ * Useful for preventing hydration issues during SSR
+ * @returns Active exchange rate or null
+ */
+export const useActiveExchangeRateSafe = (): ExchangeRate | null => {
+  const { activeRate } = useExchangeRateStore();
+  return activeRate;
+};
