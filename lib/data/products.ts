@@ -44,7 +44,14 @@ export async function fetchProducts(page: number, categoryIds?: string[]) {
 
   const { data, error, count } = await query.range(from, to);
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error fetching products:", error);
+    return {
+      products: [],
+      hasMore: false,
+      totalCount: 0
+    };
+  }
 
   return {
     products: data as ProductWithDetails[],
@@ -93,7 +100,11 @@ export async function searchProducts(query: string, page: number = 1) {
 
     if (error) {
       console.error('Search error:', error);
-      throw error;
+      return {
+        products: [],
+        hasMore: false,
+        totalCount: 0,
+      };
     }
 
     return {

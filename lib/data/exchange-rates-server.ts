@@ -8,6 +8,12 @@ import { ExchangeRate } from "@/lib/types/database.types";
  */
 export async function getActiveExchangeRateServer(): Promise<ExchangeRate | null> {
   try {
+    // Check if required environment variables are present
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error("Missing Supabase environment variables");
+      return null;
+    }
+
     const supabase = await supabaseServer();
     
     const { data, error } = await supabase
@@ -19,14 +25,17 @@ export async function getActiveExchangeRateServer(): Promise<ExchangeRate | null
     if (error) {
       if (error.code === "PGRST116") {
         // No rows found - no active rate exists
+        console.warn("No active exchange rate found");
         return null;
       }
-      throw error;
+      console.error("Supabase error fetching exchange rate:", error);
+      return null; // Return null instead of throwing
     }
 
     return data;
   } catch (error) {
     console.error("Error fetching active exchange rate (server):", error);
-    throw error;
+    // Return null instead of throwing to prevent 500 errors
+    return null;
   }
 }
