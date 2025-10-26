@@ -6,10 +6,8 @@ import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
 import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
-import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
+import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
-import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
-import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 import { Category } from "@/lib/types/database.types";
 import Image from 'next/image';
 
@@ -21,25 +19,6 @@ export default async function Home() {
   } catch (error) {
     console.error("Error fetching subcategories for home page:", error);
     // Continue with empty array - page will still load
-  }
-
-  // Safely fetch initial products and exchange rate for Moon Drops section
-  let initialProducts: { products: ProductWithDetails[]; hasMore: boolean } = { 
-    products: [], 
-    hasMore: false
-  };
-  let exchangeRate = null;
-  
-  try {
-    const [productsResult, rateResult] = await Promise.all([
-      fetchProducts(1),
-      getActiveExchangeRateServer()
-    ]);
-    initialProducts = productsResult;
-    exchangeRate = rateResult;
-  } catch (error) {
-    console.error("Error fetching initial data for home page:", error);
-    // Continue with empty data - page will still load
   }
 
   return (
@@ -104,42 +83,6 @@ export default async function Home() {
           <CategoriesCarousel categories={subcategories} />
         </div>
       </section>
-
-      {/* Moon Drops Section */}
-      <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="font-exo text-3xl sm:text-4xl font-bold mb-4">Moon Drops</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
-          </div>
-          
-          {/* Use ProductsWrapper exactly like /products page */}
-          <ProductsWrapper 
-            categories={[]} // Empty categories for home page
-            initialProducts={initialProducts.products} 
-            queryKey={['home-products']}
-            disableCategoryFilter={true}
-            exchangeRate={exchangeRate}
-          />
-          
-          <div className="text-center mt-12">
-            <Link href="/products">
-              <Button
-                variant="outline"
-                size="lg"
-                className="group hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-              >
-                Explorar Catálogo Completo
-                <FontAwesomeIcon
-                  icon={faArrowRight}
-                  className="ml-2 transition-transform duration-300 group-hover:translate-x-2"
-                />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* La Moon Base Section */}
       <section className="py-8 sm:py-12">
         <div className="container mx-auto px-4">
@@ -193,6 +136,36 @@ export default async function Home() {
           </div>
         </div>
       </section>
+      {/* Moon Drops Section */}
+      <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="font-exo text-3xl sm:text-4xl font-bold mb-4">Moon Drops</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
+          </div>
+          
+          {/* Use ProductGrid instead of ProductsWrapper for server-side rendering */}
+          <ProductGrid />
+          
+          <div className="text-center mt-12">
+            <Link href="/products">
+              <Button
+                variant="outline"
+                size="lg"
+                className="group hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+              >
+                Explorar Catálogo Completo
+                <FontAwesomeIcon
+                  icon={faArrowRight}
+                  className="ml-2 transition-transform duration-300 group-hover:translate-x-2"
+                />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+
     </ShopLayout>
   );
 }
