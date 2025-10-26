@@ -2,6 +2,7 @@ import { getCategories } from "@/lib/data/categories";
 import { fetchProducts } from "@/lib/data/products";
 import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
 import { categoriesToIds } from "@/lib/utils/category-utils";
+import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 
 interface ProductsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -11,9 +12,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const params = await searchParams;
   
   // Fetch data on the server
-  const [categories, initialProducts] = await Promise.all([
+  const [categories, initialProducts, exchangeRate] = await Promise.all([
     getCategories(),
-    fetchProducts(1, params.categories ? [params.categories as string] : undefined)
+    fetchProducts(1, params.categories ? [params.categories as string] : undefined),
+    getActiveExchangeRateServer()
   ]);
 
   // Convert URL parameters to filter format
@@ -72,6 +74,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       initialProducts={initialProducts.products} 
       queryKey={['products']}
       initialURLParams={urlParams}
+      exchangeRate={exchangeRate}
     />
   );
 }

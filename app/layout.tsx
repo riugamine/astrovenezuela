@@ -6,7 +6,6 @@ import { Providers } from "../providers/ThemeProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { CookieConsent } from '@/components/CookieConsent';
 import { AuthProvider } from '@/components/providers/AuthProvider';
-import { ExchangeRateProvider } from '@/components/providers/ExchangeRateProvider';
 
 // Configuración de la fuente Exo para títulos y texto destacado
 const exo = Exo({
@@ -59,9 +58,7 @@ export default function RootLayout({
         <QueryProvider>
           <Providers>
             <AuthProvider>
-              <ExchangeRateProvider>
-                {children}
-              </ExchangeRateProvider>
+              {children}
             </AuthProvider>
           </Providers>
         </QueryProvider>

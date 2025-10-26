@@ -12,18 +12,36 @@ import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // import { toast } from "sonner"; // Removed unused import
 import { useRouter } from "next/navigation";
-import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
+import { useActiveExchangeRateSafe } from "@/lib/store/useExchangeRateStore";
 import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
+import { getActiveExchangeRate } from "@/lib/data/exchange-rates";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, orderNotes, setOrderNotes } = useCartStore();
   // const { user } = useAuthStore(); // Removed unused variable
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const activeRate = useActiveExchangeRate();
+  const activeRate = useActiveExchangeRateSafe();
+  const [exchangeRate, setExchangeRate] = useState(activeRate);
+
+  // Fetch exchange rate once on mount
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const rate = await getActiveExchangeRate();
+        setExchangeRate(rate);
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+      }
+    };
+    
+    if (!exchangeRate) {
+      fetchRate();
+    }
+  }, [exchangeRate]);
 
   const total = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -32,12 +50,12 @@ export default function CartPage() {
 
   // Calculate dual prices for total if exchange rate is available
   const getTotalDisplay = () => {
-    if (!activeRate) {
+    if (!exchangeRate) {
       return `REF ${total.toLocaleString("es-VE")}`;
     }
     
     try {
-      const { usdPrice, vesPrice } = calculateDualPrices(total, activeRate);
+      const { usdPrice, vesPrice } = calculateDualPrices(total, exchangeRate);
       return formatDualPrice(usdPrice, vesPrice);
     } catch (error) {
       console.error('Error calculating dual prices:', error);
@@ -47,12 +65,12 @@ export default function CartPage() {
 
   // Calculate dual prices for individual items
   const getItemPriceDisplay = (price: number) => {
-    if (!activeRate) {
+    if (!exchangeRate) {
       return `$${price.toLocaleString('es-VE')}`;
     }
     
     try {
-      const { usdPrice, vesPrice } = calculateDualPrices(price, activeRate);
+      const { usdPrice, vesPrice } = calculateDualPrices(price, exchangeRate);
       return formatDualPrice(usdPrice, vesPrice);
     } catch (error) {
       console.error('Error calculating dual prices:', error);

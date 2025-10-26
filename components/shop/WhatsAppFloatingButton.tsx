@@ -3,27 +3,25 @@
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-import { Product } from "@/lib/types/database.types";
-import { useExchangeRateStore } from "@/lib/store/useExchangeRateStore";
+import { Product, ExchangeRate } from "@/lib/types/database.types";
 import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
 
 interface WhatsAppFloatingButtonProps {
   product: Product;
+  exchangeRate?: ExchangeRate | null;
 }
 
 /**
  * Botón flotante de WhatsApp para ventas
  * Se muestra en la parte inferior derecha en desktop y en la parte inferior en móviles
  */
-export function WhatsAppFloatingButton({ product }: WhatsAppFloatingButtonProps) {
-  const { activeRate } = useExchangeRateStore();
-
+export function WhatsAppFloatingButton({ product, exchangeRate }: WhatsAppFloatingButtonProps) {
   const handleWhatsAppClick = () => {
     // Crear mensaje para WhatsApp
     let priceDisplay = `REF ${product.price.toLocaleString("en-US")}`;
     
-    if (activeRate) {
-      const { usdPrice, vesPrice } = calculateDualPrices(product.price, activeRate);
+    if (exchangeRate) {
+      const { usdPrice, vesPrice } = calculateDualPrices(product.price, exchangeRate);
       priceDisplay = formatDualPrice(usdPrice, vesPrice);
     }
     

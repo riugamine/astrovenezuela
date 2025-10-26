@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/lib/store/useCartStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { Separator } from "@/components/ui/separator";
@@ -28,8 +28,9 @@ import { toast } from "sonner";
 import { CustomerInfo } from "@/lib/types/database.types";
 // Importar el tipo de método de pago desde constants
 import { VALID_PAYMENT_METHODS } from "@/lib/constants";
-import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
+import { useActiveExchangeRateSafe } from "@/lib/store/useExchangeRateStore";
 import { calculateDualPrices, formatDualPrice, calculatePriceByPaymentMethod } from "@/lib/utils/currency-converter";
+import { getActiveExchangeRate } from "@/lib/data/exchange-rates";
 
 // Actualizar la interfaz para usar el tipo literal
 type PaymentMethod = typeof VALID_PAYMENT_METHODS[number];
@@ -97,7 +98,24 @@ export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState<string>(initialFormFields.shippingMethod);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">(initialFormFields.paymentMethod);
   const { customerInfo, setCustomerInfo } = useCustomerStore();
-  const activeRate = useActiveExchangeRate();
+  const activeRate = useActiveExchangeRateSafe();
+  const [exchangeRate, setExchangeRate] = useState(activeRate);
+
+  // Fetch exchange rate once on mount
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const rate = await getActiveExchangeRate();
+        setExchangeRate(rate);
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+      }
+    };
+    
+    if (!exchangeRate) {
+      fetchRate();
+    }
+  }, [exchangeRate]);
 
   const subtotal = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -109,16 +127,16 @@ export default function CheckoutPage() {
 
   // Calculate dual prices for display based on payment method
   const getPriceDisplay = (price: number, usePaymentMethod: boolean = false) => {
-    if (!activeRate) {
+    if (!exchangeRate) {
       return `REF ${price.toFixed(2)}`;
     }
     
     try {
       if (usePaymentMethod && paymentMethod) {
-        const pricing = calculatePriceByPaymentMethod(price, paymentMethod, activeRate);
+        const pricing = calculatePriceByPaymentMethod(price, paymentMethod, exchangeRate);
         return formatDualPrice(pricing.usdPrice, pricing.vesPrice);
       } else {
-        const { usdPrice, vesPrice } = calculateDualPrices(price, activeRate);
+        const { usdPrice, vesPrice } = calculateDualPrices(price, exchangeRate);
         return formatDualPrice(usdPrice, vesPrice);
       }
     } catch (error) {
@@ -129,10 +147,10 @@ export default function CheckoutPage() {
 
   // Get discount information for current payment method
   const getDiscountInfo = (price: number) => {
-    if (!activeRate || !paymentMethod) return null;
+    if (!exchangeRate || !paymentMethod) return null;
     
     try {
-      return calculatePriceByPaymentMethod(price, paymentMethod, activeRate);
+      return calculatePriceByPaymentMethod(price, paymentMethod, exchangeRate);
     } catch (error) {
       console.error('Error calculating discount info:', error);
       return null;

@@ -2,6 +2,7 @@ import { getCategories } from "@/lib/data/categories";
 import { notFound } from 'next/navigation';
 import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
 import { supabaseClient } from '@/lib/supabase/client';
+import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -46,7 +47,12 @@ type PageParams = {
 };
 export default async function SubcategoryPage({ params }: PageParams) {
   const resolvedParams = await Promise.resolve(params);
-  const data = await getSubcategoryWithInitialProducts(resolvedParams.slug);
+  
+  // Obtener datos de la subcategoría, productos iniciales y exchange rate
+  const [data, exchangeRate] = await Promise.all([
+    getSubcategoryWithInitialProducts(resolvedParams.slug),
+    getActiveExchangeRateServer()
+  ]);
   
   if (!data) {
     notFound();
@@ -75,6 +81,7 @@ export default async function SubcategoryPage({ params }: PageParams) {
         categories={categories} 
         initialProducts={products}
         queryKey={[`subcategory-${subcategory.id}-products`]}
+        exchangeRate={exchangeRate}
       />
     </div>
   );

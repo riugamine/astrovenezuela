@@ -11,10 +11,10 @@ import {
   Product,
   ProductDetailImage,
   ProductVariant,
+  ExchangeRate,
 } from "@/lib/types/database.types";
 import { Badge } from "@/components/ui/badge";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
-import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
 import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
 
 interface ProductInfoProps {
@@ -22,22 +22,22 @@ interface ProductInfoProps {
     product_images: ProductDetailImage[];
     variants: ProductVariant[];
   };
+  exchangeRate?: ExchangeRate | null;
 }
 
-export function ProductInfo({ product }: ProductInfoProps) {
+export function ProductInfo({ product, exchangeRate }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const addItem = useCartStore((state) => state.addItem);
-  const activeRate = useActiveExchangeRate();
 
   // Calculate dual prices if exchange rate is available
   const getPriceDisplay = () => {
-    if (!activeRate) {
+    if (!exchangeRate) {
       return `REF ${product.price.toLocaleString("en-US")}`;
     }
     
     try {
-      const { usdPrice, vesPrice } = calculateDualPrices(product.price, activeRate);
+      const { usdPrice, vesPrice } = calculateDualPrices(product.price, exchangeRate);
       return formatDualPrice(usdPrice, vesPrice);
     } catch (error) {
       console.error('Error calculating dual prices:', error);

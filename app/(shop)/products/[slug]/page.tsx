@@ -4,6 +4,7 @@ import { RelatedProducts } from "@/components/shop/RelatedProducts";
 import { WhatsAppFloatingButton } from "@/components/shop/WhatsAppFloatingButton";
 import { supabaseClient } from "@/lib/supabase/client";
 import { notFound } from "next/navigation";
+import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 
 // Fetch product data
 async function getProduct(slug: string) {
@@ -48,7 +49,10 @@ type PageParams = {
 }
 export default async function ProductPage({ params }: PageParams) {
   const resolvedParams = await Promise.resolve(params);
-  const data = await getProduct(resolvedParams.slug);
+  const [data, exchangeRate] = await Promise.all([
+    getProduct(resolvedParams.slug),
+    getActiveExchangeRateServer()
+  ]);
 
   if (!data) {
     notFound();
@@ -67,16 +71,16 @@ export default async function ProductPage({ params }: PageParams) {
           
           {/* Información del producto */}
           <div className="w-full max-w-xl mx-auto lg:max-w-none">
-            <ProductInfo product={product} />
+            <ProductInfo product={product} exchangeRate={exchangeRate} />
           </div>
         </div>
 
         {/* Productos relacionados */}
-        <RelatedProducts products={relatedProducts} />
+        <RelatedProducts products={relatedProducts} exchangeRate={exchangeRate} />
       </div>
 
       {/* Botón flotante de WhatsApp */}
-      <WhatsAppFloatingButton product={product} />
+      <WhatsAppFloatingButton product={product} exchangeRate={exchangeRate} />
     </>
   );
 }

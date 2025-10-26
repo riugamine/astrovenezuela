@@ -9,19 +9,21 @@ import { useSearchProducts } from '@/lib/hooks/useSearchProducts';
 import { useFilterStore } from '@/lib/store/useFilterStore';
 import { Card, CardContent } from '@/components/ui/card';
 import { useQueryClient } from '@tanstack/react-query';
+import { ExchangeRate } from '@/lib/types/database.types';
 
 interface InfiniteSearchGridProps {
   query: string;
   initialProducts?: ProductWithDetails[];
   queryKey: string[];
   forcedCategories?: string[];
+  exchangeRate?: ExchangeRate | null;
 }
 
-const ProductList = memo(function ProductList({ products }: { products: ProductWithDetails[] }) {
+const ProductList = memo(function ProductList({ products, exchangeRate }: { products: ProductWithDetails[]; exchangeRate?: ExchangeRate | null }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} exchangeRate={exchangeRate} />
       ))}
     </div>
   );
@@ -50,7 +52,7 @@ const ProductGridSkeleton = memo(function ProductGridSkeleton() {
   );
 });
 
-export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCategories }: InfiniteSearchGridProps) {
+export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCategories, exchangeRate }: InfiniteSearchGridProps) {
   const queryClient = useQueryClient();
   const { ref, inView } = useInView({
     threshold: 0,
@@ -128,7 +130,7 @@ export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCat
 
   return (
     <div className="space-y-8 relative">
-      <ProductList products={products} />
+      <ProductList products={products} exchangeRate={exchangeRate} />
       <div ref={ref} className="w-full py-8">
         {isFetchingNextPage && <ProductGridSkeleton />}
       </div>

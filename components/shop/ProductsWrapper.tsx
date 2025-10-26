@@ -3,7 +3,7 @@
 import { ProductFilters } from "./ProductFilters";
 import { InfiniteProductsGrid } from "./InfiniteProductsGrid";
 import { useEffect, useState, Suspense } from "react";
-import { Category } from "@/lib/types/database.types";
+import { Category, ExchangeRate } from "@/lib/types/database.types";
 import { ProductWithDetails } from "@/lib/data/products";
 import { useFilterStore } from "@/lib/store/useFilterStore";
 
@@ -14,6 +14,7 @@ interface ProductsWrapperProps {
   initialURLParams?: URLSearchParams;
   forcedCategories?: string[];
   disableCategoryFilter?: boolean;
+  exchangeRate?: ExchangeRate | null;
 }
 
 export function ProductsWrapper({ 
@@ -22,7 +23,8 @@ export function ProductsWrapper({
   queryKey, 
   initialURLParams,
   forcedCategories: propForcedCategories,
-  disableCategoryFilter = false
+  disableCategoryFilter = false,
+  exchangeRate
 }: ProductsWrapperProps) {
   const setFiltersFromURL = useFilterStore((state) => state.setFiltersFromURL);
   const applyFilters = useFilterStore((state) => state.applyFilters);
@@ -70,7 +72,7 @@ export function ProductsWrapper({
       <ProductFilters categories={categories} disableCategoryFilter={disableCategoryFilter} />
       <main>
         <Suspense fallback={null}>
-          <InfiniteProductsGrid initialProducts={initialProducts} queryKey={queryKey} forcedCategories={forcedCategories} />
+          <InfiniteProductsGrid initialProducts={initialProducts} queryKey={queryKey} forcedCategories={forcedCategories} exchangeRate={exchangeRate} />
         </Suspense>
       </main>
     </div>

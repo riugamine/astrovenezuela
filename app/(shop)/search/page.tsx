@@ -2,6 +2,7 @@ import { getCategories } from "@/lib/data/categories";
 import { searchProducts } from "@/lib/data/products";
 import { SearchWrapper } from "@/components/shop/SearchWrapper";
 import { notFound } from "next/navigation";
+import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 
 interface SearchPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,17 +22,21 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   // Fetch data on the server
   let searchResults;
   let categories;
+  let exchangeRate;
   try {
-    const [categoriesData, results] = await Promise.all([
+    const [categoriesData, results, rate] = await Promise.all([
       getCategories(),
-      searchProducts(searchQuery, 1)
+      searchProducts(searchQuery, 1),
+      getActiveExchangeRateServer()
     ]);
     categories = categoriesData;
     searchResults = results;
+    exchangeRate = rate;
   } catch (error) {
     console.error('Search error:', error);
     // Return empty results if search fails
     categories = await getCategories().catch(() => []);
+    exchangeRate = await getActiveExchangeRateServer().catch(() => null);
     searchResults = {
       products: [],
       hasMore: false,
@@ -77,6 +82,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           queryKey={['search', searchQuery]}
           initialURLParams={urlParams}
           disableCategoryFilter={false}
+          exchangeRate={exchangeRate}
         />
       ) : (
         <div className="text-center py-12">

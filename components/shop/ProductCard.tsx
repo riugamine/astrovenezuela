@@ -1,13 +1,12 @@
 'use client'
 
-import { Database } from "@/lib/types/database.types";
+import { Database, ExchangeRate } from "@/lib/types/database.types";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { useState, memo } from "react";
 import { cn } from "@/lib/utils";
-import { useActiveExchangeRate } from "@/lib/store/useExchangeRateStore";
 import { calculateDualPrices, formatDualPrice } from "@/lib/utils/currency-converter";
 
 type Tables = Database['public']['Tables'];
@@ -22,9 +21,10 @@ type ProductWithDetails = ProductRow & {
 
 interface ProductCardProps {
   product: ProductWithDetails;
+  exchangeRate?: ExchangeRate | null;
 }
 
-const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
+const ProductCard = memo(function ProductCard({ product, exchangeRate }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const displayImage = isHovered && product.product_images?.[0]
@@ -50,6 +50,7 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
           availableSizes={availableSizes}
           hasStock={hasStock}
           onHover={setIsHovered}
+          exchangeRate={exchangeRate}
         />
       </div>
     );
@@ -66,6 +67,7 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
         availableSizes={availableSizes}
         hasStock={hasStock}
         onHover={setIsHovered}
+        exchangeRate={exchangeRate}
       />
     </Link>
   );
@@ -77,6 +79,7 @@ interface ProductCardContentProps {
   availableSizes: string[];
   hasStock: boolean;
   onHover: (isHovered: boolean) => void;
+  exchangeRate?: ExchangeRate | null;
 }
 
 const ProductCardContent = memo(function ProductCardContent({
@@ -84,18 +87,17 @@ const ProductCardContent = memo(function ProductCardContent({
   displayImage,
   availableSizes,
   hasStock,
-  onHover
+  onHover,
+  exchangeRate
 }: ProductCardContentProps) {
-  const activeRate = useActiveExchangeRate();
-  
   // Calculate dual prices if exchange rate is available
   const getPriceDisplay = () => {
-    if (!activeRate) {
+    if (!exchangeRate) {
       return `REF ${product.price.toLocaleString('es-VE')}`;
     }
     
     try {
-      const { usdPrice, vesPrice } = calculateDualPrices(product.price, activeRate);
+      const { usdPrice, vesPrice } = calculateDualPrices(product.price, exchangeRate);
       return formatDualPrice(usdPrice, vesPrice);
     } catch (error) {
       console.error('Error calculating dual prices:', error);

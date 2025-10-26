@@ -70,37 +70,6 @@ export const useExchangeRateStore = create<ExchangeRateStore>((set, get) => ({
 }));
 
 /**
- * Hook to get exchange rate with automatic fetching
- * @returns Exchange rate state and actions
- */
-export const useExchangeRate = () => {
-  const store = useExchangeRateStore();
-  
-  // Auto-fetch if no rate is loaded and not currently loading
-  if (!store.activeRate && !store.isLoading && !store.error) {
-    store.fetchActiveRate();
-  }
-
-  return store;
-};
-
-/**
- * Hook to get just the active exchange rate (read-only)
- * @returns Active exchange rate or null
- */
-export const useActiveExchangeRate = (): ExchangeRate | null => {
-  const { activeRate, fetchActiveRate, isLoading } = useExchangeRateStore();
-  
-  // Only auto-fetch if no rate is loaded and not currently loading
-  // This prevents unnecessary fetching when server-provided rate exists
-  if (!activeRate && !isLoading) {
-    fetchActiveRate();
-  }
-
-  return activeRate;
-};
-
-/**
  * Hook to get active exchange rate without auto-fetching
  * Useful for preventing hydration issues during SSR
  * @returns Active exchange rate or null

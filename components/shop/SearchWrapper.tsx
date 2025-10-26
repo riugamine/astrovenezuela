@@ -3,7 +3,7 @@
 import { ProductFilters } from "./ProductFilters";
 import { InfiniteSearchGrid } from "./InfiniteSearchGrid";
 import { useEffect, useState, Suspense } from "react";
-import { Category } from "@/lib/types/database.types";
+import { Category, ExchangeRate } from "@/lib/types/database.types";
 import { ProductWithDetails } from "@/lib/data/products";
 import { useFilterStore } from "@/lib/store/useFilterStore";
 
@@ -15,6 +15,7 @@ interface SearchWrapperProps {
   initialURLParams?: URLSearchParams;
   forcedCategories?: string[];
   disableCategoryFilter?: boolean;
+  exchangeRate?: ExchangeRate | null;
 }
 
 export function SearchWrapper({ 
@@ -24,7 +25,8 @@ export function SearchWrapper({
   queryKey, 
   initialURLParams,
   forcedCategories: propForcedCategories,
-  disableCategoryFilter = false
+  disableCategoryFilter = false,
+  exchangeRate
 }: SearchWrapperProps) {
   const setFiltersFromURL = useFilterStore((state) => state.setFiltersFromURL);
   const applyFilters = useFilterStore((state) => state.applyFilters);
@@ -76,7 +78,8 @@ export function SearchWrapper({
             query={query}
             initialProducts={initialProducts} 
             queryKey={queryKey} 
-            forcedCategories={forcedCategories} 
+            forcedCategories={forcedCategories}
+            exchangeRate={exchangeRate}
           />
         </Suspense>
       </main>
