@@ -10,23 +10,28 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
 import { Category, ExchangeRate } from "@/lib/types/database.types";
 import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
+import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
 import Image from 'next/image';
 
 export default async function Home() {
-  // Safely fetch subcategories and exchange rate with error handling
+  // Safely fetch subcategories, products, and exchange rate with error handling
   let subcategories: Category[] = [];
   let exchangeRate: ExchangeRate | null = null;
+  let products: ProductWithDetails[] = [];
   
   try {
-    const [subcategoriesData, exchangeRateData] = await Promise.all([
+    const [subcategoriesData, exchangeRateData, productsData] = await Promise.all([
       getSubcategories(),
-      getActiveExchangeRateServer()
+      getActiveExchangeRateServer(),
+      fetchProducts(1) // Fetch first page of products
     ]);
     subcategories = subcategoriesData;
     exchangeRate = exchangeRateData;
+    products = productsData.products;
   } catch (error) {
     console.error("Error fetching data for home page:", error);
     // Continue with empty arrays - page will still load
+    products = [];
   }
 
   return (
@@ -152,8 +157,8 @@ export default async function Home() {
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
           </div>
           
-          {/* Use ProductGrid instead of ProductsWrapper for server-side rendering */}
-          <ProductGrid exchangeRate={exchangeRate} />
+          {/* Use ProductGrid with server-fetched products */}
+          <ProductGrid products={products} exchangeRate={exchangeRate} />
           
           <div className="text-center mt-12">
             <Link href="/products">
