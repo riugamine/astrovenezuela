@@ -1,6 +1,5 @@
 import { supabaseClient } from "@/lib/supabase/client";
 import { Database } from "@/lib/types/database.types";
-import { normalizeSearchText } from "@/lib/utils/search-normalizer";
 
 type Tables = Database['public']['Tables'];
 type ProductRow = Tables['products']['Row'];
@@ -117,7 +116,7 @@ export async function searchProducts(query: string, page: number = 1) {
 
       // Sort products to match the order from search results
       const sortedProducts = productIds
-        .map(id => productsWithRelations?.find(p => p.id === id))
+        .map((id: string) => productsWithRelations?.find(p => p.id === id))
         .filter(Boolean);
 
       return {

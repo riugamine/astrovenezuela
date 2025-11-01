@@ -2,7 +2,6 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useFilterStore } from '@/lib/store/useFilterStore';
 import { supabaseClient } from '@/lib/supabase/client';
 import { ProductWithDetails } from '@/lib/data/products';
-import { normalizeSearchText } from '@/lib/utils/search-normalizer';
 
 export const SEARCH_PRODUCTS_PER_PAGE = 12;
 
