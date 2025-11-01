@@ -6,22 +6,33 @@ import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
 import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
+import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
 import { Category } from "@/lib/types/database.types";
+import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
 import Image from 'next/image';
 
 export default async function Home() {
-  // Only fetch subcategories for the carousel
+  // Fetch subcategories and products without exchange rate
   let subcategories: Category[] = [];
+  let products: ProductWithDetails[] = [];
   
   try {
     subcategories = await getSubcategories().catch((err) => {
       console.error("Error fetching subcategories:", err);
       return [];
     });
+
+    const productsData = await fetchProducts(1).catch((err) => {
+      console.error("Error fetching products:", err);
+      return { products: [], hasMore: false };
+    });
+    products = productsData.products || [];
+
   } catch (error) {
     console.error("Unexpected error in Home page:", error);
     subcategories = [];
+    products = [];
   }
 
   return (
@@ -84,6 +95,89 @@ export default async function Home() {
       <section className="py-4 sm:py-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
           <CategoriesCarousel categories={subcategories} />
+        </div>
+      </section>
+
+      {/* La Moon Base Section */}
+      <section className="py-8 sm:py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            {/* Store Image */}
+            <div className="order-2 lg:order-1">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+                <Image
+                  src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/public/brand-assets/brand-images/moon_base.webp"
+                  alt="La Moon Base - Tienda física"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Store Information */}
+            <div className="order-1 lg:order-2 space-y-4">
+              <div className="space-y-3">
+                <h2 className="font-exo text-3xl sm:text-4xl font-bold text-primary dark:text-accent">
+                  La Moon Base
+                </h2>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Nuestra primera base lunar está en el C.C. Maracay Plaza. La Moon Base es el inicio de un viaje donde moda y deporte se encuentran con los cuerpos celestes.
+                </p>
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground">📍 Ubicación:</p>
+                  <p className="text-muted-foreground">C.C. Maracay Plaza, Maracay, Venezuela</p>
+                </div>
+              </div>
+
+              <Button
+                asChild
+                size="lg"
+                className="bg-primary hover:bg-primary-foreground hover:text-primary transition-all group"
+              >
+                <Link 
+                  href="https://www.google.com/maps/place/C.C+Maracay+Plaza/@10.233201,-67.5970872,17z/data=!3m1!4b1!4m6!3m5!1s0x8e803c95fa2e49e9:0x8f57164a8bed4790!8m2!3d10.233201!4d-67.5970872!16s%2Fg%2F1hdz0rmnf?entry=ttu&g_ep=EgoyMDI1MDkyOS4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center"
+                >
+                  Visítanos
+                  <FontAwesomeIcon
+                    icon={faArrowRight}
+                    className="ml-2 group-hover:translate-x-1 transition-transform"
+                  />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Moon Drops Section - WITHOUT exchangeRate */}
+      <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="font-exo text-3xl sm:text-4xl font-bold mb-4">Moon Drops</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
+          </div>
+          
+          {/* ProductGrid without exchangeRate to avoid server errors */}
+          <ProductGrid products={products} />
+          
+          <div className="text-center mt-12">
+            <Link href="/products">
+              <Button
+                variant="outline"
+                size="lg"
+                className="group hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+              >
+                Explorar Catálogo Completo
+                <FontAwesomeIcon
+                  icon={faArrowRight}
+                  className="ml-2 transition-transform duration-300 group-hover:translate-x-2"
+                />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
