@@ -16,12 +16,9 @@ interface SearchProductsOptions {
 
 async function fetchSearchProductsPage(page: number, options: SearchProductsOptions) {
   const { query, categories, priceRange, sortBy, sizes } = options;
-  
-  const from = (page - 1) * SEARCH_PRODUCTS_PER_PAGE;
-  const to = from + SEARCH_PRODUCTS_PER_PAGE - 1;
 
   // Validate pagination parameters
-  if (from < 0 || to < from) {
+  if (page < 1) {
     return {
       products: [],
       hasMore: false,
@@ -29,35 +26,58 @@ async function fetchSearchProductsPage(page: number, options: SearchProductsOpti
     };
   }
 
-  // Normalize search query to handle accents and case-insensitivity
-  // Using client-side normalization as fallback, but PostgreSQL unaccent is preferred
-  const normalizedQuery = normalizeSearchText(query);
-
   try {
-    // Use PostgreSQL's unaccent function for accent-insensitive search
-    // Build the base query with normalized search
-    let searchQuery = supabaseClient
+    // Use the PostgreSQL RPC function for normalized search
+    const { data: searchResults, error: rpcError } = await supabaseClient
+      .rpc('search_products_normalized', {
+        search_query: query,
+        page_number: page,
+        page_size: SEARCH_PRODUCTS_PER_PAGE
+      });
+
+    if (rpcError) {
+      console.error('Search RPC error:', rpcError);
+      return {
+        products: [],
+        hasMore: false,
+        total: 0
+      };
+    }
+
+    const totalCount = searchResults && searchResults.length > 0 
+      ? Number(searchResults[0].total_count) 
+      : 0;
+
+    // If no results, return early
+    if (!searchResults || searchResults.length === 0) {
+      return {
+        products: [],
+        hasMore: false,
+        total: 0
+      };
+    }
+
+    // Get product IDs from search results
+    const productIds = searchResults.map((p: any) => p.id);
+
+    // Fetch full product data with relations
+    let productsQuery = supabaseClient
       .from("products")
-      .select(
-        `
+      .select(`
         *,
         product_images (*),
         variants:product_variants (*),
         category:categories (*)
-      `,
-        { count: "exact" }
-      )
-      .eq("is_active", true)
-      // Use the normalize_for_search function to search without accents
-      .filter('name', 'ilike', `%${normalizedQuery}%`);
+      `)
+      .in('id', productIds);
 
-    // Apply additional filters only if they are set
+    // Apply additional filters
     if (categories.length > 0) {
-      searchQuery = searchQuery.in('category_id', categories);
+      productsQuery = productsQuery.in('category_id', categories);
     }
 
     // Apply price range filter
-    searchQuery = searchQuery
+    productsQuery = productsQuery
       .gte('price', priceRange[0])
       .lte('price', priceRange[1]);
 
@@ -71,52 +91,54 @@ async function fetchSearchProductsPage(page: number, options: SearchProductsOpti
 
       if (variantsError) {
         console.error('Variants query error:', variantsError);
-        throw variantsError;
-      }
-
-      const productIdsWithSelectedSizes = [...new Set(variantsData?.map(v => v.product_id) || [])];
-      
-      if (productIdsWithSelectedSizes.length > 0) {
-        searchQuery = searchQuery.in('id', productIdsWithSelectedSizes);
       } else {
-        return {
-          products: [],
-          hasMore: false,
-          total: 0
-        };
+        const productIdsWithSelectedSizes = [...new Set(variantsData?.map(v => v.product_id) || [])];
+        
+        if (productIdsWithSelectedSizes.length > 0) {
+          productsQuery = productsQuery.in('id', productIdsWithSelectedSizes);
+        } else {
+          return {
+            products: [],
+            hasMore: false,
+            total: 0
+          };
+        }
       }
     }
 
     // Apply sorting
     switch (sortBy) {
       case 'price-asc':
-        searchQuery = searchQuery.order('price', { ascending: true });
+        productsQuery = productsQuery.order('price', { ascending: true });
         break;
       case 'price-desc':
-        searchQuery = searchQuery.order('price', { ascending: false });
+        productsQuery = productsQuery.order('price', { ascending: false });
         break;
       case 'name-asc':
-        searchQuery = searchQuery.order('name', { ascending: true });
+        productsQuery = productsQuery.order('name', { ascending: true });
         break;
       case 'name-desc':
-        searchQuery = searchQuery.order('name', { ascending: false });
+        productsQuery = productsQuery.order('name', { ascending: false });
         break;
       default:
-        searchQuery = searchQuery.order('created_at', { ascending: false });
+        productsQuery = productsQuery.order('created_at', { ascending: false });
     }
 
-    // Apply pagination
-    const { data, error, count } = await searchQuery.range(from, to);
+    const { data: products, error } = await productsQuery;
 
     if (error) {
-      console.error('Search products error:', error);
-      throw error;
+      console.error('Products fetch error:', error);
+      return {
+        products: [],
+        hasMore: false,
+        total: 0
+      };
     }
 
     return {
-      products: data as ProductWithDetails[],
-      hasMore: count ? from + SEARCH_PRODUCTS_PER_PAGE < count : false,
-      total: count || 0
+      products: products as ProductWithDetails[],
+      hasMore: totalCount > page * SEARCH_PRODUCTS_PER_PAGE,
+      total: totalCount
     };
   } catch (error) {
     console.error('Search products error:', error);

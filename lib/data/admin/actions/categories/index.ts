@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Category, CategoryData, CategoryWithSubcategories } from "./types";
 import { generateSlug } from "@/lib/utils";
@@ -187,6 +188,11 @@ export async function updateCategory(
     .single();
 
   if (error) throw error;
+  
+  // Revalidate homepage to update carousel
+  revalidatePath('/');
+  revalidatePath('/categories');
+  
   return data;
 }
 
@@ -323,5 +329,49 @@ export async function uploadCategoryBanner(file: File): Promise<string> {
       throw error;
     }
     throw new Error('Failed to upload category banner');
+  }
+}
+
+/**
+ * Deletes a category banner image from storage and updates the database
+ * @param categoryId - The ID of the category
+ * @param bannerUrl - The current banner URL to delete from storage
+ * @returns True if successful
+ * @throws Error if deletion fails
+ */
+export async function deleteCategoryBanner(categoryId: string, bannerUrl: string): Promise<boolean> {
+  try {
+    // Import deleteImageFromStorage dynamically to avoid circular deps
+    const { deleteImageFromStorage } = await import('@/lib/data/admin/actions/image-utils');
+    
+    // Delete from storage
+    const storageDeleted = await deleteImageFromStorage(bannerUrl, 'categories');
+    
+    if (!storageDeleted) {
+      console.warn('Failed to delete image from storage, but will continue to update database');
+    }
+    
+    // Update database to remove banner_url
+    const { error } = await supabaseAdmin
+      .from('categories')
+      .update({ banner_url: null })
+      .eq('id', categoryId);
+    
+    if (error) {
+      console.error('Database update error:', error);
+      throw new Error('Failed to update category in database');
+    }
+    
+    // Revalidate homepage to update carousel
+    revalidatePath('/');
+    revalidatePath('/categories');
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting category banner:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to delete category banner');
   }
 }

@@ -60,17 +60,14 @@ export async function fetchProducts(page: number, categoryIds?: string[]) {
 }
 
 /**
- * Searches for products by name only
+ * Searches for products by name and category using accent-insensitive search
  * @param query Search query string
  * @param page Current page number (starts from 1)
  * @returns Promise with products and hasMore flag
  */
 export async function searchProducts(query: string, page: number = 1) {
-  const from = (page - 1) * PRODUCTS_PER_PAGE;
-  const to = from + PRODUCTS_PER_PAGE - 1;
-
   // Validate pagination parameters
-  if (from < 0 || to < from) {
+  if (page < 1) {
     return {
       products: [],
       hasMore: false,
@@ -78,48 +75,70 @@ export async function searchProducts(query: string, page: number = 1) {
     };
   }
 
-  // Normalize search query to handle accents and case-insensitivity
-  // Using client-side normalization as fallback, but PostgreSQL unaccent is preferred
-  const normalizedQuery = normalizeSearchText(query);
-
   try {
-    // Use PostgreSQL's unaccent function for accent-insensitive search
-    // This searches on normalized text in the database
-    const { data, error, count } = await supabaseClient
-      .from("products")
-      .select(
-        `
-        *,
-        product_images (*),
-        variants:product_variants (*),
-        category:categories (*)
-      `,
-        { count: "exact" }
-      )
-      .eq("is_active", true)
-      // Use the normalize_for_search function to search without accents
-      .filter('name', 'ilike', `%${normalizedQuery}%`)
-      .range(from, to);
+    // Use the PostgreSQL RPC function for normalized search
+    const { data: searchResults, error } = await supabaseClient
+      .rpc('search_products_normalized', {
+        search_query: query,
+        page_number: page,
+        page_size: PRODUCTS_PER_PAGE
+      });
 
-          if (error) {
-            return {
-              products: [],
-              hasMore: false,
-              totalCount: 0,
-            };
-          }
+    if (error) {
+      console.error('Search RPC error:', error);
+      return {
+        products: [],
+        hasMore: false,
+        totalCount: 0,
+      };
+    }
+
+    const totalCount = searchResults && searchResults.length > 0 
+      ? Number(searchResults[0].total_count) 
+      : 0;
+
+    // Now fetch the related data (images, variants, category) for each product
+    if (searchResults && searchResults.length > 0) {
+      const productIds = searchResults.map((p: any) => p.id);
+      
+      const { data: productsWithRelations, error: relationsError } = await supabaseClient
+        .from("products")
+        .select(`
+          *,
+          product_images (*),
+          variants:product_variants (*),
+          category:categories (*)
+        `)
+        .in('id', productIds);
+
+      if (relationsError) {
+        console.error('Relations fetch error:', relationsError);
+      }
+
+      // Sort products to match the order from search results
+      const sortedProducts = productIds
+        .map(id => productsWithRelations?.find(p => p.id === id))
+        .filter(Boolean);
+
+      return {
+        products: sortedProducts as (ProductWithDetails & { category: any })[],
+        hasMore: totalCount > page * PRODUCTS_PER_PAGE,
+        totalCount: totalCount,
+      };
+    }
 
     return {
-      products: data as (ProductWithDetails & { category: any })[],
-      hasMore: count ? from + PRODUCTS_PER_PAGE < count : false,
-      totalCount: count || 0,
+      products: [],
+      hasMore: false,
+      totalCount: 0,
     };
-        } catch {
-          // Return empty results on error
-          return {
-            products: [],
-            hasMore: false,
-            totalCount: 0,
-          };
-        }
+  } catch (err) {
+    // Return empty results on error
+    console.error('Search exception:', err);
+    return {
+      products: [],
+      hasMore: false,
+      totalCount: 0,
+    };
+  }
 }

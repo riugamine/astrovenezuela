@@ -16,11 +16,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import type { Category } from '@/lib/data/admin/actions/categories/types';
 import { CategoryImageUploader } from './CategoryImageUploader';
+import { deleteCategoryBanner } from '@/lib/data/admin/actions/categories';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface SubcategoryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   parentCategory: Category | null;
+  subcategory?: Category | null; // For editing existing subcategory
   onSubmit: (data: CategoryFormData) => void;
   isLoading: boolean;
 }
@@ -49,9 +52,11 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
   isOpen,
   onClose,
   parentCategory,
+  subcategory,
   onSubmit,
   isLoading,
 }) => {
+  const queryClient = useQueryClient();
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CategoryFormData>({
     resolver: zodResolver(subcategorySchema),
     defaultValues: {
@@ -72,9 +77,9 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Crear Nueva Subcategoría</DialogTitle>
+          <DialogTitle>{subcategory ? 'Editar Subcategoría' : 'Crear Nueva Subcategoría'}</DialogTitle>
           <DialogDescription>
-            Añadir subcategoría a {parentCategory?.name}
+            {subcategory ? `Editar ${subcategory.name}` : `Añadir subcategoría a ${parentCategory?.name}`}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)}>
@@ -102,12 +107,21 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
                     onBannerChange={(url) => {
                       setValue("banner_url", url);
                     }}
+                    onDelete={subcategory ? async () => {
+                      if (!subcategory.id || !subcategory.banner_url) {
+                        throw new Error('No se puede eliminar la imagen');
+                      }
+                      await deleteCategoryBanner(subcategory.id, subcategory.banner_url);
+                      setValue("banner_url", "");
+                      // Invalidate queries to refresh data
+                      queryClient.invalidateQueries({ queryKey: ["categories"] });
+                    } : undefined}
                   />
             </div>
           </div>
           <DialogFooter className="mt-6">
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Creando...' : 'Crear Subcategoría'}
+              {isLoading ? (subcategory ? 'Actualizando...' : 'Creando...') : (subcategory ? 'Actualizar Subcategoría' : 'Crear Subcategoría')}
             </Button>
           </DialogFooter>
         </form>

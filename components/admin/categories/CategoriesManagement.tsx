@@ -40,7 +40,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCategories, createCategory, updateCategory, toggleCategoryStatus, deleteCategory } from "@/lib/data/admin/actions/categories";
+import { getCategories, createCategory, updateCategory, toggleCategoryStatus, deleteCategory, deleteCategoryBanner } from "@/lib/data/admin/actions/categories";
 import { Category, CategoryData, CategoryWithSubcategories } from '@/lib/data/admin/actions/categories/types';
 import CategoryActions from "./CategoryActions";
 import { cn } from "@/lib/utils";
@@ -529,6 +529,15 @@ const CategoriesManagement: FC = () => {
                     bannerUrl={watch("banner_url") || ""}
                     onBannerChange={(url) => {
                       setValue("banner_url", url);
+                    }}
+                    onDelete={async () => {
+                      if (!selectedCategory?.id || !selectedCategory?.banner_url) {
+                        throw new Error('No se puede eliminar la imagen');
+                      }
+                      await deleteCategoryBanner(selectedCategory.id, selectedCategory.banner_url);
+                      setValue("banner_url", "");
+                      // Invalidate queries to refresh data
+                      queryClient.invalidateQueries({ queryKey: ["categories"] });
                     }}
                   />
                 </div>

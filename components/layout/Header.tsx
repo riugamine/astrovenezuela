@@ -176,13 +176,6 @@ const Header = () => {
                       </Link>
                     </AccordionItem>
 
-                    {/* Ver Todo */}
-                    <AccordionItem value="ver-todo" className="border-none">
-                      <Link href="/products" className="flex items-center gap-2 py-2 hover:text-primary transition-colors">
-                        <span>Ver Todo</span>
-                      </Link>
-                    </AccordionItem>
-
                     {/* Categories */}
                     {mainCategories.map(category => (
                       hasSubcategories(category.id) ? (
@@ -195,6 +188,12 @@ const Header = () => {
                           }}
                         >
                           <div className="space-y-2">
+                            <Link
+                              href={`/categories/${category.slug}`}
+                              className="block py-2 font-semibold text-primary hover:text-primary/80 transition-colors border-b border-border/50 mb-2"
+                            >
+                              Ver Todo en {category.name}
+                            </Link>
                             {getSubcategories(category.id).map(subcat => (
                               <Link
                                 key={subcat.id}
@@ -268,17 +267,6 @@ const Header = () => {
           <div className="hidden lg:flex flex-1 justify-center">
             <NavigationMenu>
               <NavigationMenuList className="gap-2">
-                {/* Ver Todo Link */}
-                <NavigationMenuItem>
-                  <NavigationLink
-                    item={{
-                      title: "Ver Todo",
-                      href: "/products",
-                      description: "Ver todos los productos",
-                    }}
-                  />
-                </NavigationMenuItem>
-                
                 {mainCategories.map(category => (
                   hasSubcategories(category.id) ? (
                     <NavigationMenuItem key={category.id}>
@@ -295,16 +283,24 @@ const Header = () => {
                               
                             }}
                           />
-                          <div className="grid grid-cols-2 gap-3 pt-4 border-t">
-                            {getSubcategories(category.id).map(subcat => (
-                              <Link
-                                key={subcat.id}
-                                href={`/categories/${category.slug}/${subcat.slug}`}
-                                className="p-3 hover:bg-secondary/10 rounded-lg transition-colors"
-                              >
-                                {subcat.name}
-                              </Link>
-                            ))}
+                          <div className="pt-4 border-t">
+                            <Link
+                              href={`/categories/${category.slug}`}
+                              className="block p-3 mb-3 bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors text-center font-semibold text-primary border border-primary/20"
+                            >
+                              Ver Todo en {category.name}
+                            </Link>
+                            <div className="grid grid-cols-2 gap-3">
+                              {getSubcategories(category.id).map(subcat => (
+                                <Link
+                                  key={subcat.id}
+                                  href={`/categories/${category.slug}/${subcat.slug}`}
+                                  className="p-3 hover:bg-secondary/10 rounded-lg transition-colors"
+                                >
+                                  {subcat.name}
+                                </Link>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </NavigationMenuContent>
