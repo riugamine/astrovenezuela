@@ -20,12 +20,26 @@ export function CategoryImageUploader({
 }: CategoryImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
 
+  /**
+   * Handles image file upload with validation
+   * Validates file type and size before uploading
+   */
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
     
+    // Validate file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Image must not exceed 10MB');
+      toast.error('La imagen no debe exceder 10MB');
+      e.target.value = ''; // Reset input
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Solo se permiten imágenes JPEG, PNG, WebP y GIF');
+      e.target.value = ''; // Reset input
       return;
     }
 
@@ -45,13 +59,20 @@ export function CategoryImageUploader({
       }
 
       const { url } = await response.json();
+      
+      if (!url) {
+        throw new Error('No se recibió URL de la imagen');
+      }
+      
       onBannerChange(url);
       toast.success('Imagen subida correctamente');
     } catch (error: unknown) {
       const err = error as UploadError;
       toast.error(err.message || 'Error al subir la imagen');
+      console.error('Upload error:', error);
     } finally {
       setUploading(false);
+      e.target.value = ''; // Reset input to allow re-upload of same file
     }
   };
 

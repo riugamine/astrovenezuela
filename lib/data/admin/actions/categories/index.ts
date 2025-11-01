@@ -255,10 +255,23 @@ export async function deleteCategory(categoryId: string): Promise<void> {
   if (deleteError) throw deleteError;
 }
 
-// Helper function to upload category banner
+/**
+ * Uploads a category banner image to Supabase Storage
+ * Validates file size and type before uploading
+ * @param file - The image file to upload
+ * @returns The public URL of the uploaded image
+ * @throws Error if validation fails or upload fails
+ */
 export async function uploadCategoryBanner(file: File): Promise<string> {
+  // Validate file size (10MB max)
   if (file.size > 10 * 1024 * 1024) {
     throw new Error('Image must not exceed 10MB');
+  }
+
+  // Validate file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Only JPEG, PNG, WebP, and GIF images are allowed');
   }
 
   try {
@@ -269,6 +282,7 @@ export async function uploadCategoryBanner(file: File): Promise<string> {
     const fileName = `${crypto.randomUUID()}.${ext}`;
     const filePath = `banners/${fileName}`;
 
+    // Upload to Supabase Storage
     const { data, error } = await supabaseAdmin.storage
       .from('categories')
       .upload(filePath, compressedBuffer, {
@@ -277,15 +291,37 @@ export async function uploadCategoryBanner(file: File): Promise<string> {
         upsert: false
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase storage error:', error);
+      // Provide more specific error messages
+      if (error.message.includes('not found')) {
+        throw new Error('Storage bucket "categories" not found. Please check Supabase Storage configuration.');
+      }
+      if (error.message.includes('policy')) {
+        throw new Error('Permission denied. Please check storage bucket policies.');
+      }
+      throw new Error(`Storage error: ${error.message}`);
+    }
 
+    if (!data) {
+      throw new Error('Upload succeeded but no data returned');
+    }
+
+    // Get public URL
     const { data: { publicUrl } } = supabaseAdmin.storage
       .from('categories')
       .getPublicUrl(data.path);
 
+    if (!publicUrl) {
+      throw new Error('Failed to generate public URL for uploaded image');
+    }
+
     return publicUrl;
   } catch (error) {
     console.error('Error uploading category banner:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
     throw new Error('Failed to upload category banner');
   }
 }
