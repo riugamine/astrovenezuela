@@ -148,6 +148,9 @@ export function useProducts(initialData?: ProductWithDetails[], queryKey: string
                     priceRange[0] !== 0 || 
                     priceRange[1] !== 1000;
 
+  // Determine if we have initial data and no filters
+  const hasInitialData = !hasFilters && initialData && initialData.length > 0;
+
   return useInfiniteQuery({
     queryKey: finalQueryKey,
     queryFn: ({ pageParam = 1 }) => fetchProductsPage(pageParam, {
@@ -162,15 +165,20 @@ export function useProducts(initialData?: ProductWithDetails[], queryKey: string
       return allPages.length + 1;
     },
     // Only use initialData when no filters are applied
-    initialData: !hasFilters && initialData
+    initialData: hasInitialData
       ? {
           pages: [{ products: initialData, hasMore: true, total: initialData.length }],
           pageParams: [1],
         }
       : undefined,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    // Prevent automatic refetch when we have initial data from server
+    enabled: true, // Always enabled, but with proper staleTime
+    staleTime: hasInitialData ? Infinity : 1000 * 60 * 5, // Never stale if we have initial data, 5 minutes otherwise
     gcTime: 1000 * 60 * 30, // 30 minutes
-    retry: 3,
+    retry: 2, // Reduce retries to avoid hammering server
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnMount: !hasInitialData, // Don't refetch on mount if we have initial data
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 }

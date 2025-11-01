@@ -18,30 +18,38 @@ export function WhatsAppFloatingButtonGeneric() {
   }, []);
 
   const handleWhatsAppClick = () => {
-    // Create a general inquiry message
-    const message = [
-      "👋 *HOLA*",
-      "",
-      "¡Hola! Estoy interesado en sus productos.",
-      "¿Podrían brindarme más información?",
-      "",
-      `🔗 Sitio web: ${window.location.href}`
-    ].join("\n");
+    try {
+      // Create a general inquiry message
+      const message = [
+        "👋 *HOLA*",
+        "",
+        "¡Hola! Estoy interesado en sus productos.",
+        "¿Podrían brindarme más información?",
+        "",
+        `🔗 Sitio web: ${window.location.href}`
+      ].join("\n");
 
-    // WhatsApp number from environment variables
-    const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
-    
-    if (!phoneNumber) {
-      console.error('Número de WhatsApp no configurado en NEXT_PUBLIC_WHATSAPP_NUMBER');
-      alert('Error: Número de WhatsApp no configurado. Por favor contacta al administrador.');
-      return;
+      // WhatsApp number from environment variables
+      const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
+      
+      if (!phoneNumber) {
+        console.error('Número de WhatsApp no configurado en NEXT_PUBLIC_WHATSAPP_NUMBER');
+        // Don't show alert in production, just log
+        if (process.env.NODE_ENV === 'development') {
+          alert('Error: Número de WhatsApp no configurado. Por favor contacta al administrador.');
+        }
+        return;
+      }
+      
+      // Create WhatsApp URL
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      
+      // Open WhatsApp
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error('Error opening WhatsApp:', error);
+      // Silently fail in production
     }
-    
-    // Create WhatsApp URL
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    
-    // Open WhatsApp
-    window.open(whatsappUrl, '_blank');
   };
 
   // Don't render on server to avoid hydration issues

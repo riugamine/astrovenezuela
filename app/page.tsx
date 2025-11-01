@@ -20,18 +20,29 @@ export default async function Home() {
   let products: ProductWithDetails[] = [];
   
   try {
-    const [subcategoriesData, exchangeRateData, productsData] = await Promise.all([
-      getSubcategories(),
-      getActiveExchangeRateServer(),
-      fetchProducts(1) // Fetch first page of products
-    ]);
-    subcategories = subcategoriesData;
-    exchangeRate = exchangeRateData;
-    products = productsData.products;
+    // Fetch each independently to better handle errors
+    subcategories = await getSubcategories().catch((err) => {
+      console.error("Error fetching subcategories:", err);
+      return [];
+    });
+
+    exchangeRate = await getActiveExchangeRateServer().catch((err) => {
+      console.error("Error fetching exchange rate:", err);
+      return null;
+    });
+
+    const productsData = await fetchProducts(1).catch((err) => {
+      console.error("Error fetching products:", err);
+      return { products: [], hasMore: false };
+    });
+    products = productsData.products || [];
+
   } catch (error) {
-    console.error("Error fetching data for home page:", error);
-    // Continue with empty arrays - page will still load
-    products = [];
+    console.error("Unexpected error in Home page:", error);
+    // Ensure we have at least empty arrays
+    subcategories = subcategories || [];
+    products = products || [];
+    exchangeRate = exchangeRate || null;
   }
 
   return (
