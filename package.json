@@ -57,6 +57,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.3",
+    "react-image-magnifiers": "^1.4.0",
     "react-intersection-observer": "^9.16.0",
     "react-parallax-tilt": "^1.7.295",
     "react-phone-number-input": "^3.4.12",

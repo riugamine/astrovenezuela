@@ -17,6 +17,7 @@ interface InfiniteSearchGridProps {
   queryKey: string[];
   forcedCategories?: string[];
   exchangeRate?: ExchangeRate | null;
+  initialTotal?: number; // Add total count from server
 }
 
 const ProductList = memo(function ProductList({ products, exchangeRate }: { products: ProductWithDetails[]; exchangeRate?: ExchangeRate | null }) {
@@ -52,7 +53,7 @@ const ProductGridSkeleton = memo(function ProductGridSkeleton() {
   );
 });
 
-export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCategories, exchangeRate }: InfiniteSearchGridProps) {
+export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCategories, exchangeRate, initialTotal }: InfiniteSearchGridProps) {
   const queryClient = useQueryClient();
   const { ref, inView } = useInView({
     threshold: 0,
@@ -89,9 +90,10 @@ export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCat
   } = useSearchProducts(
     query,
     // Only pass initialProducts when no filters are applied
-    hasFilters ? undefined : initialProducts, 
+    hasFilters ? undefined : initialProducts,
     queryKey,
-    forcedCategories
+    forcedCategories,
+    initialTotal // Pass the total from server
   );
 
   const handleFetchNextPage = useCallback(() => {
@@ -106,9 +108,15 @@ export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCat
     }
   }, [inView, handleFetchNextPage]);
 
+  // Flatten all products from pages and remove duplicates by ID
   const products = data?.pages.flatMap((page) => page.products) || [];
+  
+  // Remove duplicates using a Map to keep only unique products by ID
+  const uniqueProducts = Array.from(
+    new Map(products.map(product => [product.id, product])).values()
+  );
 
-  if (isLoading && !products.length) {
+  if (isLoading && !uniqueProducts.length) {
     return <ProductGridSkeleton />;
   }
 
@@ -120,7 +128,7 @@ export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCat
     );
   }
 
-  if (!products.length) {
+  if (!uniqueProducts.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         No hay productos disponibles con los filtros seleccionados
@@ -130,7 +138,7 @@ export function InfiniteSearchGrid({ query, initialProducts, queryKey, forcedCat
 
   return (
     <div className="space-y-8 relative">
-      <ProductList products={products} exchangeRate={exchangeRate} />
+      <ProductList products={uniqueProducts} exchangeRate={exchangeRate} />
       <div ref={ref} className="w-full py-8">
         {isFetchingNextPage && <ProductGridSkeleton />}
       </div>

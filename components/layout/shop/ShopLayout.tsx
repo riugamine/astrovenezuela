@@ -1,5 +1,6 @@
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { WhatsAppFloatingButtonGeneric } from '@/components/shop/WhatsAppFloatingButtonGeneric';
 
 interface ShopLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ const ShopLayout = ({ children }: ShopLayoutProps) => {
         {children}
       </main>
       <Footer />
+      <WhatsAppFloatingButtonGeneric />
     </div>
   );
 };

@@ -176,6 +176,13 @@ const Header = () => {
                       </Link>
                     </AccordionItem>
 
+                    {/* Ver Todo */}
+                    <AccordionItem value="ver-todo" className="border-none">
+                      <Link href="/products" className="flex items-center gap-2 py-2 hover:text-primary transition-colors">
+                        <span>Ver Todo</span>
+                      </Link>
+                    </AccordionItem>
+
                     {/* Categories */}
                     {mainCategories.map(category => (
                       hasSubcategories(category.id) ? (
@@ -261,6 +268,17 @@ const Header = () => {
           <div className="hidden lg:flex flex-1 justify-center">
             <NavigationMenu>
               <NavigationMenuList className="gap-2">
+                {/* Ver Todo Link */}
+                <NavigationMenuItem>
+                  <NavigationLink
+                    item={{
+                      title: "Ver Todo",
+                      href: "/products",
+                      description: "Ver todos los productos",
+                    }}
+                  />
+                </NavigationMenuItem>
+                
                 {mainCategories.map(category => (
                   hasSubcategories(category.id) ? (
                     <NavigationMenuItem key={category.id}>

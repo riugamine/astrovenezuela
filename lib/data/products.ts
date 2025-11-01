@@ -1,5 +1,6 @@
 import { supabaseClient } from "@/lib/supabase/client";
 import { Database } from "@/lib/types/database.types";
+import { normalizeSearchText } from "@/lib/utils/search-normalizer";
 
 type Tables = Database['public']['Tables'];
 type ProductRow = Tables['products']['Row'];
@@ -77,11 +78,13 @@ export async function searchProducts(query: string, page: number = 1) {
     };
   }
 
-  // Create search pattern for case-insensitive search
-  const searchPattern = `%${query}%`;
+  // Normalize search query to handle accents and case-insensitivity
+  // Using client-side normalization as fallback, but PostgreSQL unaccent is preferred
+  const normalizedQuery = normalizeSearchText(query);
 
   try {
-    // Simple search by product name only
+    // Use PostgreSQL's unaccent function for accent-insensitive search
+    // This searches on normalized text in the database
     const { data, error, count } = await supabaseClient
       .from("products")
       .select(
@@ -94,7 +97,8 @@ export async function searchProducts(query: string, page: number = 1) {
         { count: "exact" }
       )
       .eq("is_active", true)
-      .ilike("name", searchPattern)
+      // Use the normalize_for_search function to search without accents
+      .filter('name', 'ilike', `%${normalizedQuery}%`)
       .range(from, to);
 
           if (error) {

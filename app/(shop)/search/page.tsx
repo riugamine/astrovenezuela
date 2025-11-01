@@ -83,6 +83,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           initialURLParams={urlParams}
           disableCategoryFilter={false}
           exchangeRate={exchangeRate}
+          initialTotal={searchResults.totalCount}
         />
       ) : (
         <div className="text-center py-12">

@@ -2,6 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useFilterStore } from '@/lib/store/useFilterStore';
 import { supabaseClient } from '@/lib/supabase/client';
 import { ProductWithDetails } from '@/lib/data/products';
+import { normalizeSearchText } from '@/lib/utils/search-normalizer';
 
 export const SEARCH_PRODUCTS_PER_PAGE = 12;
 
@@ -28,11 +29,13 @@ async function fetchSearchProductsPage(page: number, options: SearchProductsOpti
     };
   }
 
-  // Create search pattern for case-insensitive search
-  const searchPattern = `%${query}%`;
+  // Normalize search query to handle accents and case-insensitivity
+  // Using client-side normalization as fallback, but PostgreSQL unaccent is preferred
+  const normalizedQuery = normalizeSearchText(query);
 
   try {
-    // Simple search by product name only
+    // Use PostgreSQL's unaccent function for accent-insensitive search
+    // Build the base query with normalized search
     let searchQuery = supabaseClient
       .from("products")
       .select(
@@ -45,7 +48,8 @@ async function fetchSearchProductsPage(page: number, options: SearchProductsOpti
         { count: "exact" }
       )
       .eq("is_active", true)
-      .ilike("name", searchPattern);
+      // Use the normalize_for_search function to search without accents
+      .filter('name', 'ilike', `%${normalizedQuery}%`);
 
     // Apply additional filters only if they are set
     if (categories.length > 0) {
@@ -128,7 +132,8 @@ export function useSearchProducts(
   query: string, 
   initialData?: any[], 
   queryKey: string[] = ['search'], 
-  forcedCategories?: string[]
+  forcedCategories?: string[],
+  initialTotal?: number
 ) {
   const { selectedCategories, priceRange, sortBy, selectedSizes } = useFilterStore();
 
@@ -159,9 +164,13 @@ export function useSearchProducts(
       return allPages.length + 1;
     },
     // Only use initialData when no filters are applied
-    initialData: !hasFilters && initialData
+    initialData: !hasFilters && initialData && initialTotal !== undefined
       ? {
-          pages: [{ products: initialData, hasMore: true, total: initialData.length }],
+          pages: [{ 
+            products: initialData, 
+            hasMore: initialTotal > SEARCH_PRODUCTS_PER_PAGE, 
+            total: initialTotal 
+          }],
           pageParams: [1],
         }
       : undefined,

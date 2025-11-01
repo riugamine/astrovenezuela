@@ -103,9 +103,15 @@ export function InfiniteProductsGrid({ initialProducts, queryKey, forcedCategori
     }
   }, [inView, handleFetchNextPage]);
 
+  // Flatten all products from pages and remove duplicates by ID
   const products = data?.pages.flatMap((page) => page.products) || [];
+  
+  // Remove duplicates using a Map to keep only unique products by ID
+  const uniqueProducts = Array.from(
+    new Map(products.map(product => [product.id, product])).values()
+  );
 
-  if (isLoading && !products.length) {
+  if (isLoading && !uniqueProducts.length) {
     return <ProductGridSkeleton />;
   }
 
@@ -117,7 +123,7 @@ export function InfiniteProductsGrid({ initialProducts, queryKey, forcedCategori
     );
   }
 
-  if (!products.length) {
+  if (!uniqueProducts.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         No hay productos disponibles con los filtros seleccionados
@@ -127,7 +133,7 @@ export function InfiniteProductsGrid({ initialProducts, queryKey, forcedCategori
 
   return (
     <div className="space-y-8 relative">
-      <ProductList products={products} exchangeRate={exchangeRate} />
+      <ProductList products={uniqueProducts} exchangeRate={exchangeRate} />
       <div ref={ref} className="w-full py-8">
         {isFetchingNextPage && <ProductGridSkeleton />}
       </div>

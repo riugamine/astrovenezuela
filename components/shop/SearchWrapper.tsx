@@ -16,6 +16,7 @@ interface SearchWrapperProps {
   forcedCategories?: string[];
   disableCategoryFilter?: boolean;
   exchangeRate?: ExchangeRate | null;
+  initialTotal?: number; // Add total count from server
 }
 
 export function SearchWrapper({ 
@@ -26,7 +27,8 @@ export function SearchWrapper({
   initialURLParams,
   forcedCategories: propForcedCategories,
   disableCategoryFilter = false,
-  exchangeRate
+  exchangeRate,
+  initialTotal
 }: SearchWrapperProps) {
   const setFiltersFromURL = useFilterStore((state) => state.setFiltersFromURL);
   const applyFilters = useFilterStore((state) => state.applyFilters);
@@ -80,6 +82,7 @@ export function SearchWrapper({
             queryKey={queryKey} 
             forcedCategories={forcedCategories}
             exchangeRate={exchangeRate}
+            initialTotal={initialTotal}
           />
         </Suspense>
       </main>

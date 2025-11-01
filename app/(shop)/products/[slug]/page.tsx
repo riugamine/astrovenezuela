@@ -1,7 +1,6 @@
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { ProductInfo } from "@/components/shop/ProductInfo";
 import { RelatedProducts } from "@/components/shop/RelatedProducts";
-import { WhatsAppFloatingButton } from "@/components/shop/WhatsAppFloatingButton";
 import { supabaseClient } from "@/lib/supabase/client";
 import { notFound } from "next/navigation";
 import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
@@ -61,26 +60,21 @@ export default async function ProductPage({ params }: PageParams) {
   const { product, relatedProducts } = data;
 
   return (
-    <>
-      <div className="container mx-auto px-4 py-8 space-y-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Galería de imágenes */}
-          <div className="w-full max-w-2xl mx-auto lg:max-w-none">
-            <ProductGallery product={product} />
-          </div>
-          
-          {/* Información del producto */}
-          <div className="w-full max-w-xl mx-auto lg:max-w-none">
-            <ProductInfo product={product} exchangeRate={exchangeRate} />
-          </div>
+    <div className="container mx-auto px-4 py-8 space-y-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        {/* Galería de imágenes */}
+        <div className="w-full max-w-2xl mx-auto lg:max-w-none">
+          <ProductGallery product={product} />
         </div>
-
-        {/* Productos relacionados */}
-        <RelatedProducts products={relatedProducts} exchangeRate={exchangeRate} />
+        
+        {/* Información del producto */}
+        <div className="w-full max-w-xl mx-auto lg:max-w-none">
+          <ProductInfo product={product} exchangeRate={exchangeRate} />
+        </div>
       </div>
 
-      {/* Botón flotante de WhatsApp */}
-      <WhatsAppFloatingButton product={product} exchangeRate={exchangeRate} />
-    </>
+      {/* Productos relacionados */}
+      <RelatedProducts products={relatedProducts} exchangeRate={exchangeRate} />
+    </div>
   );
 }
