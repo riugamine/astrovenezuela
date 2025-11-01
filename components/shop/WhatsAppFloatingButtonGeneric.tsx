@@ -3,12 +3,20 @@
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import { useEffect, useState } from "react";
 
 /**
  * Generic WhatsApp floating button for the shop
  * Displays in the bottom-right corner across all shop pages
  */
 export function WhatsAppFloatingButtonGeneric() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const handleWhatsAppClick = () => {
     // Create a general inquiry message
     const message = [
@@ -17,7 +25,7 @@ export function WhatsAppFloatingButtonGeneric() {
       "¡Hola! Estoy interesado en sus productos.",
       "¿Podrían brindarme más información?",
       "",
-      `🔗 Sitio web: ${typeof window !== 'undefined' ? window.location.href : ''}`
+      `🔗 Sitio web: ${window.location.href}`
     ].join("\n");
 
     // WhatsApp number from environment variables
@@ -35,6 +43,11 @@ export function WhatsAppFloatingButtonGeneric() {
     // Open WhatsApp
     window.open(whatsappUrl, '_blank');
   };
+
+  // Don't render on server to avoid hydration issues
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div 

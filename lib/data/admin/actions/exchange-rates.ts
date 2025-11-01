@@ -71,19 +71,18 @@ export async function createExchangeRateAction(formData: FormData) {
       };
     }
 
-    // Revalidate specific pages to show updated rates
-    // Don't revalidate the root layout as it can cause issues
+    // Revalidate only essential pages to show updated rates
+    // Avoid revalidating layouts to prevent hydration issues and 500 errors
     try {
-      revalidatePath("/admin/settings");
-      revalidatePath("/admin");
-      revalidatePath("/products", "page");
-      revalidatePath("/cart", "page");
-      revalidatePath("/checkout", "page");
+      // Only revalidate admin pages
+      revalidatePath("/admin/settings", "page");
+      revalidatePath("/admin", "page");
       
-      // Revalidate specific product pages that might be cached
-      revalidatePath("/products", "layout");
-    } catch {
+      // Note: Other pages will be updated when users navigate to them
+      // This prevents overwhelming the system with too many revalidations
+    } catch (revalidationError) {
       // Don't fail the entire operation if revalidation fails
+      console.error("Revalidation warning:", revalidationError);
     }
 
     return {
