@@ -8,17 +8,25 @@ import { HyperText } from "@/components/magicui/hyper-text";
 import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
-import { Category } from "@/lib/types/database.types";
+import { Category, ExchangeRate } from "@/lib/types/database.types";
+import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 import Image from 'next/image';
 
 export default async function Home() {
-  // Safely fetch subcategories with error handling
+  // Safely fetch subcategories and exchange rate with error handling
   let subcategories: Category[] = [];
+  let exchangeRate: ExchangeRate | null = null;
+  
   try {
-    subcategories = await getSubcategories();
+    const [subcategoriesData, exchangeRateData] = await Promise.all([
+      getSubcategories(),
+      getActiveExchangeRateServer()
+    ]);
+    subcategories = subcategoriesData;
+    exchangeRate = exchangeRateData;
   } catch (error) {
-    console.error("Error fetching subcategories for home page:", error);
-    // Continue with empty array - page will still load
+    console.error("Error fetching data for home page:", error);
+    // Continue with empty arrays - page will still load
   }
 
   return (
@@ -145,7 +153,7 @@ export default async function Home() {
           </div>
           
           {/* Use ProductGrid instead of ProductsWrapper for server-side rendering */}
-          <ProductGrid />
+          <ProductGrid exchangeRate={exchangeRate} />
           
           <div className="text-center mt-12">
             <Link href="/products">
