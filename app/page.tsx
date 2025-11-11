@@ -12,6 +12,10 @@ import { Category } from "@/lib/types/database.types";
 import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
 import Image from 'next/image';
 
+// Force dynamic rendering and disable cache to ensure fresh data from Supabase
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function Home() {
   // Fetch subcategories and products without exchange rate
   let subcategories: Category[] = [];
@@ -160,8 +164,8 @@ export default async function Home() {
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
           </div>
           
-          {/* ProductGrid without exchangeRate to avoid server errors */}
-          <ProductGrid products={products} />
+          {/* ProductGrid without exchangeRate and without showing prices */}
+          <ProductGrid products={products} showPrice={false} />
           
           <div className="text-center mt-12">
             <Link href="/products">
