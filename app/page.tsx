@@ -10,6 +10,7 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
 import { Category } from "@/lib/types/database.types";
 import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import Image from 'next/image';
 
 // Force dynamic rendering and disable cache to ensure fresh data from Supabase
@@ -17,17 +18,21 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function Home() {
-  // Fetch subcategories and products without exchange rate
+  // Fetch subcategories and products without exchange rate using server client
   let subcategories: Category[] = [];
   let products: ProductWithDetails[] = [];
   
   try {
-    subcategories = await getSubcategories().catch((err) => {
+    // Create server-side Supabase client
+    const supabase = await createServerSupabaseClient();
+    
+    // Fetch data using server client
+    subcategories = await getSubcategories(supabase).catch((err) => {
       console.error("Error fetching subcategories:", err);
       return [];
     });
 
-    const productsData = await fetchProducts(1).catch((err) => {
+    const productsData = await fetchProducts(1, undefined, supabase).catch((err) => {
       console.error("Error fetching products:", err);
       return { products: [], hasMore: false };
     });
