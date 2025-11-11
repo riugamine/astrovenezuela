@@ -10,20 +10,25 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
 import { Category } from "@/lib/types/database.types";
 import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import Image from 'next/image';
 
 export default async function Home() {
-  // Fetch subcategories and products without exchange rate
+  // Fetch subcategories and products without exchange rate using server client
   let subcategories: Category[] = [];
   let products: ProductWithDetails[] = [];
   
   try {
-    subcategories = await getSubcategories().catch((err) => {
+    // Create server-side Supabase client
+    const supabase = await createServerSupabaseClient();
+    
+    // Fetch data using server client
+    subcategories = await getSubcategories(supabase).catch((err) => {
       console.error("Error fetching subcategories:", err);
       return [];
     });
 
-    const productsData = await fetchProducts(1).catch((err) => {
+    const productsData = await fetchProducts(1, undefined, supabase).catch((err) => {
       console.error("Error fetching products:", err);
       return { products: [], hasMore: false };
     });
@@ -160,8 +165,8 @@ export default async function Home() {
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
           </div>
           
-          {/* ProductGrid without exchangeRate to avoid server errors */}
-          <ProductGrid products={products} />
+          {/* ProductGrid without exchangeRate and without showing prices */}
+          <ProductGrid products={products} showPrice={false} />
           
           <div className="text-center mt-12">
             <Link href="/products">

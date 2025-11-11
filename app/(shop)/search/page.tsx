@@ -3,6 +3,7 @@ import { searchProducts } from "@/lib/data/products";
 import { SearchWrapper } from "@/components/shop/SearchWrapper";
 import { notFound } from "next/navigation";
 import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 interface SearchPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -19,14 +20,17 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const searchQuery = Array.isArray(query) ? query[0] : query;
   
-  // Fetch data on the server
+  // Create server-side Supabase client
+  const supabase = await createServerSupabaseClient();
+  
+  // Fetch data on the server using server client
   let searchResults;
   let categories;
   let exchangeRate;
   try {
     const [categoriesData, results, rate] = await Promise.all([
-      getCategories(),
-      searchProducts(searchQuery, 1),
+      getCategories(supabase),
+      searchProducts(searchQuery, 1, supabase),
       getActiveExchangeRateServer()
     ]);
     categories = categoriesData;
@@ -35,7 +39,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   } catch (error) {
     console.error('Search error:', error);
     // Return empty results if search fails
-    categories = await getCategories().catch(() => []);
+    categories = await getCategories(supabase).catch(() => []);
     exchangeRate = await getActiveExchangeRateServer().catch(() => null);
     searchResults = {
       products: [],

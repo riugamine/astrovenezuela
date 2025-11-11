@@ -1,7 +1,7 @@
 import { getCategories } from "@/lib/data/categories";
 import { notFound } from "next/navigation";
 import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
-import { supabaseClient } from "@/lib/supabase/client";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 
 const PRODUCTS_PER_PAGE = 12;
@@ -10,8 +10,10 @@ async function getSubcategoryWithProducts(
   categorySlug: string,
   subcategorySlug: string
 ) {
+  const supabase = await createServerSupabaseClient();
+  
   // Intentemos primero encontrar la categoría padre
-  const { data: parentCategory, error: parentError } = await supabaseClient
+  const { data: parentCategory, error: parentError } = await supabase
     .from("categories")
     .select("*")
     .eq("slug", categorySlug)
@@ -23,7 +25,7 @@ async function getSubcategoryWithProducts(
   }
 
   // Luego busquemos la subcategoría
-  const { data: subcategory, error: subcategoryError } = await supabaseClient
+  const { data: subcategory, error: subcategoryError } = await supabase
     .from("categories")
     .select(
       `
@@ -41,7 +43,7 @@ async function getSubcategoryWithProducts(
   }
 
   // Si llegamos aquí, busquemos los productos
-  const { data: products, error: productsError } = await supabaseClient
+  const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
       `
@@ -72,6 +74,9 @@ type PageParams = {
 export default async function SubcategoryPage({ params }: PageParams) {
   const resolvedParams = await Promise.resolve(params);
   
+  // Create server-side Supabase client
+  const supabase = await createServerSupabaseClient();
+  
   // Fetch data and exchange rate in parallel
   const [data, exchangeRate] = await Promise.all([
     getSubcategoryWithProducts(
@@ -91,7 +96,7 @@ export default async function SubcategoryPage({ params }: PageParams) {
   // Only include the subcategory ID since we only want products from this specific subcategory
   const forcedCategories = [subcategory.id];
 
-  const categories = await getCategories();
+  const categories = await getCategories(supabase);
 
   return (
     <div className="container mx-auto px-4 py-8">
