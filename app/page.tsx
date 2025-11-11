@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Meteors } from "@/components/magicui/meteors";
 import { HyperText } from "@/components/magicui/hyper-text";
 import { CategoriesCarousel } from "@/components/shop/CategoriesCarousel";
-import { ProductGrid } from "@/components/shop/ProductGrid";
+//import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
 import { Category } from "@/lib/types/database.types";
 import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
