@@ -1,3 +1,6 @@
+// Force dynamic rendering because Supabase client depends on cookies.
+export const dynamic = "force-dynamic";
+
 import ShopLayout from "@/components/layout/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
