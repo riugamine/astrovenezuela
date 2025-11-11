@@ -169,9 +169,9 @@ export default async function Home() {
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
           </div>
           
-          {/* ProductGrid without exchangeRate and without showing prices */}
+          {/* ProductGrid without exchangeRate and without showing prices 
           <ProductGrid products={products} showPrice={false} />
-          
+          */}
           <div className="text-center mt-12">
             <Link href="/products">
               <Button
