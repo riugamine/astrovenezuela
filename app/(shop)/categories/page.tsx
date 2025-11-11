@@ -1,10 +1,9 @@
 import { Category } from '@/lib/types/database.types';
 import { CategoryCard } from '@/components/shop/CategoryCard';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseClient } from '@/lib/supabase/client';
 
 async function getCategories() {
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('categories')
     .select('*')
     .eq('is_active', true)

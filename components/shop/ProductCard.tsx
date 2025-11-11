@@ -22,10 +22,9 @@ type ProductWithDetails = ProductRow & {
 interface ProductCardProps {
   product: ProductWithDetails;
   exchangeRate?: ExchangeRate | null;
-  showPrice?: boolean;
 }
 
-const ProductCard = memo(function ProductCard({ product, exchangeRate, showPrice = true }: ProductCardProps) {
+const ProductCard = memo(function ProductCard({ product, exchangeRate }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const displayImage = isHovered && product.product_images?.[0]
@@ -52,7 +51,6 @@ const ProductCard = memo(function ProductCard({ product, exchangeRate, showPrice
           hasStock={hasStock}
           onHover={setIsHovered}
           exchangeRate={exchangeRate}
-          showPrice={showPrice}
         />
       </div>
     );
@@ -70,7 +68,6 @@ const ProductCard = memo(function ProductCard({ product, exchangeRate, showPrice
         hasStock={hasStock}
         onHover={setIsHovered}
         exchangeRate={exchangeRate}
-        showPrice={showPrice}
       />
     </Link>
   );
@@ -83,7 +80,6 @@ interface ProductCardContentProps {
   hasStock: boolean;
   onHover: (isHovered: boolean) => void;
   exchangeRate?: ExchangeRate | null;
-  showPrice?: boolean;
 }
 
 const ProductCardContent = memo(function ProductCardContent({
@@ -92,8 +88,7 @@ const ProductCardContent = memo(function ProductCardContent({
   availableSizes,
   hasStock,
   onHover,
-  exchangeRate,
-  showPrice = true
+  exchangeRate
 }: ProductCardContentProps) {
   // Calculate dual prices if exchange rate is available
   const getPriceDisplay = () => {
@@ -149,11 +144,9 @@ const ProductCardContent = memo(function ProductCardContent({
           )}>
             {product.name}
           </h3>
-          {showPrice && (
-            <p className="font-semibold text-primary dark:text-accent text-sm leading-tight">
-              {getPriceDisplay()}
-            </p>
-          )}
+          <p className="font-semibold text-primary dark:text-accent text-sm leading-tight">
+            {getPriceDisplay()}
+          </p>
           {hasStock && availableSizes.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {availableSizes.map(size => (

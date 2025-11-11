@@ -1,6 +1,5 @@
 import { supabaseClient } from "@/lib/supabase/client";
 import { Database } from "@/lib/types/database.types";
-import { SupabaseClient } from '@supabase/supabase-js';
 
 type Tables = Database['public']['Tables'];
 type ProductRow = Tables['products']['Row'];
@@ -19,16 +18,13 @@ export const PRODUCTS_PER_PAGE = 12;
  * Fetches paginated products with their details
  * @param page Current page number (starts from 1)
  * @param categoryIds Optional array of category IDs to filter by
- * @param client Optional Supabase client (for server-side use)
  * @returns Promise with products and hasMore flag
  */
-export async function fetchProducts(page: number, categoryIds?: string[], client?: SupabaseClient) {
+export async function fetchProducts(page: number, categoryIds?: string[]) {
   const from = (page - 1) * PRODUCTS_PER_PAGE;
   const to = from + PRODUCTS_PER_PAGE - 1;
 
-  const supabase = client || supabaseClient;
-
-  let query = supabase
+  let query = supabaseClient
     .from("products")
     .select(
       `
@@ -66,10 +62,9 @@ export async function fetchProducts(page: number, categoryIds?: string[], client
  * Searches for products by name and category using accent-insensitive search
  * @param query Search query string
  * @param page Current page number (starts from 1)
- * @param client Optional Supabase client (for server-side use)
  * @returns Promise with products and hasMore flag
  */
-export async function searchProducts(query: string, page: number = 1, client?: SupabaseClient) {
+export async function searchProducts(query: string, page: number = 1) {
   // Validate pagination parameters
   if (page < 1) {
     return {
@@ -80,10 +75,8 @@ export async function searchProducts(query: string, page: number = 1, client?: S
   }
 
   try {
-    const supabase = client || supabaseClient;
-    
     // Use the PostgreSQL RPC function for normalized search
-    const { data: searchResults, error } = await supabase
+    const { data: searchResults, error } = await supabaseClient
       .rpc('search_products_normalized', {
         search_query: query,
         page_number: page,
@@ -107,7 +100,7 @@ export async function searchProducts(query: string, page: number = 1, client?: S
     if (searchResults && searchResults.length > 0) {
       const productIds = searchResults.map((p: any) => p.id);
       
-      const { data: productsWithRelations, error: relationsError } = await supabase
+      const { data: productsWithRelations, error: relationsError } = await supabaseClient
         .from("products")
         .select(`
           *,

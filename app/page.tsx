@@ -10,29 +10,20 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
 import { Category } from "@/lib/types/database.types";
 import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import Image from 'next/image';
 
-// Force dynamic rendering and disable cache to ensure fresh data from Supabase
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export default async function Home() {
-  // Fetch subcategories and products without exchange rate using server client
+  // Fetch subcategories and products without exchange rate
   let subcategories: Category[] = [];
   let products: ProductWithDetails[] = [];
   
   try {
-    // Create server-side Supabase client
-    const supabase = await createServerSupabaseClient();
-    
-    // Fetch data using server client
-    subcategories = await getSubcategories(supabase).catch((err) => {
+    subcategories = await getSubcategories().catch((err) => {
       console.error("Error fetching subcategories:", err);
       return [];
     });
 
-    const productsData = await fetchProducts(1, undefined, supabase).catch((err) => {
+    const productsData = await fetchProducts(1).catch((err) => {
       console.error("Error fetching products:", err);
       return { products: [], hasMore: false };
     });
@@ -45,11 +36,10 @@ export default async function Home() {
   }
 
   return (
-    <div>
-      <div>Hello World</div>
-      {/* Hero Section 
+    <ShopLayout>
+      {/* Hero Section */}
       <section className="relative h-[60vh] overflow-hidden">
-        {/* Background Image with Overlay 
+        {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <Image
             src="https://mhldtcjzkmgolvqjwnro.supabase.co/storage/v1/object/public/brand-assets/brand-images/hero-image%20(1).jpg"
@@ -101,18 +91,18 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Subcategories Section 
+      {/* Subcategories Section */}
       <section className="py-4 sm:py-6 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
           <CategoriesCarousel categories={subcategories} />
         </div>
       </section>
 
-      {/* La Moon Base Section 
+      {/* La Moon Base Section */}
       <section className="py-8 sm:py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            {/* Store Image 
+            {/* Store Image */}
             <div className="order-2 lg:order-1">
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
                 <Image
@@ -124,7 +114,7 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Store Information 
+            {/* Store Information */}
             <div className="order-1 lg:order-2 space-y-4">
               <div className="space-y-3">
                 <h2 className="font-exo text-3xl sm:text-4xl font-bold text-primary dark:text-accent">
@@ -162,7 +152,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Moon Drops Section - WITHOUT exchangeRate 
+      {/* Moon Drops Section - WITHOUT exchangeRate */}
       <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -170,8 +160,9 @@ export default async function Home() {
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
           </div>
           
-          {/* ProductGrid without exchangeRate and without showing prices 
-          <ProductGrid products={products} showPrice={false} />
+          {/* ProductGrid without exchangeRate to avoid server errors */}
+          <ProductGrid products={products} />
+          
           <div className="text-center mt-12">
             <Link href="/products">
               <Button
@@ -189,7 +180,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
-      */}
-    </div>
+
+    </ShopLayout>
   );
 }

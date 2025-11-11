@@ -9,10 +9,9 @@ import { ExchangeRate } from '@/lib/types/database.types';
 interface ProductGridProps {
   products?: ProductWithDetails[];
   exchangeRate?: ExchangeRate | null;
-  showPrice?: boolean;
 }
 
-const ProductGrid = memo(function ProductGrid({ products: initialProducts, exchangeRate, showPrice = true }: ProductGridProps) {
+const ProductGrid = memo(function ProductGrid({ products: initialProducts, exchangeRate }: ProductGridProps) {
   const { data, isLoading, error } = useProducts(initialProducts);
   
   const products = data?.pages[0]?.products || [];
@@ -44,7 +43,7 @@ const ProductGrid = memo(function ProductGrid({ products: initialProducts, excha
   return (
     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} exchangeRate={exchangeRate} showPrice={showPrice} />
+        <ProductCard key={product.id} product={product} exchangeRate={exchangeRate} />
       ))}
     </div>
   );

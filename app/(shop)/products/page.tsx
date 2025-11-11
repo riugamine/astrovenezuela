@@ -3,7 +3,6 @@ import { fetchProducts } from "@/lib/data/products";
 import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
 import { categoriesToIds } from "@/lib/utils/category-utils";
 import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 interface ProductsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -12,13 +11,10 @@ interface ProductsPageProps {
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
   
-  // Create server-side Supabase client
-  const supabase = await createServerSupabaseClient();
-  
-  // Fetch data on the server using server client
+  // Fetch data on the server
   const [categories, initialProducts, exchangeRate] = await Promise.all([
-    getCategories(supabase),
-    fetchProducts(1, params.categories ? [params.categories as string] : undefined, supabase),
+    getCategories(),
+    fetchProducts(1, params.categories ? [params.categories as string] : undefined),
     getActiveExchangeRateServer()
   ]);
 

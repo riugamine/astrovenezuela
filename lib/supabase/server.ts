@@ -1,21 +1,48 @@
-import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 /**
- * Creates a Supabase client for server-side operations in Server Components.
- * This version avoids cookie mutations to prevent runtime errors during SSR.
+ * Creates a Supabase client for server-side operations with proper cookie handling
+ * This ensures secure session management on the server side
  */
-export const createServerSupabaseClient = async () => {
-  return createClient(
+export const createServerSupabaseClient = async (
+) => {
+  // Use Next.js cookies API for server components
+  const cookieStore = await cookies();
+  
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {
+            // Handle cookie setting errors silently for server components
+            console.warn('Failed to set cookie:', name, error);
+          }
+        },
+        remove(name: string, options: any) {
+          try {
+            cookieStore.set({ name, value: '', ...options });
+          } catch (error) {
+            // Handle cookie removal errors silently for server components
+            console.warn('Failed to remove cookie:', name, error);
+          }
+        },
       },
-    },
+      auth: {
+        flowType: 'pkce', // More secure than implicit flow
+        detectSessionInUrl: true,
+        autoRefreshToken: true,
+        persistSession: true,
+      },
+    }
   );
 };
 
