@@ -45,7 +45,7 @@ export default async function Home() {
   }
 
   return (
-    <ShopLayout>
+    <div>
       <div>Hello World</div>
       {/* Hero Section 
       <section className="relative h-[60vh] overflow-hidden">
@@ -190,6 +190,6 @@ export default async function Home() {
         </div>
       </section>
       */}
-    </ShopLayout>
+    </div>
   );
 }
