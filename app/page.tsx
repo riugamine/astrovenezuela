@@ -1,6 +1,3 @@
-// Force dynamic rendering because Supabase client depends on cookies.
-export const dynamic = "force-dynamic";
-
 import ShopLayout from "@/components/layout/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,25 +10,20 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { getSubcategories } from "@/lib/data/categories";
 import { Category } from "@/lib/types/database.types";
 import { fetchProducts, ProductWithDetails } from "@/lib/data/products";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import Image from 'next/image';
 
 export default async function Home() {
-  // Fetch subcategories and products without exchange rate using server client
+  // Fetch subcategories and products without exchange rate
   let subcategories: Category[] = [];
   let products: ProductWithDetails[] = [];
   
   try {
-    // Create server-side Supabase client
-    const supabase = await createServerSupabaseClient();
-    
-    // Fetch data using server client
-    subcategories = await getSubcategories(supabase).catch((err) => {
+    subcategories = await getSubcategories().catch((err) => {
       console.error("Error fetching subcategories:", err);
       return [];
     });
 
-    const productsData = await fetchProducts(1, undefined, supabase).catch((err) => {
+    const productsData = await fetchProducts(1).catch((err) => {
       console.error("Error fetching products:", err);
       return { products: [], hasMore: false };
     });
@@ -168,7 +160,7 @@ export default async function Home() {
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las últimas incorporaciones a nuestra colección</p>
           </div>
           
-          {/* ProductGrid without exchangeRate and without showing prices */}
+          {/* ProductGrid without exchangeRate to avoid server errors */}
           <ProductGrid products={products} showPrice={false} />
           
           <div className="text-center mt-12">

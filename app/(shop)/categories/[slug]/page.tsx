@@ -1,14 +1,13 @@
 import { getCategories } from "@/lib/data/categories";
 import { notFound } from 'next/navigation';
 import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseClient } from '@/lib/supabase/client';
 import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 
 const PRODUCTS_PER_PAGE = 12;
 
 async function getCategoryWithInitialProducts(slug: string) {
-  const supabase = await createServerSupabaseClient();
-  const { data: category, error: categoryError } = await supabase
+  const { data: category, error: categoryError } = await supabaseClient
     .from('categories')
     .select(`
       *,
@@ -30,7 +29,7 @@ async function getCategoryWithInitialProducts(slug: string) {
     categoryIds = [...categoryIds, ...subcategoryIds];
   }
 
-  const { data: products, error: productsError } = await supabase
+  const { data: products, error: productsError } = await supabaseClient
     .from('products')
     .select(`
       *,
@@ -54,9 +53,6 @@ type PageParams = {
 export default async function CategoryPage({ params }: PageParams) {
   const resolvedParams = await Promise.resolve(params);
   
-  // Create server-side Supabase client
-  const supabase = await createServerSupabaseClient();
-  
   // Obtener datos de la categoría, productos iniciales y exchange rate
   const [data, exchangeRate] = await Promise.all([
     getCategoryWithInitialProducts(resolvedParams.slug),
@@ -77,8 +73,8 @@ export default async function CategoryPage({ params }: PageParams) {
     forcedCategories.push(...subcategoryIds);
   }
 
-  // Obtener todas las categorías para los filtros usando server client
-  const categories = await getCategories(supabase);
+  // Obtener todas las categorías para los filtros
+  const categories = await getCategories();
 
   return (
     <div className="container mx-auto px-4 py-8">

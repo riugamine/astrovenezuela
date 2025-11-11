@@ -1,16 +1,14 @@
 import { getCategories } from "@/lib/data/categories";
 import { notFound } from 'next/navigation';
 import { ProductsWrapper } from "@/components/shop/ProductsWrapper";
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { supabaseClient } from '@/lib/supabase/client';
 import { getActiveExchangeRateServer } from "@/lib/data/exchange-rates-server";
 
 const PRODUCTS_PER_PAGE = 12;
 
 async function getSubcategoryWithInitialProducts(slug: string) {
-  const supabase = await createServerSupabaseClient();
-  
   // Get subcategory details
-  const { data: subcategory, error: subcategoryError } = await supabase
+  const { data: subcategory, error: subcategoryError } = await supabaseClient
     .from('categories')
     .select(`
       *,
@@ -24,7 +22,7 @@ async function getSubcategoryWithInitialProducts(slug: string) {
   if (subcategoryError || !subcategory) return null;
 
   // Get products for this subcategory
-  const { data: products, error: productsError } = await supabase
+  const { data: products, error: productsError } = await supabaseClient
     .from('products')
     .select(`
       *,
@@ -50,9 +48,6 @@ type PageParams = {
 export default async function SubcategoryPage({ params }: PageParams) {
   const resolvedParams = await Promise.resolve(params);
   
-  // Create server-side Supabase client
-  const supabase = await createServerSupabaseClient();
-  
   // Obtener datos de la subcategoría, productos iniciales y exchange rate
   const [data, exchangeRate] = await Promise.all([
     getSubcategoryWithInitialProducts(resolvedParams.slug),
@@ -64,7 +59,7 @@ export default async function SubcategoryPage({ params }: PageParams) {
   }
 
   const { subcategory, products } = data;
-  const categories = await getCategories(supabase);
+  const categories = await getCategories();
 
   return (
     <div className="container mx-auto px-4 py-8">

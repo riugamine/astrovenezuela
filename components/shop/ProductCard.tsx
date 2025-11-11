@@ -25,6 +25,9 @@ interface ProductCardProps {
   showPrice?: boolean;
 }
 
+/**
+ * Displays a single product with hover interactions and optional pricing details.
+ */
 const ProductCard = memo(function ProductCard({ product, exchangeRate, showPrice = true }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -86,6 +89,9 @@ interface ProductCardContentProps {
   showPrice?: boolean;
 }
 
+/**
+ * Shared card layout responsible for rendering product visuals, pricing and size availability.
+ */
 const ProductCardContent = memo(function ProductCardContent({
   product,
   displayImage,

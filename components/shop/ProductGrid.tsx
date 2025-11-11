@@ -12,6 +12,10 @@ interface ProductGridProps {
   showPrice?: boolean;
 }
 
+/**
+ * Renders a responsive grid of product cards while supporting initial data hydration,
+ * exchange rate conversion and conditional price visibility.
+ */
 const ProductGrid = memo(function ProductGrid({ products: initialProducts, exchangeRate, showPrice = true }: ProductGridProps) {
   const { data, isLoading, error } = useProducts(initialProducts);
   
