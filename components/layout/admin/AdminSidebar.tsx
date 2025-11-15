@@ -10,6 +10,7 @@ import {
   faShoppingCart,
   faSignOut,
   faCog,
+  faCashRegister,
 } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ const AdminSidebar: FC = () => {
     { href: "/admin/products", icon: faBox, label: "Productos" },
     { href: "/admin/categories", icon: faListUl, label: "Categorías" },
     { href: "/admin/orders", icon: faShoppingCart, label: "Órdenes" },
+    { href: "/admin/sales", icon: faCashRegister, label: "Ventas" },
     { href: "/admin/users", icon: faUsers, label: "Usuarios" },
     { href: "/admin/settings", icon: faCog, label: "Configuración" },
   ];

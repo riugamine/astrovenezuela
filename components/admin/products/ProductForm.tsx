@@ -25,7 +25,7 @@ import { RichTextEditor } from "./RichTextEditor";
 import { RichTextPreview } from "./RichTextPreview";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createProduct } from '@/lib/data/admin/actions/products';
+import { createProductAPI } from '@/lib/api/products';
 import { sanitizeHtml } from '@/lib/utils/sanitize-html';
 
 // Define the schemas for new product only
@@ -103,7 +103,7 @@ export function ProductForm({ onClose }: ProductFormProps) {
         updated_at: new Date().toISOString()
       };
 
-      return createProduct(submitData);
+      return createProductAPI(submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });

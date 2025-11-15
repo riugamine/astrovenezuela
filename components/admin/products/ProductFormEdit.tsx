@@ -27,9 +27,9 @@ import { RichTextPreview } from "./RichTextPreview";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  updateProduct,
-  getProductCategoryDetails,
-} from "@/lib/data/admin/actions/products";
+  updateProductAPI,
+  getProductCategoryDetailsAPI,
+} from "@/lib/api/products";
 import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
 import { type ProductData } from "@/lib/data/admin/actions/products/types";
 import { sanitizeHtml } from '@/lib/utils/sanitize-html';
@@ -95,7 +95,7 @@ export function ProductFormEdit({
   // Fetch category details first
   const { data: categoryDetails, isLoading: isLoadingCategoryDetails } = useQuery<{ category_id: string; parent_id: string | null }>({
     queryKey: ["productCategory", initialData.id],
-    queryFn: () => getProductCategoryDetails(initialData.id),
+    queryFn: () => getProductCategoryDetailsAPI(initialData.id),
   });
 
   const form = useForm<EditProductFormData>({
@@ -150,7 +150,7 @@ export function ProductFormEdit({
         updated_at: new Date().toISOString(),
       };
 
-      return updateProduct(data.id, submitData);
+      return updateProductAPI(data.id, submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });

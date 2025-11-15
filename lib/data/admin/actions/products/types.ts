@@ -44,6 +44,7 @@ export interface ProductVariant {
   size: string;
   stock: number;
   reference_number?: string;
+  image_url?: string;
   product_id: string;
 }
 

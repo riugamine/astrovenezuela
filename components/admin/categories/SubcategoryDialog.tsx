@@ -16,7 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import type { Category } from '@/lib/data/admin/actions/categories/types';
 import { CategoryImageUploader } from './CategoryImageUploader';
-import { deleteCategoryBanner } from '@/lib/data/admin/actions/categories';
+import { deleteCategoryBannerAPI } from '@/lib/api/categories';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface SubcategoryDialogProps {
@@ -111,7 +111,7 @@ export const SubcategoryDialog: FC<SubcategoryDialogProps> = ({
                       if (!subcategory.id || !subcategory.banner_url) {
                         throw new Error('No se puede eliminar la imagen');
                       }
-                      await deleteCategoryBanner(subcategory.id, subcategory.banner_url);
+                      await deleteCategoryBannerAPI(subcategory.id, subcategory.banner_url);
                       setValue("banner_url", "");
                       // Invalidate queries to refresh data
                       queryClient.invalidateQueries({ queryKey: ["categories"] });

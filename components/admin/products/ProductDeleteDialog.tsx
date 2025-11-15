@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { deleteProductAPI } from "@/lib/api/products";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
@@ -32,29 +32,7 @@ export function ProductDeleteDialog({
 
   const deleteProduct = useMutation({
     mutationFn: async () => {
-      // Primero eliminamos las imágenes de detalle
-      const { error: imagesError } = await supabaseAdmin
-        .from('product_images')
-        .delete()
-        .eq('product_id', productId);
-
-      if (imagesError) throw imagesError;
-
-      // Luego eliminamos las variantes
-      const { error: variantsError } = await supabaseAdmin
-        .from('product_variants')
-        .delete()
-        .eq('product_id', productId);
-
-      if (variantsError) throw variantsError;
-
-      // Finalmente eliminamos el producto
-      const { error: productError } = await supabaseAdmin
-        .from('products')
-        .delete()
-        .eq('id', productId);
-
-      if (productError) throw productError;
+      await deleteProductAPI(productId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });

@@ -14,7 +14,7 @@ import { ProductViewDialog } from './ProductViewDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { ProductWithRelations } from '@/lib/data/admin/actions/products/types';
 import { ProductEditDialog } from './ProductEditDialog';
-import { toggleProductStatus } from '@/lib/data/admin/actions/products';
+import { toggleProductStatusAPI } from '@/lib/api/products';
 import { toast } from 'sonner';
 
 interface ProductActionsProps {
@@ -41,7 +41,7 @@ export const ProductActions: FC<ProductActionsProps> = ({ product }) => {
 
   const handleToggleActive = async () => {
     try {
-      await toggleProductStatus(product.id, !product.is_active);
+      await toggleProductStatusAPI(product.id, !product.is_active);
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(`Producto ${product.is_active ? 'desactivado' : 'activado'} exitosamente`);
       setIsDropdownOpen(false);

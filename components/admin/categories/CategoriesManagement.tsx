@@ -40,7 +40,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCategories, createCategory, updateCategory, toggleCategoryStatus, deleteCategory, deleteCategoryBanner } from "@/lib/data/admin/actions/categories";
+import { 
+  fetchCategories, 
+  createCategoryAPI, 
+  updateCategoryAPI, 
+  toggleCategoryStatusAPI, 
+  deleteCategoryAPI, 
+  deleteCategoryBannerAPI 
+} from "@/lib/api/categories";
 import { Category, CategoryData, CategoryWithSubcategories } from '@/lib/data/admin/actions/categories/types';
 import CategoryActions from "./CategoryActions";
 import { cn } from "@/lib/utils";
@@ -207,7 +214,7 @@ const CategoriesManagement: FC = () => {
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories"],
-    queryFn: getCategories,
+    queryFn: fetchCategories,
     
   });
 
@@ -234,7 +241,7 @@ const CategoriesManagement: FC = () => {
 
   // Crear categoría
   const createMutation = useMutation({
-    mutationFn: (data: CategoryFormData) => createCategory(data),
+    mutationFn: (data: CategoryFormData) => createCategoryAPI(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Categoría creada exitosamente");
@@ -250,7 +257,7 @@ const CategoriesManagement: FC = () => {
   // Actualizar categoría
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CategoryData> }) =>
-      updateCategory(id, data),
+      updateCategoryAPI(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Categoría actualizada exitosamente");
@@ -264,7 +271,7 @@ const CategoriesManagement: FC = () => {
   });
   // Desactivar categoría
   const toggleStatusMutation = useMutation({
-    mutationFn: (categoryId: string) => toggleCategoryStatus(categoryId),
+    mutationFn: (categoryId: string) => toggleCategoryStatusAPI(categoryId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Estado de la categoría actualizado exitosamente");
@@ -279,7 +286,7 @@ const CategoriesManagement: FC = () => {
 
   // Eliminar categoría permanentemente
   const deleteMutation = useMutation({
-    mutationFn: (categoryId: string) => deleteCategory(categoryId),
+    mutationFn: (categoryId: string) => deleteCategoryAPI(categoryId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Categoría eliminada permanentemente");
@@ -534,7 +541,7 @@ const CategoriesManagement: FC = () => {
                       if (!selectedCategory?.id || !selectedCategory?.banner_url) {
                         throw new Error('No se puede eliminar la imagen');
                       }
-                      await deleteCategoryBanner(selectedCategory.id, selectedCategory.banner_url);
+                      await deleteCategoryBannerAPI(selectedCategory.id, selectedCategory.banner_url);
                       setValue("banner_url", "");
                       // Invalidate queries to refresh data
                       queryClient.invalidateQueries({ queryKey: ["categories"] });
